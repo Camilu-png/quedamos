@@ -1,6 +1,6 @@
-# quedamos
+# Quedamos?
 
-A new Flutter project.
+Aplicación móvil que permite crear, compartir y gestionar planes fácilmente.
 
 ## Getting Started
 
