@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import '../app_colors.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
-  static const primaryColor = Color(0xFF3f51b5);
-  static const Color primaryDark = Color(0xFF303F9F);
 
   const CustomBottomNavBar({
     super.key,

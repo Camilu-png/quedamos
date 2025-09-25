@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-
-const primaryColor = Color(0xFF3f51b5);
-const primaryDark = Color(0xFF303F9F);
-const primaryLight = Color(0xFFc5cae9);
-const secondary = Color(0xFFff5722);
+import 'friends_screen.dart';
+import '../app_colors.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -72,7 +69,12 @@ class LoginScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => FriendsScreen()),
+                  );
+                  },
                   child: const Text(
                     "Ingresar",
                     style: TextStyle(
