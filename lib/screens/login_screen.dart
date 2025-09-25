@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-const primary = Color(0xFF3f51b5);
-const primary_dark = Color(0xFF303F9F);
-const primary_light = Color(0xFFc5cae9);
+const primaryColor = Color(0xFF3f51b5);
+const primaryDark = Color(0xFF303F9F);
+const primaryLight = Color(0xFFc5cae9);
 const secondary = Color(0xFFff5722);
 
 class LoginScreen extends StatelessWidget {
@@ -11,7 +11,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: primary,
+      backgroundColor: primaryColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
