@@ -72,7 +72,7 @@ class LoginScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => FriendsScreen()),
+                    MaterialPageRoute(builder: (context) => FriendsScreen()), // TOOD: Navegar a inicio
                   );
                   },
                   child: const Text(
