@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import 'package:url_launcher/url_launcher.dart';
 import "../app_colors.dart";
 import '../text_styles.dart';
 
@@ -6,6 +7,22 @@ class PlanScreen extends StatelessWidget {
   final Map<String, dynamic> plan;
 
   const PlanScreen({super.key, required this.plan});
+
+  Future<void> _openMap(String location, BuildContext context) async {
+    if (location.isEmpty) return;
+    final query = Uri.encodeComponent(location);
+    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+    try {
+      await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir el mapa')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +37,52 @@ class PlanScreen extends StatelessWidget {
 
       //APP BAR
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "Detalle del plan",
-          style: TextStyle(color: Colors.white),
+          style: subtitleText.copyWith(
+            color: Colors.white,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: primaryColor,
         elevation: 0,
+        actions: [
+          if (esPropio) 
+            IconButton(
+              icon: const Icon(Icons.more_vert, color: Colors.white),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  builder: (context) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.edit),
+                          title: const Text("Editar plan"),
+                          onTap: () {
+                            Navigator.pop(context); //Cerrar modal
+                            //Editar
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.delete),
+                          title: const Text("Eliminar plan"),
+                          onTap: () {
+                            Navigator.pop(context); //Cerrar modal
+                            //Eliminar
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+        ],
       ),
 
       //CUERPO
@@ -102,7 +158,7 @@ class PlanScreen extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   //TÍTULO
                   Text(
@@ -148,6 +204,51 @@ class PlanScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
+                  if (plan["encuesta"])
+                    //ENCUESTA
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: secondary,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          //ACCIÓN
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.poll, color: Colors.white, size: 24),
+                              const SizedBox(width: 8),
+                              Text(
+                                "Ver y participar en encuesta",
+                                style: bodyPrimaryText.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Spacer(),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Center(
+                                  child: Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 12),
+
+                  //VER UBICACIÓN EN MAPA
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -158,9 +259,7 @@ class PlanScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: () {
-                        //ACCIÓN
-                      },
+                      onPressed: () => _openMap(plan['ubicacion'] ?? "", context),
                       child: Padding(
                         padding: const EdgeInsets.only(left: 16),
                         child: Row(
@@ -174,6 +273,13 @@ class PlanScreen extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            const Spacer(),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Center(
+                                child: Icon(Icons.arrow_forward_ios, color: primaryText, size: 18),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -182,6 +288,7 @@ class PlanScreen extends StatelessWidget {
                   
                   const SizedBox(height: 12),
                   
+                  //VER PARTICIPANTES
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -206,6 +313,13 @@ class PlanScreen extends StatelessWidget {
                               "Ver participantes",
                               style: bodyPrimaryText.copyWith(
                                 fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Center(
+                                child: Icon(Icons.arrow_forward_ios, color: primaryText, size: 18),
                               ),
                             ),
                           ],

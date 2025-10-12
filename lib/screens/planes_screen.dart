@@ -91,6 +91,7 @@ class _PlanesScreenState extends State<PlanesScreen> {
       "visibilidad": visibilidades[index % visibilidades.length],
       "descripcion": "Únete a este plan para disfrutar de una experiencia única en ${ubicaciones[index % ubicaciones.length]}. ¡No te lo pierdas!",
       "esPropio": false,
+      "encuesta": true,
     };
   });
 
@@ -232,7 +233,7 @@ class _PlanesScreenState extends State<PlanesScreen> {
                       child: CircularProgressIndicator(),
                     ),
                     newPageProgressIndicatorBuilder: (_) => const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.only(top: 16),
                       child: Center(
                         child: CircularProgressIndicator(),
                       ),

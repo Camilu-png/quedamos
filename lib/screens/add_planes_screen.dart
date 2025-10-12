@@ -4,14 +4,14 @@ import '../widgets/plan_list.dart';
 import '../app_colors.dart';
 import '../text_styles.dart';
 
-class MisPlanesScreen extends StatefulWidget {
-  const MisPlanesScreen({super.key});
+class AddPlanesScreen extends StatefulWidget {
+  const AddPlanesScreen({super.key});
 
   @override
-  State<MisPlanesScreen> createState() => _MisPlanesScreenState();
+  State<AddPlanesScreen> createState() => _AddPlanesScreenState();
 }
 
-class _MisPlanesScreenState extends State<MisPlanesScreen> {
+class _AddPlanesScreenState extends State<AddPlanesScreen> {
   String selectedSegment = 'Amigos';
   String searchQuery = "";
 

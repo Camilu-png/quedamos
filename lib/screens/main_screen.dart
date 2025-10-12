@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'friends_screen.dart';
+import 'mis_planes_screen.dart';
+import 'add_planes_screen.dart';
 import 'planes_screen.dart';
 import '../widgets/custom_navbar.dart';
 import '../app_colors.dart';
@@ -17,6 +19,8 @@ class _MainScreenState extends State<MainScreen> {
   //PANTALLAS
   final List<Widget> _screens = const [
     PlanesScreen(),
+    MisPlanesScreen(),
+    AddPlanesScreen(),
     FriendsScreen(),
   ];
 

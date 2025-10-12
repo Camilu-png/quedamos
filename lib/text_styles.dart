@@ -7,6 +7,12 @@ const TextStyle titleText = TextStyle(
   color: Colors.black,
 );
 
+const TextStyle subtitleText = TextStyle(
+  fontSize: 20,
+  fontWeight: FontWeight.bold,
+  color: Colors.black,
+);
+
 const TextStyle helpText = TextStyle(
   fontSize: 16,
   color: primaryDark,
