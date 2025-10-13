@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import '../widgets/friend_list.dart';
 import '../widgets/custom_navbar.dart';
+import 'package:quedamos/text_styles.dart';
 import '../app_colors.dart';
 
-final List<Map<String, String>> friends = [
-  {"name": "Alice", "photo": "/assets/logo.png"},
-  {"name": "Bob", "photo": "/assets/logo.png"},
-  {"name": "Charlie", "photo": "/assets/logo.png"},
+final List<Map<String, dynamic>> friends = [
+  {"name": "Alice", "color": Colors.blue},
+  {"name": "Bob", "color": Colors.green},
+  {"name": "Charlie", "color": Colors.red},
+  {"name": "Diana", "color": Colors.purple},
+  {"name": "Eve", "color": Colors.orange},
+  {"name": "Frank", "color": Colors.teal},
+  {"name": "Grace", "color": Colors.cyan},
+  {"name": "Hank", "color": Colors.amber},
+  {"name": "Ivy", "color": Colors.indigo},
+  {"name": "Jack", "color": Colors.lime},
 ];
 
 class AddFriendsScreen extends StatefulWidget {
@@ -25,10 +33,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
       appBar: AppBar(
         title: const Text(
           "Nuevo Amigo",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 28,
-          ),
+          style: titleText,
         ),
         centerTitle: true,
       ),
@@ -44,10 +49,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
                     searchQuery = value;
                   });
                 },
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: primaryDark,
-                ),
+                style: helpText,
                 decoration: const InputDecoration(
                   hintText: 'Buscar amigo...',
                   prefixIcon: Icon(Icons.search, color: primaryDark),
@@ -74,6 +76,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
                         .toLowerCase()
                         .contains(searchQuery.toLowerCase()))
                     .toList(),
+                showIcons: true,
               ),
             ),
           ],
