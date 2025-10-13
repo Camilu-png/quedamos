@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import 'package:url_launcher/url_launcher.dart';
+import 'package:quedamos/screens/add_planes_screen.dart';
 import "../app_colors.dart";
 import '../text_styles.dart';
 
@@ -44,7 +45,7 @@ class PlanScreen extends StatelessWidget {
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: primaryColor,
+        backgroundColor: iconColor,
         elevation: 0,
         actions: [
           if (esPropio) 
@@ -65,7 +66,12 @@ class PlanScreen extends StatelessWidget {
                           title: const Text("Editar plan"),
                           onTap: () {
                             Navigator.pop(context); //Cerrar modal
-                            //Editar
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddPlanesScreen(plan: plan),
+                              ),
+                            );
                           },
                         ),
                         ListTile(

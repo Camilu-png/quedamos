@@ -185,7 +185,7 @@ class _PlanesScreenState extends State<PlanesScreen> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               //BUSCADOR
               SizedBox(
@@ -218,7 +218,7 @@ class _PlanesScreenState extends State<PlanesScreen> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               //LISTA DE PLANES
               Expanded(

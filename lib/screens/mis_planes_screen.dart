@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:quedamos/screens/add_planes_screen.dart';
 import '../widgets/plan_list.dart';
 import '../app_colors.dart';
 import '../text_styles.dart';
@@ -197,7 +198,10 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    //ACCIÓN
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AddPlanesScreen()),
+                    );
                   },
                   icon: const Icon(Icons.add, size: 24, color: Colors.white),
                   label: Text(
