@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:quedamos/screens/main_screen.dart';
 import 'package:quedamos/text_styles.dart';
 import '../widgets/friend_list.dart';
 import '../app_colors.dart';
-import 'add_friend_screen.dart';
 
 final List<Map<String, dynamic>> friends = [
   {"name": "Alice", "color": Colors.pink},
@@ -31,8 +31,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
       appBar: AppBar(
         title: const Text("Mis Amigos", style: titleText),
         centerTitle: true,
+        backgroundColor: backgroundColor,
+        surfaceTintColor: Colors.transparent,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -41,9 +43,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => AddFriendsScreen()),
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (_) => const MainScreen(initialIndex: 4), // 4 es el índice de AddFriendsScreen
+                    ),
                   );
                 },
                 icon: const Icon(Icons.add, size: 24, color: Colors.white),
@@ -65,8 +68,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Expanded(
-              child: FriendList(friends: friends, showIcons: false,),
+            SizedBox(
+              height: 600,
+              child: FriendList(friends: friends, showIcons: false),
             ),
           ],
         ),

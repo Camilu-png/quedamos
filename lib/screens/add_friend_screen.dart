@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/friend_list.dart';
-import '../widgets/custom_navbar.dart';
 import 'package:quedamos/text_styles.dart';
 import '../app_colors.dart';
 
 final List<Map<String, dynamic>> friends = [
-  {"name": "Alice", "color": Colors.blue},
+  {"name": "Antonella", "color": Colors.blue},
   {"name": "Bob", "color": Colors.green},
   {"name": "Charlie", "color": Colors.red},
   {"name": "Diana", "color": Colors.purple},
@@ -37,7 +36,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
         ),
         centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -69,7 +68,8 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Expanded(
+            SizedBox(
+              height: 600, // Ajusta la altura según lo que necesites
               child: FriendList(
                 friends: friends
                     .where((friend) => friend["name"]!
@@ -81,12 +81,6 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 3,
-        onTap: (index) {
-          // TODO: Implementar la navegación entre pantallas
-        },
       ),
     );
   }

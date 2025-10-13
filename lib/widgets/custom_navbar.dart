@@ -52,14 +52,14 @@ class CustomBottomNavBar extends StatelessWidget {
           IconButton(
             icon: Icon(
               Icons.group,
-              color: currentIndex == 3 ? Colors.black : Colors.white,
+              color: (currentIndex == 3 || currentIndex == 4)  ? Colors.black : Colors.white,
             ),
             onPressed: () => onTap(3),
           ),
           IconButton(
             icon: Icon(
               Icons.person,
-              color: currentIndex == 4 ? Colors.black : Colors.white,
+              color: currentIndex == 5 ? Colors.black : Colors.white,
             ),
             onPressed: () => onTap(4),
           ),
