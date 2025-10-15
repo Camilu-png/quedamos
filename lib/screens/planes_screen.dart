@@ -83,15 +83,20 @@ class _PlanesScreenState extends State<PlanesScreen> {
     return {
       "anfitrion": anfitriones[index % anfitriones.length],
       "titulo": titulos[index % titulos.length] + " #${index + 1}",
-      "fecha": "${10 + (index % 20)} de octubre",
-      "hora": "${8 + (index % 12)}:00 ${index % 2 == 0 ? 'AM' : 'PM'}",
-      "ubicacion": ubicaciones[index % ubicaciones.length],
       "iconColor": colores[index % colores.length],
       "iconCode": iconos[index % iconos.length].codePoint,
       "visibilidad": visibilidades[index % visibilidades.length],
       "descripcion": "Únete a este plan para disfrutar de una experiencia única en ${ubicaciones[index % ubicaciones.length]}. ¡No te lo pierdas!",
       "esPropio": false,
-      "encuesta": true,
+      "fechaEsEncuesta": false,
+      "fecha": DateTime.now(),
+      "fechasEncuesta": [DateTime.now(), DateTime.now()],
+      "horaEsEncuesta": false,
+      "hora": TimeOfDay.now(),
+      "horasEncuesta": [TimeOfDay.now(), TimeOfDay.now()],
+      "ubicacionEsEncuesta": true,
+      "ubicacion": ubicaciones[index % ubicaciones.length],
+      "ubicacionesEncuesta": ["Av. Libertador Bernardo O'Higgins 1234, Santiago",  "Av. Libertador Bernardo O'Higgins 1234, Santiago"],
     };
   });
 

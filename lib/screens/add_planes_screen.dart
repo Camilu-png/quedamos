@@ -1,4 +1,6 @@
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../app_colors.dart';
 import '../text_styles.dart';
 
@@ -37,8 +39,8 @@ final List<Color> coloresDisponibles = [
   Colors.deepPurple,
   Colors.lightBlue,
   Colors.lightGreen,
-  secondary, // tu color secundario
-  primaryColor, // tu color principal
+  secondary,
+  primaryColor,
 ];
 
 class AddPlanesScreen extends StatefulWidget {
@@ -64,8 +66,22 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   final TextEditingController _descripcionController = TextEditingController();
   //FECHA
   bool fechaEsEncuesta = false;
-  DateTime? fechaSeleccionada;
-  List<DateTime> encuestaFechas = [];
+  DateTime? fecha;
+  List<DateTime> fechasEncuesta = [];
+  //HORA
+  bool horaEsEncuesta = false;
+  TimeOfDay? hora;
+  List<TimeOfDay> horasEncuesta = [];
+  //UBICACIÓN
+  bool ubicacionEsEncuesta = false;
+  String? ubicacion;
+  List<String> ubicacionesEncuesta = [];
+  final List<String> ubicacionesDisponibles = [
+    "Parque Central",
+    "Café de la Esquina",
+    "Avenida Principal, Edificio 123, Oficina 45B",
+    "Estadio Nacional",
+  ];
 
   @override
   void initState() {
@@ -77,11 +93,29 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       //CARGAR FECHA O ENCUESTA
       fechaEsEncuesta = widget.plan!["fechaEsEncuesta"] ?? false;
       if (fechaEsEncuesta) {
-        encuestaFechas = widget.plan!["encuestaFechas"] != null
-            ? List<DateTime>.from(widget.plan!["encuestaFechas"])
+        fechasEncuesta = widget.plan!["fechasEncuesta"] != null
+            ? List<DateTime>.from(widget.plan!["fechasEncuesta"])
             : [];
       } else {
-        fechaSeleccionada = widget.plan!["fechaSeleccionada"];
+        fecha = widget.plan!["fecha"];
+      }
+      //CARGAR HORA O ENCUESTA
+      horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
+      if (horaEsEncuesta) {
+        horasEncuesta = widget.plan!["horasEncuesta"] != null
+            ? List<TimeOfDay>.from(widget.plan!["horasEncuesta"])
+            : [];
+      } else {
+        hora = widget.plan!["hora"];
+      }
+      //CARGAR UBICACIÓN O ENCUESTA
+      ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
+      if (ubicacionEsEncuesta) {
+        ubicacionesEncuesta = widget.plan!["ubicacionesEncuesta"] != null
+            ? List<String>.from(widget.plan!["ubicacionesEncuesta"])
+            : [];
+      } else {
+        ubicacion = widget.plan!["ubicacion"];
       }
     }
   }
@@ -182,13 +216,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   void _seleccionarFechaNormal(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: fechaSeleccionada ?? DateTime.now(),
+      initialDate: fecha ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
     if (picked != null) {
       setState(() {
-        fechaSeleccionada = picked;
+        fecha = picked;
       });
     }
   }
@@ -203,14 +237,153 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     );
     if (picked != null) {
       setState(() {
-        encuestaFechas.add(picked);
+        fechasEncuesta.add(picked);
       });
     }
   }
 
-  //FORMATO: FECHA
-  String formatoFecha(DateTime fecha) {
-    return '${fecha.day}/${fecha.month}/${fecha.year}';
+  // HORA NORMAL
+  void _seleccionarHoraNormal(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: hora ?? TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        hora = picked;
+      });
+    }
+  }
+
+  // HORA ENCUESTA
+  void _agregarHoraEncuesta(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        horasEncuesta.add(picked);
+      });
+    }
+  }
+
+  Future<void> _openMap(String location, BuildContext context) async {
+    if (location.isEmpty) return;
+    final query = Uri.encodeComponent(location);
+    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+    try {
+      await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir el mapa')),
+      );
+    }
+  }
+
+  void _seleccionarUbicacion(BuildContext context) async {
+    final TextEditingController _ubicacionController = TextEditingController(text: ubicacion);
+    String? ubicacionSeleccionada = ubicacion;
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: MediaQuery.of(context).viewInsets,
+          child: SizedBox(
+            height: 400,
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                const Text(
+                  'Selecciona ubicación',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    controller: _ubicacionController,
+                    decoration: const InputDecoration(
+                      hintText: 'Escribe una ubicación',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: ubicacionesDisponibles.length,
+                    itemBuilder: (context, index) {
+                      final loc = ubicacionesDisponibles[index];
+                      return ListTile(
+                        title: Text(
+                          loc,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            ubicacionSeleccionada = loc;
+                            if (ubicacionEsEncuesta) {
+                              ubicacionesEncuesta.add(ubicacionSeleccionada!);
+                            } else {
+                              ubicacion = ubicacionSeleccionada;
+                            }
+                          });
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          _openMap(_ubicacionController.text, context);
+                        },
+                        icon: const Icon(Icons.map),
+                        label: const Text('Ver en mapa'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            ubicacionSeleccionada = _ubicacionController.text;
+                            if (ubicacionEsEncuesta) {
+                              ubicacionesEncuesta.add(ubicacionSeleccionada!);
+                            } else {
+                              ubicacion = ubicacionSeleccionada;
+                            }
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -224,7 +397,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
           style: subtitleText.copyWith(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: primaryColor,
+        backgroundColor: selectedColor,
         elevation: 0,
       ),
 
@@ -289,7 +462,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
                     const SizedBox(height: 12),
 
-                    // TÍTULO
+                    //TÍTULO
                     Text(
                       "Título",
                       style: labelText,
@@ -314,7 +487,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
                     const SizedBox(height: 12),
 
-                    // DESCRIPCIÓN
+                    //DESCRIPCIÓN
                     Text(
                       "Descripción",
                       style: labelText,
@@ -372,8 +545,8 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                               child: Text(
                                 fechaEsEncuesta
                                     ? 'Agregar opción de encuesta'
-                                    : (fechaSeleccionada != null
-                                        ? formatoFecha(fechaSeleccionada!)
+                                    : (fecha != null
+                                        ? DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fecha!)
                                         : 'Toca para elegir fecha'),
                               ),
                             ),
@@ -410,11 +583,11 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     ),
                     const SizedBox(height: 12),
                     //FECHA: OPCIONES DE ENCUESTA
-                    if (fechaEsEncuesta && encuestaFechas.isNotEmpty)
+                    if (fechaEsEncuesta && fechasEncuesta.isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          for (int i = 0; i < encuestaFechas.length; i++)
+                          for (int i = 0; i < fechasEncuesta.length; i++)
                             Container(
                               margin: const EdgeInsets.symmetric(vertical: 4),
                               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -426,7 +599,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Opción ${i + 1}: ${formatoFecha(encuestaFechas[i])}',
+                                    'Opción ${i + 1}: ${DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fechasEncuesta[i])}',
                                     style: bodyPrimaryText.copyWith(
                                       fontWeight: FontWeight.w500
                                     ),
@@ -434,7 +607,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                                   GestureDetector(
                                     onTap: () {
                                       setState(() {
-                                        encuestaFechas.removeAt(i);
+                                        fechasEncuesta.removeAt(i);
                                       });
                                     },
                                     child: const Icon(Icons.close, size: 24, color: Colors.red),
@@ -442,10 +615,235 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                                 ],
                               ),
                             ),
-                          const SizedBox(height: 12),
                         ],
                       ),
 
+                    const SizedBox(height: 12),
+
+                    //HORA
+                    Text(
+                      "Hora",
+                      style: labelText,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        //BOTÓN: INPUT HORA
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (horaEsEncuesta) {
+                                _agregarHoraEncuesta(context);
+                              } else {
+                                _seleccionarHoraNormal(context);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: primaryText,
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: secondaryText,
+                                  width: 1,
+                                ),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                horaEsEncuesta
+                                    ? 'Agregar opción de encuesta'
+                                    : (hora != null
+                                        ? hora!.format(context)
+                                        : 'Toca para elegir hora'),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        //SEGMENTED BUTTON (HORA/ENCUESTA)
+                        Expanded(
+                          child: SegmentedButton<String>(
+                            segments: const [
+                              ButtonSegment(value: 'hora', label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: 'encuesta', label: Icon(Icons.poll)),
+                            ],
+                            selected: {horaEsEncuesta ? 'encuesta' : 'hora'},
+                            onSelectionChanged: (newSelection) {
+                              setState(() {
+                                horaEsEncuesta = newSelection.first == 'encuesta';
+                              });
+                            },
+                            style: SegmentedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              backgroundColor: Colors.white,
+                              selectedBackgroundColor: primaryLight,
+                              foregroundColor: primaryDark,
+                              selectedForegroundColor: primaryDark,
+                              side: const BorderSide(color: primaryDark, width: 1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    //HORA: OPCIONES DE ENCUESTA
+                    if (horaEsEncuesta && horasEncuesta.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (int i = 0; i < horasEncuesta.length; i++)
+                            Container(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: primaryLight,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Opción ${i + 1}: ${horasEncuesta[i].format(context)}',
+                                    style: bodyPrimaryText.copyWith(
+                                      fontWeight: FontWeight.w500
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        horasEncuesta.removeAt(i);
+                                      });
+                                    },
+                                    child: const Icon(Icons.close, size: 24, color: Colors.red),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+
+                    const SizedBox(height: 12),
+
+                    //UBICACIÓN
+                    Text(
+                      "Ubicación",
+                      style: labelText,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        //BOTÓN: INPUT UBICACIÓN
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              _seleccionarUbicacion(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: primaryText,
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: secondaryText,
+                                  width: 1,
+                                ),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child:
+                                Text(
+                                  ubicacionEsEncuesta
+                                      ? 'Agregar opción de encuesta'
+                                      : (ubicacion?.isNotEmpty == true
+                                          ? ubicacion!
+                                          : 'Toca para elegir ubicación'),
+                                  softWrap: true,
+                                ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        //SEGMENTED BUTTON (UBICACIÓN/ENCUESTA)
+                        Expanded(
+                          child: SegmentedButton<String>(
+                            segments: const [
+                              ButtonSegment(value: 'ubicacion', label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: 'encuesta', label: Icon(Icons.poll)),
+                            ],
+                            selected: {ubicacionEsEncuesta ? 'encuesta' : 'ubicacion'},
+                            onSelectionChanged: (newSelection) {
+                              setState(() {
+                                ubicacionEsEncuesta = newSelection.first == 'encuesta';
+                              });
+                            },
+                            style: SegmentedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              backgroundColor: Colors.white,
+                              selectedBackgroundColor: primaryLight,
+                              foregroundColor: primaryDark,
+                              selectedForegroundColor: primaryDark,
+                              side: const BorderSide(color: primaryDark, width: 1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    //UBICACIÓN: OPCIONES DE ENCUESTA
+                    if (ubicacionEsEncuesta && ubicacionesEncuesta.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (int i = 0; i < ubicacionesEncuesta.length; i++)
+                            Container(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: primaryLight,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      'Opción ${i + 1}: ${ubicacionesEncuesta[i]}',
+                                      style: bodyPrimaryText.copyWith(
+                                        fontWeight: FontWeight.w500
+                                      ),
+                                      softWrap: true,
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        ubicacionesEncuesta.removeAt(i);
+                                      });
+                                    },
+                                    child: const Icon(Icons.close, size: 24, color: Colors.red),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    
+                    const SizedBox(height: 12),
 
                     //BOTÓN: GUARDAR
                     SizedBox(
@@ -459,8 +857,11 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                               "descripcion": _descripcionController.text,
                               "visibilidad": selectedSegment,
                               "fechaEsEncuesta": fechaEsEncuesta,
-                              "fechaSeleccionada": fechaSeleccionada,
-                              "encuestaFechas": encuestaFechas,
+                              "fecha": fecha,
+                              "fechasEncuesta": fechasEncuesta,
+                              "horaEsEncuesta": horaEsEncuesta,
+                              "hora": hora,
+                              "horasEncuesta": horasEncuesta,
                             };
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(

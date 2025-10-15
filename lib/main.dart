@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'app_colors.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializa Firebase si lo estás usando
+  //await Firebase.initializeApp(
+  //  options: DefaultFirebaseOptions.currentPlatform,
+  //);
+
+  // Inicializa intl para español
+  await initializeDateFormatting('es', null);
+
   runApp(const MyApp());
 }
 
