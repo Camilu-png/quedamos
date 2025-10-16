@@ -1,8 +1,11 @@
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../app_colors.dart';
 import '../text_styles.dart';
+
+final db = FirebaseFirestore.instance;
 
 final List<IconData> iconosDisponibles = [
   Icons.event,
@@ -127,6 +130,12 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     super.dispose();
   }
 
+  String _timeOfDayToString(TimeOfDay t) {
+    final hour = t.hour.toString().padLeft(2, '0');
+    final minute = t.minute.toString().padLeft(2, '0');
+    return "$hour:$minute";
+  }
+  
   //ICONO: MODAL
   void _abrirSelectorIconoColor(BuildContext context) {
     showModalBottomSheet(
@@ -357,6 +366,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                       ),
                       ElevatedButton(
                         onPressed: () {
+                          print("✅ cancelado");
                           Navigator.pop(context);
                         },
                         child: const Text('Cancelar'),
@@ -846,47 +856,28 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     const SizedBox(height: 12),
 
                     //BOTÓN: GUARDAR
-                    SizedBox(
-                      width: double.infinity,
-                      height: 45,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            final nuevoPlan = {
-                              "titulo": _tituloController.text,
-                              "descripcion": _descripcionController.text,
-                              "visibilidad": selectedSegment,
-                              "fechaEsEncuesta": fechaEsEncuesta,
-                              "fecha": fecha,
-                              "fechasEncuesta": fechasEncuesta,
-                              "horaEsEncuesta": horaEsEncuesta,
-                              "hora": hora,
-                              "horasEncuesta": horasEncuesta,
-                            };
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  widget.plan != null ? "Plan editado" : "Plan guardado",
-                                ),
-                              ),
-                            );
-                            Navigator.pop(context, nuevoPlan);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: secondary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "Guardar",
-                          style: bodyPrimaryText.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                    ElevatedButton(
+                      onPressed: () {
+                          print("✅ botón");
+                          db.collection("planes").add({
+                            "anfitrion": "yo",
+                            "titulo": _tituloController.text,
+                            "descripcion": _descripcionController.text,
+                            "visibilidad": selectedSegment,
+                            "fechaEsEncuesta": fechaEsEncuesta,
+                            "fecha": Timestamp.fromDate(fecha!),
+                            "fechasEncuesta": fechasEncuesta.map((h) => Timestamp.fromDate(h)).toList(),
+                            "horaEsEncuesta": horaEsEncuesta,
+                            "hora": _timeOfDayToString(hora!),
+                            "horasEncuesta": horasEncuesta.map((h) => _timeOfDayToString(h)).toList(),
+                            "ubicacionEsEncuesta": ubicacionEsEncuesta,
+                            "ubicacion": ubicacion,
+                            "ubicacionesEncuesta": ubicacionesEncuesta,
+                          });
+                          print("✅ Plan guardado correctamente");
+                        // Aquí agregas lo que quieras hacer al guardar
+                      },
+                      child: Text('Guardar'),
                     ),
                   ],
                 ),
