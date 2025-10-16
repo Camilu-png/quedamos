@@ -26,6 +26,7 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,9 +68,22 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
             ),
             const SizedBox(height: 12),
+            friends.isEmpty ? Center(
+              child: Text("Todavía no tienes amigos...",
+              style: subtitleText,),
+            ) : 
             SizedBox(
               height: 600,
-              child: FriendList(friends: friends, showIcons: false),
+              child: FriendList(
+                friends: friends,
+                showIcons: false,
+                onDelete: (index) {
+                  setState(() {
+                    friends.removeAt(index);
+                  });
+                },
+              ),
+
             ),
           ],
         ),

@@ -5,11 +5,13 @@ import 'package:quedamos/app_colors.dart';
 class FriendList extends StatelessWidget {
   final List<Map<String, dynamic>> friends;
   final bool showIcons;
+  final void Function(int)? onDelete;
 
   const FriendList({
     super.key,
     required this.friends,
     this.showIcons = true,
+    this.onDelete,
   });
 
   @override
@@ -18,10 +20,10 @@ class FriendList extends StatelessWidget {
       itemCount: friends.length,
       itemBuilder: (context, index) {
         final friend = friends[index];
-        return InkWell(
+
+        Widget friendCard = InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            // Acción al seleccionar un amigo
           },
           child: Card(
             margin: const EdgeInsets.symmetric(vertical: 8),
@@ -33,7 +35,6 @@ class FriendList extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Avatar/Color
                   Container(
                     width: 80,
                     height: 70,
@@ -52,7 +53,6 @@ class FriendList extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Información del amigo
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
@@ -68,7 +68,6 @@ class FriendList extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Botón agregar amigo con highlight
                   if (showIcons)
                     Padding(
                       padding: const EdgeInsets.only(right: 15.0),
@@ -81,9 +80,39 @@ class FriendList extends StatelessWidget {
             ),
           ),
         );
+
+        if (!showIcons) {
+          friendCard = Dismissible(
+            key: Key(friend["name"]),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.redAccent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.delete, color: Colors.white),
+            ),
+            onDismissed: (_) {
+              if (onDelete != null) onDelete!(index);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${friend["name"]} fue eliminado'),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            },
+            child: friendCard,
+          );
+        }
+
+        return friendCard;
       },
     );
-  }
+}
 }
 
 class _AddFriendButton extends StatefulWidget {
@@ -112,7 +141,7 @@ class _AddFriendButtonState extends State<_AddFriendButton> {
           color: _pressed ? lightDark : primaryLight,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
+        child: const Icon(
           Icons.person_add_alt_1_outlined,
           size: 20,
           color: Colors.black,
