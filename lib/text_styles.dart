@@ -1,0 +1,40 @@
+import 'package:flutter/material.dart';
+import '../app_colors.dart';
+
+const TextStyle titleText = TextStyle(
+  fontSize: 28,
+  fontWeight: FontWeight.bold,
+  color: Colors.black,
+);
+
+const TextStyle subtitleText = TextStyle(
+  fontSize: 20,
+  fontWeight: FontWeight.bold,
+  color: Colors.black,
+);
+
+const TextStyle helpText = TextStyle(
+  fontSize: 16,
+  color: primaryDark,
+);
+
+const TextStyle labelText = TextStyle(
+  fontSize: 16,
+  fontWeight: FontWeight.w500,
+  color: primaryText,
+);
+
+const TextStyle bodyPrimaryText = TextStyle(
+  fontSize: 16,
+  color: primaryText,
+);
+
+const TextStyle bodySecondaryText = TextStyle(
+  fontSize: 16,
+  color: secondaryText,
+);
+
+const TextStyle smallText = TextStyle(
+  fontSize: 14,
+  color: Colors.grey,
+);

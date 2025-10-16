@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'friends_screen.dart';
+import 'main_screen.dart';
 import '../app_colors.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -71,9 +71,9 @@ class LoginScreen extends StatelessWidget {
                   ),
                   onPressed: () {
                     Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => FriendsScreen()),
-                  );
+                      context,
+                      MaterialPageRoute(builder: (context) => const MainScreen()),
+                    ); // TOOD: Navegar a inicio
                   },
                   child: const Text(
                     "Ingresar",
