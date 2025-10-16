@@ -1,49 +1,65 @@
 import 'package:flutter/material.dart';
+import 'package:quedamos/screens/add_friend_screen.dart';
+import 'package:quedamos/screens/main_screen.dart';
+import 'package:quedamos/text_styles.dart';
 import '../widgets/friend_list.dart';
-import '../widgets/custom_navbar.dart';
 import '../app_colors.dart';
-import 'add_friend_screen.dart';
 
+final List<Map<String, dynamic>> friends = [
+  {"name": "Alice", "color": Colors.pink},
+  {"name": "Bob", "color": Colors.purple},
+  {"name": "Charlie", "color": Colors.green},
+  {"name": "Diana", "color": Colors.blue},
+  {"name": "Eve", "color": Colors.red},
+  {"name": "Frank", "color": Colors.orange},
+  {"name": "Grace", "color": Colors.yellow},
+  {"name": "Hank", "color": Colors.brown},
+  {"name": "Ivy", "color": Colors.cyan},
+  {"name": "Jack", "color": Colors.lime},
+];
 
-final List<Map<String, String>> friends = [
-    {"name": "Alice", "photo": "/assets/logo.png"},
-    {"name": "Bob", "photo": "/assets/logo.png"},
-    {"name": "Charlie", "photo": "/assets/logo.png"},
-  ];
-
-class FriendsScreen extends StatelessWidget {
+class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
+
+  @override
+  State<FriendsScreen> createState() => _FriendsScreenState();
+}
+
+class _FriendsScreenState extends State<FriendsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Mis Amigos",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 28,
-          )
-        ),
+        title: const Text("Mis Amigos", style: titleText),
         centerTitle: true,
+        backgroundColor: backgroundColor,
+        surfaceTintColor: Colors.transparent,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             SizedBox(
+              height: 45,
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => AddFriendsScreen()),
-                  );
+                  final mainState = context.findAncestorStateOfType<MainScreenState>();
+                  mainState?.navigateTo(const AddFriendsScreen());
                 },
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text("Nuevo amigo"),
+
+                icon: const Icon(Icons.add, size: 24, color: Colors.white),
+                label: Text(
+                  "Nuevo amigo",
+                  style: bodyPrimaryText.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
+                  alignment: Alignment.centerLeft,
                   backgroundColor: secondary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -51,18 +67,12 @@ class FriendsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-          
-            Expanded(
-              child: FriendList(friends: friends),
+            SizedBox(
+              height: 600,
+              child: FriendList(friends: friends, showIcons: false),
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 3, 
-        onTap: (index) {
-          // TODO: Implementar la navegación entre pantallas
-        },
       ),
     );
   }
