@@ -13,57 +13,64 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomAppBar(
-      color: primaryColor,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          IconButton(
-            icon: Icon(
-              Icons.location_on,
-              color: currentIndex == 0 ? Colors.black : Colors.white,
-            ),
-            onPressed: () => onTap(0),
+    return NavigationBarTheme(
+      data: NavigationBarThemeData(
+        labelTextStyle: MaterialStateProperty.all(
+          const TextStyle(
+            color: Colors.white,
           ),
-          IconButton(
-            icon: Icon(
-              Icons.calendar_today,
-              color: currentIndex == 1 ? Colors.black : Colors.white,
-            ),
-            onPressed: () => onTap(1),
+        ),
+      ),
+      child: NavigationBar(
+        selectedIndex: currentIndex,
+        onDestinationSelected: onTap,
+        backgroundColor: primaryColor,
+        indicatorColor: primaryDark.withOpacity(0.5),
+        height: 70,
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.location_on_outlined, color: Colors.white),
+            selectedIcon: const Icon(Icons.location_on, color: Colors.white),
+            label: 'Planes',
           ),
-
-          // 🔹 Botón Add destacado
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                shape: const CircleBorder(),
-                padding: const EdgeInsets.all(6),
-                backgroundColor: primaryDark,
-                foregroundColor:  currentIndex == 2 ? Colors.black : Colors.white,
-                elevation: 4,
+          NavigationDestination(
+            icon: const Icon(Icons.calendar_today_outlined, color: Colors.white),
+            selectedIcon: const Icon(Icons.calendar_today, color: Colors.white),
+            label: 'Mis planes',
+          ),
+          NavigationDestination(
+            icon: Container(
+              decoration: BoxDecoration(
+                color: primaryDark,
+                shape: BoxShape.circle,
               ),
-              onPressed: () => onTap(2),
-              child: const Icon(Icons.add, size: 32),
+              padding: const EdgeInsets.all(8),
+              child: const Icon(Icons.add, color: Colors.white, size: 32),
             ),
+            selectedIcon: Container(
+              decoration: BoxDecoration(
+                color: primaryDark,
+                shape: BoxShape.circle,
+              ),
+              padding: const EdgeInsets.all(8),
+              child: const Icon(Icons.add, color: Colors.white, size: 32),
+            ),
+            label: 'Crear plan',
           ),
-
-          IconButton(
-            icon: Icon(
-              Icons.group,
-              color: (currentIndex == 3 || currentIndex == 4)  ? Colors.black : Colors.white,
-            ),
-            onPressed: () => onTap(3),
+          NavigationDestination(
+            icon: const Icon(Icons.group_outlined, color: Colors.white),
+            selectedIcon: const Icon(Icons.group, color: Colors.white),
+            label: 'Amigos',
           ),
-          IconButton(
-            icon: Icon(
-              Icons.person,
-              color: currentIndex == 5 ? Colors.black : Colors.white,
-            ),
-            onPressed: () => onTap(4),
+          NavigationDestination(
+            icon: const Icon(Icons.person_outline, color: Colors.white),
+            selectedIcon: Icon(Icons.person, color: Colors.white),
+            label: 'Perfil',
           ),
         ],
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+        elevation: 3,
+        surfaceTintColor: Colors.transparent,
       ),
     );
   }

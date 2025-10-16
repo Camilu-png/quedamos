@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quedamos/screens/add_friend_screen.dart';
 import 'package:quedamos/screens/main_screen.dart';
 import 'package:quedamos/text_styles.dart';
 import '../widgets/friend_list.dart';
@@ -43,12 +44,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (_) => const MainScreen(initialIndex: 4), // 4 es el índice de AddFriendsScreen
-                    ),
-                  );
+                  final mainState = context.findAncestorStateOfType<MainScreenState>();
+                  mainState?.navigateTo(const AddFriendsScreen());
                 },
+
                 icon: const Icon(Icons.add, size: 24, color: Colors.white),
                 label: Text(
                   "Nuevo amigo",
