@@ -1,9 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
+import 'screens/main_screen.dart';
 import 'app_colors.dart';
-import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
@@ -12,10 +13,11 @@ void main() async {
   // Inicializa intl para español
   await initializeDateFormatting('es', null);
 
-  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
-  );  
+  );
+  // Descomentar y hot restart para desconectarse
+  await FirebaseAuth.instance.signOut();
   runApp(const MyApp());
 }
 
@@ -32,7 +34,33 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
+          // Mientras carga
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          // Error
+          if (snapshot.hasError) {
+            return const Scaffold(
+              body: Center(child: Text("Ocurrió un error")),
+            );
+          }
+
+          // Usuario logueado
+          if (snapshot.data != null) {
+            final user = snapshot.data!;
+            return MainScreen(userID: user.uid);
+          }
+
+          // No hay usuario
+          return const LoginScreen();
+        },
+      ),
     );
   }
 }

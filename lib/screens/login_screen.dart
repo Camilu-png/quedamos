@@ -1,11 +1,46 @@
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
+import 'register_screen.dart';
 import '../app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-  
+
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  // Controladores para los campos
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Función para hacer login
+  Future<void> _login() async {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    try {
+      final credential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      print("✅ Login OK: ${credential.user?.uid}");
+
+      if (!mounted) return;
+
+      // Navegar a la pantalla principal
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => MainScreen(userID: credential.user!.uid)),
+      );
+    } on FirebaseAuthException catch (e) {
+      print("Error login");
+      print(e.code);
+    }
+  }
+
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: primaryColor,
@@ -18,8 +53,8 @@ class LoginScreen extends StatelessWidget {
               //Logo calendario
               Image.asset(
                 "assets/logo.png",
-                height: 120,
-              ),
+                 height: 120,
+                 ),
               const SizedBox(height: 16),
               const Text(
                 "Quedamos?",
@@ -33,6 +68,7 @@ class LoginScreen extends StatelessWidget {
 
               // Input correo
               TextFormField(
+                controller: _emailController,
                 decoration: InputDecoration(
                   hintText: "Dirección de correo electrónico",
                   filled: true,
@@ -46,6 +82,7 @@ class LoginScreen extends StatelessWidget {
 
               // Input contraseña
               TextFormField(
+                controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: "Contraseña",
@@ -69,12 +106,7 @@ class LoginScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const MainScreen()),
-                    ); // TOOD: Navegar a inicio
-                  },
+                  onPressed: _login,
                   child: const Text(
                     "Ingresar",
                     style: TextStyle(
@@ -98,14 +130,19 @@ class LoginScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                    );
+                  },
                   child: const Text(
                     "Registrarse",
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.white,
                       fontWeight: FontWeight.bold
-                      ),
+                    ),
                   ),
                 ),
               ),

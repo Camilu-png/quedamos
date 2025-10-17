@@ -7,7 +7,8 @@ import '../widgets/custom_navbar.dart';
 import '../app_colors.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final String userID;
+  const MainScreen({super.key, required this.userID});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -32,6 +33,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("UID del usuario -> ${widget.userID}");
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: CustomBottomNavBar(
