@@ -1,11 +1,11 @@
-import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
-import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:quedamos/app_colors.dart';
-import 'package:quedamos/text_styles.dart';
-import 'package:quedamos/planes_components.dart';
+import "package:intl/intl.dart";
+import "package:uuid/uuid.dart";
+import "package:flutter/material.dart";
+import "package:url_launcher/url_launcher.dart";
+import "package:cloud_firestore/cloud_firestore.dart";
+import "package:quedamos/app_colors.dart";
+import "package:quedamos/text_styles.dart";
+import "package:quedamos/planes_components.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -26,11 +26,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
   final _formKey = GlobalKey<FormState>();
 
+  //PLAN
+  String planID = uuid.v4();
   //VISIBILIDAD
-  String visibilidad = 'Amigos';
+  String visibilidad = "Amigos";
   //ANFITRIÓN
-  String anfitrionID = "";
-  String anfitrionNombre = "";
+  String anfitrionID = uuid.v4();
+  String anfitrionNombre = "Yo";
   //ICONO
   IconData iconoNombre = Icons.event;
   Color iconoColor = secondary;
@@ -63,8 +65,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     super.initState();
     //MODO EDITAR
     if (widget.plan != null) {
+      //PLAN
+      planID = widget.plan!["planID"] ?? uuid.v4();
       //VISIBILIDAD
-      visibilidad = widget.plan!["visibilidad"] ?? 'Amigos';
+      visibilidad = widget.plan!["visibilidad"] ?? "Amigos";
       //ANFITRIÓN
       anfitrionID = widget.plan!["anfitrionID"] ?? uuid.v4();
       anfitrionNombre = widget.plan!["anfitrionNombre"] ?? "";
@@ -78,20 +82,37 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       //FECHA
       fechaEsEncuesta = widget.plan!["fechaEsEncuesta"] ?? false;
       if (fechaEsEncuesta) {
-        fechasEncuesta = widget.plan!["fechasEncuesta"] != null
-            ? List<DateTime>.from(widget.plan!["fechasEncuesta"])
-            : [];
+        final rawFechas = widget.plan!["fechasEncuesta"];
+        if (rawFechas != null) {
+          fechasEncuesta = List<DateTime>.from(
+            (rawFechas as List).map((e) => (e as Timestamp).toDate())
+          );
+        } else {
+          fechasEncuesta = [];
+        }
       } else {
-        fecha = widget.plan!["fecha"];
+        if (widget.plan!["fecha"] is Timestamp) {
+          fecha = (widget.plan!["fecha"] as Timestamp).toDate();
+        } else {
+          fecha = widget.plan!["fecha"];
+        }
       }
       //HORA
       horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
       if (horaEsEncuesta) {
-        horasEncuesta = widget.plan!["horasEncuesta"] != null
-            ? List<TimeOfDay>.from(widget.plan!["horasEncuesta"])
-            : [];
+        final rawHoras = widget.plan!["horasEncuesta"];
+        if (rawHoras != null) {
+          horasEncuesta = List<String>.from(rawHoras)
+              .map((h) => stringToTimeOfDay(h)!)
+              .toList();
+        }
       } else {
-        hora = widget.plan!["hora"];
+        final rawHora = widget.plan!["hora"];
+        if (rawHora is String) {
+          hora = stringToTimeOfDay(rawHora);
+        } else {
+          hora = null;
+        }
       }
       //UBICACIÓN
       ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
@@ -112,10 +133,21 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     super.dispose();
   }
 
+  //STRING -> TIME OF DAY
+  TimeOfDay? stringToTimeOfDay(String? s) {
+    if (s == null || s.isEmpty) return null;
+    final parts = s.split(":");
+    if (parts.length != 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    return TimeOfDay(hour: hour, minute: minute);
+  }
+
   //TIME OF DAY -> STRING
   String timeOfDayToString(TimeOfDay t) {
-    final hour = t.hour.toString().padLeft(2, '0');
-    final minute = t.minute.toString().padLeft(2, '0');
+    final hour = t.hour.toString().padLeft(2, "0");
+    final minute = t.minute.toString().padLeft(2, "0");
     return "$hour:$minute";
   }
 
@@ -226,7 +258,6 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     );
   }
 
-
   //FECHA: NORMAL
   void seleccionarFechaNormal(BuildContext context) async {
     final picked = await showDatePicker(
@@ -286,7 +317,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   Future<void> openMap(String location, BuildContext context) async {
     if (location.isEmpty) return;
     final query = Uri.encodeComponent(location);
-    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+    final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
     try {
       await launchUrl(
         url,
@@ -294,7 +325,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir el mapa')),
+        const SnackBar(content: Text("No se pudo abrir el mapa")),
       );
     }
   }
@@ -317,7 +348,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
               children: [
                 const SizedBox(height: 12),
                 const Text(
-                  'Selecciona ubicación',
+                  "Selecciona ubicación",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
@@ -326,7 +357,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                   child: TextField(
                     controller: ubicacionController,
                     decoration: const InputDecoration(
-                      hintText: 'Escribe una ubicación',
+                      hintText: "Escribe una ubicación",
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(),
                     ),
@@ -368,14 +399,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           openMap(ubicacionController.text, context);
                         },
                         icon: const Icon(Icons.map),
-                        label: const Text('Ver en mapa'),
+                        label: const Text("Ver en mapa"),
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          print("✅ cancelado");
                           Navigator.pop(context);
                         },
-                        child: const Text('Cancelar'),
+                        child: const Text("Cancelar"),
                       ),
                       ElevatedButton(
                         onPressed: () {
@@ -389,7 +419,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           });
                           Navigator.pop(context);
                         },
-                        child: const Text('OK'),
+                        child: const Text("OK"),
                       ),
                     ],
                   ),
@@ -452,10 +482,8 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                       width: double.infinity,
                       child: SegmentedButton<String>(
                         segments: const [
-                          ButtonSegment(
-                              value: 'Amigos', label: Text('Amigos', style: helpText)),
-                          ButtonSegment(
-                              value: 'Público', label: Text('Público', style: helpText)),
+                          ButtonSegment(value: "Amigos", label: Text("Amigos", style: helpText)),
+                          ButtonSegment(value: "Público", label: Text("Público", style: helpText)),
                         ],
                         selected: <String>{visibilidad},
                         onSelectionChanged: (newSelection) {
@@ -537,6 +565,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           flex: 2,
                           child: ElevatedButton(
                             onPressed: () {
+                              print(fecha);
                               if (fechaEsEncuesta) {
                                 agregarFechaEncuesta(context);
                               } else {
@@ -560,10 +589,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 fechaEsEncuesta
-                                    ? 'Agregar opción de encuesta'
+                                    ? "Agregar opción de encuesta"
                                     : (fecha != null
-                                        ? DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fecha!)
-                                        : 'Toca para elegir fecha'),
+                                        ? DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fecha!)
+                                        : "Toca para elegir fecha"),
                               ),
                             ),
                           ),
@@ -573,13 +602,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
-                              ButtonSegment(value: 'fecha', label: Icon(Icons.calendar_today)),
-                              ButtonSegment(value: 'encuesta', label: Icon(Icons.poll)),
+                              ButtonSegment(value: "fecha", label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: "encuesta", label: Icon(Icons.poll)),
                             ],
-                            selected: {fechaEsEncuesta ? 'encuesta' : 'fecha'},
+                            selected: {fechaEsEncuesta ? "encuesta" : "fecha"},
                             onSelectionChanged: (newSelection) {
                               setState(() {
-                                fechaEsEncuesta = newSelection.first == 'encuesta';
+                                fechaEsEncuesta = newSelection.first == "encuesta";
                               });
                             },
                             style: SegmentedButton.styleFrom(
@@ -615,7 +644,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Opción ${i + 1}: ${DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fechasEncuesta[i])}',
+                                    "Opción ${i + 1}: ${DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fechasEncuesta[i])}",
                                     style: bodyPrimaryText.copyWith(
                                       fontWeight: FontWeight.w500
                                     ),
@@ -672,10 +701,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 horaEsEncuesta
-                                    ? 'Agregar opción de encuesta'
+                                    ? "Agregar opción de encuesta"
                                     : (hora != null
                                         ? hora!.format(context)
-                                        : 'Toca para elegir hora'),
+                                        : "Toca para elegir hora"),
                               ),
                             ),
                           ),
@@ -685,13 +714,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
-                              ButtonSegment(value: 'hora', label: Icon(Icons.calendar_today)),
-                              ButtonSegment(value: 'encuesta', label: Icon(Icons.poll)),
+                              ButtonSegment(value: "hora", label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: "encuesta", label: Icon(Icons.poll)),
                             ],
-                            selected: {horaEsEncuesta ? 'encuesta' : 'hora'},
+                            selected: {horaEsEncuesta ? "encuesta" : "hora"},
                             onSelectionChanged: (newSelection) {
                               setState(() {
-                                horaEsEncuesta = newSelection.first == 'encuesta';
+                                horaEsEncuesta = newSelection.first == "encuesta";
                               });
                             },
                             style: SegmentedButton.styleFrom(
@@ -727,7 +756,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Opción ${i + 1}: ${horasEncuesta[i].format(context)}',
+                                    "Opción ${i + 1}: ${horasEncuesta[i].format(context)}",
                                     style: bodyPrimaryText.copyWith(
                                       fontWeight: FontWeight.w500
                                     ),
@@ -781,10 +810,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                               child:
                                 Text(
                                   ubicacionEsEncuesta
-                                      ? 'Agregar opción de encuesta'
+                                      ? "Agregar opción de encuesta"
                                       : (ubicacion?.isNotEmpty == true
                                           ? ubicacion!
-                                          : 'Toca para elegir ubicación'),
+                                          : "Toca para elegir ubicación"),
                                   softWrap: true,
                                 ),
                             ),
@@ -795,13 +824,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
-                              ButtonSegment(value: 'ubicacion', label: Icon(Icons.calendar_today)),
-                              ButtonSegment(value: 'encuesta', label: Icon(Icons.poll)),
+                              ButtonSegment(value: "ubicacion", label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: "encuesta", label: Icon(Icons.poll)),
                             ],
-                            selected: {ubicacionEsEncuesta ? 'encuesta' : 'ubicacion'},
+                            selected: {ubicacionEsEncuesta ? "encuesta" : "ubicacion"},
                             onSelectionChanged: (newSelection) {
                               setState(() {
-                                ubicacionEsEncuesta = newSelection.first == 'encuesta';
+                                ubicacionEsEncuesta = newSelection.first == "encuesta";
                               });
                             },
                             style: SegmentedButton.styleFrom(
@@ -838,7 +867,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      'Opción ${i + 1}: ${ubicacionesEncuesta[i]}',
+                                      "Opción ${i + 1}: ${ubicacionesEncuesta[i]}",
                                       style: bodyPrimaryText.copyWith(
                                         fontWeight: FontWeight.w500
                                       ),
@@ -863,9 +892,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
                     //BOTÓN: GUARDAR
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                           print("[🐧 planes] Guardando plan...");
-                          db.collection("planes").doc(uuid.v4()).set({
+                          final planFinal = {
+                            "planID": planID,
                             "visibilidad": visibilidad,
                             "iconoNombre": getIconName(iconoNombre),
                             "iconoColor": getColorName(iconoColor),
@@ -882,10 +912,23 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                             "ubicacionEsEncuesta": ubicacionEsEncuesta,
                             "ubicacion": ubicacion,
                             "ubicacionesEncuesta": ubicacionesEncuesta,
-                          });
-                          print("[🐧 planes] Plan guardado correctamente...");
+                          };
+                          try {
+                            if (widget.plan != null) {
+                              await db.collection("planes").doc(planID).update(planFinal);
+                              print("[🐧 planes] Plan editado correctamente...");
+                            } else {
+                              await db.collection("planes").doc(planID).set(planFinal);
+                              print("[🐧 planes] Plan creado correctamente...");
+                            }
+                          } catch (e) {
+                            print("[🐧 planes] Error: $e");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("No se pudo guardar el plan: $e")),
+                            );
+                          }      
                       },
-                      child: Text('Guardar'),
+                      child: Text("Guardar"),
                     ),
                     
                   ],

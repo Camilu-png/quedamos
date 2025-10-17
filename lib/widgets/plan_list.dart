@@ -13,7 +13,7 @@ class PlanesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //ANFITRIÓN
-    final String anfitrionNombre = plan["anfitrionNombre"] ?? "";
+    final String anfitrionNombre = plan["anfitrionNombre"] ?? "Yo";
     //ICONO
     final IconData iconoNombre = iconosMap[plan["iconoNombre"]] ?? Icons.event;
     final Color iconoColor = coloresMap[plan["iconoColor"]] ?? secondary;
