@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/friend_list.dart';
 import '../widgets/custom_navbar.dart';
 import '../app_colors.dart';
+import 'add_friend_screen.dart';
 
 
 final List<Map<String, String>> friends = [
@@ -32,7 +33,10 @@ class FriendsScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: abrir formulario de nuevo amigo
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddFriendsScreen()),
+                  );
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
                 label: const Text("Nuevo amigo"),
