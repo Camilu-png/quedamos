@@ -155,7 +155,7 @@ class PlanScreen extends StatelessWidget {
                         radius: 12,
                         backgroundColor: primaryColor,
                         child: Text(
-                          (plan["anfitrion"] ?? "A")[0],
+                          (plan["anfitrionNombre"] ?? "A")[0],
                           style: const TextStyle(fontSize: 12, color: Colors.white),
                         ),
                       ),
@@ -163,7 +163,7 @@ class PlanScreen extends StatelessWidget {
                       Text(
                         (plan["esPropio"] ?? false)
                           ? "Creado por ti"
-                          : "Creado por ${plan["anfitrion"] ?? ""}",
+                          : "Creado por ${plan["anfitrionNombre"] ?? ""}",
                         style: bodyPrimaryText,
                       ),
                     ],

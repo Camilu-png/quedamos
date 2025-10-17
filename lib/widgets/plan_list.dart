@@ -75,7 +75,7 @@ class PlanesList extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        plan['anfitrion'] ?? '',
+                        plan['anfitrionNombre'] ?? '',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),

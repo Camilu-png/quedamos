@@ -82,7 +82,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
     final visibilidades = ["Amigos", "Público"];
 
     return {
-      "anfitrion": anfitriones[index % anfitriones.length],
+      "anfitrionNombre": anfitriones[index % anfitriones.length],
       "titulo": titulos[index % titulos.length] + " #${index + 1}",
       "iconColor": colores[index % colores.length],
       "iconCode": iconos[index % iconos.length].codePoint,
@@ -119,10 +119,10 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
       final filteredPlanes = planes.where((plan) {
         final visibilidad = (plan['visibilidad'] ?? "").toLowerCase();
         final titulo = (plan['titulo'] ?? "").toLowerCase();
-        final anfitrion = (plan['anfitrion'] ?? "").toLowerCase();
+        final anfitrionNombre = (plan['anfitrionNombre'] ?? "").toLowerCase();
         final query = searchQuery.toLowerCase();
         return visibilidad == selectedSegment.toLowerCase() &&
-            (titulo.contains(query) || anfitrion.contains(query));
+            (titulo.contains(query) || anfitrionNombre.contains(query));
       }).toList();
       final isLastPage = pageKey + _pageSize >= filteredPlanes.length;
       final newItems = filteredPlanes.skip(pageKey).take(_pageSize).toList();

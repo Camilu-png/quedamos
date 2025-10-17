@@ -4,48 +4,58 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../app_colors.dart';
 import '../text_styles.dart';
+import 'package:uuid/uuid.dart';
 
 final db = FirebaseFirestore.instance;
 
-final List<IconData> iconosDisponibles = [
-  Icons.event,
-  Icons.star,
-  Icons.home,
-  Icons.work,
-  Icons.favorite,
-  Icons.sports_soccer,
-  Icons.coffee,
-  Icons.restaurant,
-  Icons.flight,
-  Icons.music_note,
-  Icons.movie,
-  Icons.book,
-  Icons.pets,
-  Icons.shopping_cart,
-  Icons.local_cafe,
-  Icons.beach_access,
-];
+final uuid = Uuid();
 
-final List<Color> coloresDisponibles = [
-  Colors.red,
-  Colors.green,
-  Colors.blue,
-  Colors.orange,
-  Colors.purple,
-  Colors.teal,
-  Colors.indigo,
-  Colors.pink,
-  Colors.amber,
-  Colors.cyan,
-  Colors.lime,
-  Colors.deepOrange,
-  Colors.deepPurple,
-  Colors.lightBlue,
-  Colors.lightGreen,
-  secondary,
-  primaryColor,
-];
+final Map<String, IconData> iconosMap = {
+  "event": Icons.event,
+  "star": Icons.star,
+  "home": Icons.home,
+  "work": Icons.work,
+  "favorite": Icons.favorite,
+  "school": Icons.school,
+  "shopping": Icons.shopping_cart,
+  "restaurant": Icons.restaurant,
+  "fitness": Icons.fitness_center,
+  "travel": Icons.flight,
+  "music": Icons.music_note,
+  "movie": Icons.movie,
+  "pets": Icons.pets,
+  "beach": Icons.beach_access,
+  "birthday": Icons.cake,
+  "meeting": Icons.meeting_room,
+  "coffee": Icons.coffee,
+  "book": Icons.book,
+  "camera": Icons.camera_alt,
+};
 
+final Map<String, Color> coloresMap = {
+  "red": Colors.red,
+  "pink": Colors.pink,
+  "purple": Colors.purple,
+  "deepPurple": Colors.deepPurple,
+  "indigo": Colors.indigo,
+  "blue": Colors.blue,
+  "lightBlue": Colors.lightBlue,
+  "cyan": Colors.cyan,
+  "teal": Colors.teal,
+  "green": Colors.green,
+  "lightGreen": Colors.lightGreen,
+  "lime": Colors.lime,
+  "yellow": Colors.yellow,
+  "amber": Colors.amber,
+  "orange": Colors.orange,
+  "deepOrange": Colors.deepOrange,
+  "brown": Colors.brown,
+  "grey": Colors.grey,
+  "blueGrey": Colors.blueGrey,
+  "secondary": secondary,
+};
+
+//ADD PLANES SCREEN
 class AddPlanesScreen extends StatefulWidget {
   final Map<String, dynamic>? plan;
 
@@ -55,18 +65,23 @@ class AddPlanesScreen extends StatefulWidget {
   State<AddPlanesScreen> createState() => _AddPlanesScreenState();
 }
 
+//ADD PLANES SCREEN STATE
 class _AddPlanesScreenState extends State<AddPlanesScreen> {
+
   final _formKey = GlobalKey<FormState>();
 
-  //ICONO
-  IconData selectedIcon = Icons.event;
-  Color selectedColor = secondary;
   //VISIBILIDAD
-  String selectedSegment = 'Amigos';
+  String visibilidad = 'Amigos';
+  //ANFITRIÓN
+  String anfitrionID = "";
+  String anfitrionNombre = "";
+  //ICONO
+  IconData iconoNombre = Icons.event;
+  Color iconoColor = secondary;
   //TÍTULO
-  final TextEditingController _tituloController = TextEditingController();
+  final TextEditingController _titulo = TextEditingController();
   //DESCRIPCIÓN
-  final TextEditingController _descripcionController = TextEditingController();
+  final TextEditingController _descripcion = TextEditingController();
   //FECHA
   bool fechaEsEncuesta = false;
   DateTime? fecha;
@@ -86,14 +101,25 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     "Estadio Nacional",
   ];
 
+  //INIT STATE
   @override
   void initState() {
     super.initState();
+    //MODO EDITAR
     if (widget.plan != null) {
-      _tituloController.text = widget.plan!["titulo"] ?? '';
-      _descripcionController.text = widget.plan!["descripcion"] ?? '';
-      selectedSegment = widget.plan!["visibilidad"] ?? 'Amigos';
-      //CARGAR FECHA O ENCUESTA
+      //VISIBILIDAD
+      visibilidad = widget.plan!["visibilidad"] ?? 'Amigos';
+      //ANFITRIÓN
+      anfitrionID = widget.plan!["anfitrionID"] ?? uuid.v4();
+      anfitrionNombre = widget.plan!["anfitrionNombre"] ?? "";
+      //ICONO
+      iconoNombre = iconosMap[widget.plan!["iconoNombre"]] ?? Icons.event;
+      iconoColor = coloresMap[widget.plan!["iconoColor"]] ?? secondary;
+      //TÍTULO
+      _titulo.text = widget.plan!["titulo"] ?? "";
+      //DESCRIPCIÓN
+      _descripcion.text = widget.plan!["descripcion"] ?? "";
+      //FECHA
       fechaEsEncuesta = widget.plan!["fechaEsEncuesta"] ?? false;
       if (fechaEsEncuesta) {
         fechasEncuesta = widget.plan!["fechasEncuesta"] != null
@@ -102,7 +128,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       } else {
         fecha = widget.plan!["fecha"];
       }
-      //CARGAR HORA O ENCUESTA
+      //HORA
       horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
       if (horaEsEncuesta) {
         horasEncuesta = widget.plan!["horasEncuesta"] != null
@@ -111,7 +137,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       } else {
         hora = widget.plan!["hora"];
       }
-      //CARGAR UBICACIÓN O ENCUESTA
+      //UBICACIÓN
       ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
       if (ubicacionEsEncuesta) {
         ubicacionesEncuesta = widget.plan!["ubicacionesEncuesta"] != null
@@ -125,15 +151,32 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
   @override
   void dispose() {
-    _tituloController.dispose();
-    _descripcionController.dispose();
+    _titulo.dispose();
+    _descripcion.dispose();
     super.dispose();
   }
 
+  //TIME OF DAY -> STRING
   String _timeOfDayToString(TimeOfDay t) {
     final hour = t.hour.toString().padLeft(2, '0');
     final minute = t.minute.toString().padLeft(2, '0');
     return "$hour:$minute";
+  }
+
+  //ICON DATA -> STRING
+  String getIconName(IconData icon) {
+    return iconosMap.entries
+      .firstWhere((entry) => entry.value == icon,
+          orElse: () => const MapEntry("event", Icons.event))
+      .key;
+  }
+
+  //COLOR -> STRING
+  String getColorName(Color color) {
+    return coloresMap.entries
+      .firstWhere((entry) => entry.value == color,
+          orElse: () => const MapEntry("secondary", secondary))
+      .key;
   }
   
   //ICONO: MODAL
@@ -160,55 +203,61 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      //PESTAÑA: ICONO
+                      //PESTAÑA: ICONOS
                       GridView.count(
                         crossAxisCount: 4,
                         padding: const EdgeInsets.all(16),
-                        children: [
-                          for (var icon in iconosDisponibles)
-                            GestureDetector(
-                              onTap: () {
-                                setState(() => selectedIcon = icon);
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: selectedIcon == icon ? primaryColor : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
+                        children: iconosMap.entries.map((entry) {
+                          final iconName = entry.key;
+                          final iconData = entry.value;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() => iconoNombre = iconData);
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: iconoNombre == iconData
+                                      ? primaryColor
+                                      : Colors.transparent,
+                                  width: 2,
                                 ),
-                                child: Icon(icon, size: 40),
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              child: Icon(iconData, size: 40),
                             ),
-                        ],
+                          );
+                        }).toList(),
                       ),
-                      //PESTAÑA: COLOR
+                      //PESTAÑA: COLORES
                       GridView.count(
                         crossAxisCount: 4,
                         padding: const EdgeInsets.all(16),
-                        children: [
-                          for (var color in coloresDisponibles)
-                            GestureDetector(
-                              onTap: () {
-                                setState(() => selectedColor = color);
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  border: Border.all(
-                                    color: selectedColor == color ? primaryColor : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
+                        children: coloresMap.entries.map((entry) {
+                          final colorName = entry.key;
+                          final colorValue = entry.value;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() => iconoColor = colorValue);
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: colorValue,
+                                border: Border.all(
+                                  color: iconoColor == colorValue
+                                      ? primaryColor
+                                      : Colors.transparent,
+                                  width: 2,
                                 ),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                        ],
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
@@ -220,6 +269,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       },
     );
   }
+
 
   //FECHA: NORMAL
   void _seleccionarFechaNormal(BuildContext context) async {
@@ -407,7 +457,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
           style: subtitleText.copyWith(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: selectedColor,
+        backgroundColor: iconoColor,
         elevation: 0,
       ),
 
@@ -422,9 +472,9 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
               child: Container(
                 width: double.infinity,
                 height: 120,
-                color: selectedColor,
+                color: iconoColor,
                 alignment: Alignment.center,
-                child: Icon(selectedIcon, color: Colors.white, size: 60),
+                child: Icon(iconoNombre, color: Colors.white, size: 60),
               ),
             ),
 
@@ -451,10 +501,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           ButtonSegment(
                               value: 'Público', label: Text('Público', style: helpText)),
                         ],
-                        selected: <String>{selectedSegment},
+                        selected: <String>{visibilidad},
                         onSelectionChanged: (newSelection) {
                           setState(() {
-                            selectedSegment = newSelection.first;
+                            visibilidad = newSelection.first;
                           });
                         },
                         style: SegmentedButton.styleFrom(
@@ -479,7 +529,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     ),
                     const SizedBox(height: 4),
                     TextFormField(
-                      controller: _tituloController,
+                      controller: _titulo,
                       maxLength: 250,
                       decoration: InputDecoration(
                         hintText: "Ingresa un título",
@@ -504,7 +554,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     ),
                     const SizedBox(height: 4),
                     TextFormField(
-                      controller: _descripcionController,
+                      controller: _descripcion,
                       maxLength: 1000,
                       minLines: 4,
                       maxLines: 8,
@@ -858,27 +908,30 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     //BOTÓN: GUARDAR
                     ElevatedButton(
                       onPressed: () {
-                          print("✅ botón");
-                          db.collection("planes").add({
-                            "anfitrion": "yo",
-                            "titulo": _tituloController.text,
-                            "descripcion": _descripcionController.text,
-                            "visibilidad": selectedSegment,
+                          print("🐧 Guardando plan...");
+                          db.collection("planes").doc(uuid.v4()).set({
+                            "visibilidad": visibilidad,
+                            "iconoNombre": getIconName(iconoNombre),
+                            "iconoColor": getColorName(iconoColor),
+                            "anfitrionID": anfitrionID,
+                            "anfitrionNombre": anfitrionNombre,
+                            "titulo": _titulo.text,
+                            "descripcion": _descripcion.text,
                             "fechaEsEncuesta": fechaEsEncuesta,
-                            "fecha": Timestamp.fromDate(fecha!),
+                            "fecha": fecha != null ? Timestamp.fromDate(fecha!) : null,
                             "fechasEncuesta": fechasEncuesta.map((h) => Timestamp.fromDate(h)).toList(),
                             "horaEsEncuesta": horaEsEncuesta,
-                            "hora": _timeOfDayToString(hora!),
+                            "hora": hora != null ? _timeOfDayToString(hora!) : null,
                             "horasEncuesta": horasEncuesta.map((h) => _timeOfDayToString(h)).toList(),
                             "ubicacionEsEncuesta": ubicacionEsEncuesta,
                             "ubicacion": ubicacion,
                             "ubicacionesEncuesta": ubicacionesEncuesta,
                           });
-                          print("✅ Plan guardado correctamente");
-                        // Aquí agregas lo que quieras hacer al guardar
+                          print("🐧 Plan guardado correctamente...");
                       },
                       child: Text('Guardar'),
                     ),
+                    
                   ],
                 ),
               ),
