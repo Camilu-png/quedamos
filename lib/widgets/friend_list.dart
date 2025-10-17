@@ -5,13 +5,15 @@ import 'package:quedamos/app_colors.dart';
 class FriendList extends StatelessWidget {
   final List<Map<String, dynamic>> friends;
   final bool showIcons;
-  final void Function(int)? onDelete;
+  final void Function(String friendId)? onDelete;
+  final void Function(String friendId)? onAddFriend;
 
   const FriendList({
     super.key,
     required this.friends,
     this.showIcons = true,
     this.onDelete,
+    this.onAddFriend,
   });
 
   @override
@@ -23,8 +25,7 @@ class FriendList extends StatelessWidget {
 
         Widget friendCard = InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () {
-          },
+          onTap: () {},
           child: Card(
             margin: const EdgeInsets.symmetric(vertical: 8),
             shape: RoundedRectangleBorder(
@@ -39,20 +40,40 @@ class FriendList extends StatelessWidget {
                     width: 80,
                     height: 70,
                     decoration: BoxDecoration(
-                      color: (friend["color"] as Color).withOpacity(0.7),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         bottomLeft: Radius.circular(12),
                       ),
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.perm_identity,
-                        color: Colors.white,
-                        size: 36,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12),
                       ),
+                      child: friend["photoUrl"] != null
+                          ? Image.network(
+                              friend["photoUrl"],
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                color: (friend["color"] as Color?)?.withOpacity(0.7) ??
+                                    primaryDark.withOpacity(0.7),
+                                child: const Center(
+                                  child: Icon(Icons.perm_identity,
+                                      color: Colors.white, size: 36),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: primaryDark.withOpacity(0.7),
+                              child: const Center(
+                                child: Icon(Icons.perm_identity,
+                                    color: Colors.white, size: 36),
+                              ),
+                            ),
                     ),
                   ),
+
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
@@ -60,19 +81,31 @@ class FriendList extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            friend["name"] ?? '',
-                            style: subtitleText,
-                          ),
+                          Text(friend["name"] ?? '', style: subtitleText),
                         ],
                       ),
                     ),
                   ),
+
                   if (showIcons)
                     Padding(
                       padding: const EdgeInsets.only(right: 15.0),
                       child: Center(
-                        child: _AddFriendButton(),
+                        child: _AddFriendButton(
+                          onTap: () {
+                            if (onAddFriend != null && friend["id"] != null) {
+                              onAddFriend!(friend["id"]);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      '${friend["name"]} fue agregado como amigo'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: secondary,
+                                ),
+                              );
+                            }
+                          },
+                        ),
                       ),
                     ),
                 ],
@@ -83,7 +116,7 @@ class FriendList extends StatelessWidget {
 
         if (!showIcons) {
           friendCard = Dismissible(
-            key: Key(friend["name"]),
+            key: Key(friend["id"]),
             direction: DismissDirection.endToStart,
             background: Container(
               alignment: Alignment.centerRight,
@@ -94,9 +127,10 @@ class FriendList extends StatelessWidget {
               ),
               child: const Icon(Icons.delete, color: Colors.white),
             ),
-            onDismissed: (_) {
-              if (onDelete != null) onDelete!(index);
-
+            onDismissed: (_) async {
+              if (onDelete != null && friend["id"] != null) {
+                onDelete!(friend["id"]);
+              }
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('${friend["name"]} fue eliminado'),
@@ -112,11 +146,13 @@ class FriendList extends StatelessWidget {
         return friendCard;
       },
     );
-}
+  }
 }
 
 class _AddFriendButton extends StatefulWidget {
-  const _AddFriendButton({super.key});
+  final VoidCallback? onTap;
+
+  const _AddFriendButton({super.key, this.onTap});
 
   @override
   State<_AddFriendButton> createState() => _AddFriendButtonState();
@@ -130,12 +166,13 @@ class _AddFriendButtonState extends State<_AddFriendButton> {
     return GestureDetector(
       onTap: () {
         setState(() => _pressed = true);
-        Future.delayed(const Duration(milliseconds: 300), () {
+        Future.delayed(const Duration(milliseconds: 200), () {
           if (mounted) setState(() => _pressed = false);
         });
+        widget.onTap?.call();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: _pressed ? lightDark : primaryLight,
