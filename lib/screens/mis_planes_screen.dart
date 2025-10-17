@@ -5,6 +5,7 @@ import '../widgets/plan_list.dart';
 import '../app_colors.dart';
 import '../text_styles.dart';
 
+//MIS PLANES SCREEN
 class MisPlanesScreen extends StatefulWidget {
   const MisPlanesScreen({super.key});
 
@@ -12,6 +13,7 @@ class MisPlanesScreen extends StatefulWidget {
   State<MisPlanesScreen> createState() => _MisPlanesScreenState();
 }
 
+//MIS PLANES SCREEN STATE
 class _MisPlanesScreenState extends State<MisPlanesScreen> {
   String selectedSegment = 'Amigos';
   String searchQuery = "";
@@ -21,86 +23,6 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
   //PAGING CONTROLLER
   final PagingController<int, Map<String, dynamic>> _pagingController =
       PagingController(firstPageKey: 0);
-
-  //MOCK
-  final List<Map<String, dynamic>> planes = List.generate(30, (index) {
-    final colores = [
-      Colors.green,
-      Colors.orange,
-      Colors.blue,
-      Colors.purple,
-      Colors.teal,
-      Colors.red,
-      Colors.indigo,
-      Colors.brown,
-    ];
-
-    final iconos = [
-      Icons.self_improvement,
-      Icons.set_meal,
-      Icons.brush,
-      Icons.movie,
-      Icons.directions_bike,
-      Icons.music_note,
-      Icons.sports_soccer,
-      Icons.park,
-    ];
-
-    final titulos = [
-      "Caminata en el cerro",
-      "Tarde de picnic",
-      "Clase de yoga al aire libre",
-      "Cine bajo las estrellas",
-      "Tour gastronómico",
-      "Taller de pintura para niños",
-      "Paseo en bicicleta",
-      "Concierto acústico",
-    ];
-
-    final anfitriones = [
-      "Carlos López",
-      "María Pérez",
-      "José Martínez",
-      "Ana Gómez",
-      "Luis Fernández",
-      "Camila Rojas",
-      "Ricardo Torres",
-      "Valentina Rodríguez",
-    ];
-
-    final ubicaciones = [
-      "Parque Metropolitano",
-      "Parque Bicentenario",
-      "Parque Forestal",
-      "Plaza Ñuñoa",
-      "Barrio Lastarria",
-      "Museo de Bellas Artes",
-      "Ciclovías Santiago Centro",
-      "Café Literario",
-    ];
-
-    final visibilidades = ["Amigos", "Público"];
-
-    return {
-      "anfitrionNombre": anfitriones[index % anfitriones.length],
-      "titulo": titulos[index % titulos.length] + " #${index + 1}",
-      "iconColor": colores[index % colores.length],
-      "iconCode": iconos[index % iconos.length].codePoint,
-      "visibilidad": visibilidades[index % visibilidades.length],
-      "descripcion": "Únete a este plan para disfrutar de una experiencia única en ${ubicaciones[index % ubicaciones.length]}. ¡No te lo pierdas!",
-      "esPropio": true,
-      "fechaEsEncuesta": false,
-      "fecha": DateTime.now(),
-      "fechasEncuesta": [DateTime.now(), DateTime.now()],
-      "horaEsEncuesta": false,
-      "hora": TimeOfDay.now(),
-      "horasEncuesta": [TimeOfDay.now(), TimeOfDay.now()],
-      "ubicacionEsEncuesta": true,
-      "ubicacion": ubicaciones[index % ubicaciones.length],
-      "ubicacionesEncuesta": ["Av. Libertador Bernardo O'Higgins 1234, Santiago",  "Av. Libertador Bernardo O'Higgins 1234, Santiago"],
-    };
-  });
-
 
   @override
   void initState() {
@@ -113,6 +35,16 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
 
   //OBTENER PLANES
   Future<void> _fetchPage(int pageKey) async {
+    //CONSULTA A LA BASE DE DATOS
+    print("[🐧 planes] Recuperando planes de la base de datos...");
+    final snapshot = await db.collection("planes").get();;
+    // Convertir los docs en Map<String, dynamic>
+    final planes = snapshot.docs.map((doc) {
+      final data = doc.data();
+      // Si quieres incluir el id:
+      data['id'] = doc.id;
+      return data;
+    }).toList();
     print("[planes] Fetching page starting at index: $pageKey"); 
     try {
       //FILTRO

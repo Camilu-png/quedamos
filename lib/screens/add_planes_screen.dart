@@ -1,59 +1,15 @@
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../app_colors.dart';
-import '../text_styles.dart';
-import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:quedamos/app_colors.dart';
+import 'package:quedamos/text_styles.dart';
+import 'package:quedamos/planes_components.dart';
 
 final db = FirebaseFirestore.instance;
 
 final uuid = Uuid();
-
-final Map<String, IconData> iconosMap = {
-  "event": Icons.event,
-  "star": Icons.star,
-  "home": Icons.home,
-  "work": Icons.work,
-  "favorite": Icons.favorite,
-  "school": Icons.school,
-  "shopping": Icons.shopping_cart,
-  "restaurant": Icons.restaurant,
-  "fitness": Icons.fitness_center,
-  "travel": Icons.flight,
-  "music": Icons.music_note,
-  "movie": Icons.movie,
-  "pets": Icons.pets,
-  "beach": Icons.beach_access,
-  "birthday": Icons.cake,
-  "meeting": Icons.meeting_room,
-  "coffee": Icons.coffee,
-  "book": Icons.book,
-  "camera": Icons.camera_alt,
-};
-
-final Map<String, Color> coloresMap = {
-  "red": Colors.red,
-  "pink": Colors.pink,
-  "purple": Colors.purple,
-  "deepPurple": Colors.deepPurple,
-  "indigo": Colors.indigo,
-  "blue": Colors.blue,
-  "lightBlue": Colors.lightBlue,
-  "cyan": Colors.cyan,
-  "teal": Colors.teal,
-  "green": Colors.green,
-  "lightGreen": Colors.lightGreen,
-  "lime": Colors.lime,
-  "yellow": Colors.yellow,
-  "amber": Colors.amber,
-  "orange": Colors.orange,
-  "deepOrange": Colors.deepOrange,
-  "brown": Colors.brown,
-  "grey": Colors.grey,
-  "blueGrey": Colors.blueGrey,
-  "secondary": secondary,
-};
 
 //ADD PLANES SCREEN
 class AddPlanesScreen extends StatefulWidget {
@@ -79,9 +35,9 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   IconData iconoNombre = Icons.event;
   Color iconoColor = secondary;
   //TÍTULO
-  final TextEditingController _titulo = TextEditingController();
+  final TextEditingController titulo = TextEditingController();
   //DESCRIPCIÓN
-  final TextEditingController _descripcion = TextEditingController();
+  final TextEditingController descripcion = TextEditingController();
   //FECHA
   bool fechaEsEncuesta = false;
   DateTime? fecha;
@@ -116,9 +72,9 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       iconoNombre = iconosMap[widget.plan!["iconoNombre"]] ?? Icons.event;
       iconoColor = coloresMap[widget.plan!["iconoColor"]] ?? secondary;
       //TÍTULO
-      _titulo.text = widget.plan!["titulo"] ?? "";
+      titulo.text = widget.plan!["titulo"] ?? "";
       //DESCRIPCIÓN
-      _descripcion.text = widget.plan!["descripcion"] ?? "";
+      descripcion.text = widget.plan!["descripcion"] ?? "";
       //FECHA
       fechaEsEncuesta = widget.plan!["fechaEsEncuesta"] ?? false;
       if (fechaEsEncuesta) {
@@ -151,13 +107,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
   @override
   void dispose() {
-    _titulo.dispose();
-    _descripcion.dispose();
+    titulo.dispose();
+    descripcion.dispose();
     super.dispose();
   }
 
   //TIME OF DAY -> STRING
-  String _timeOfDayToString(TimeOfDay t) {
+  String timeOfDayToString(TimeOfDay t) {
     final hour = t.hour.toString().padLeft(2, '0');
     final minute = t.minute.toString().padLeft(2, '0');
     return "$hour:$minute";
@@ -180,7 +136,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   }
   
   //ICONO: MODAL
-  void _abrirSelectorIconoColor(BuildContext context) {
+  void abrirSelectorIconoColor(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -272,7 +228,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
 
   //FECHA: NORMAL
-  void _seleccionarFechaNormal(BuildContext context) async {
+  void seleccionarFechaNormal(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: fecha ?? DateTime.now(),
@@ -287,7 +243,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   }
 
   //FECHA: ENCUESTA
-  void _agregarFechaEncuesta(BuildContext context) async {
+  void agregarFechaEncuesta(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -302,7 +258,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   }
 
   // HORA NORMAL
-  void _seleccionarHoraNormal(BuildContext context) async {
+  void seleccionarHoraNormal(BuildContext context) async {
     final picked = await showTimePicker(
       context: context,
       initialTime: hora ?? TimeOfDay.now(),
@@ -315,7 +271,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   }
 
   // HORA ENCUESTA
-  void _agregarHoraEncuesta(BuildContext context) async {
+  void agregarHoraEncuesta(BuildContext context) async {
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
@@ -327,7 +283,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     }
   }
 
-  Future<void> _openMap(String location, BuildContext context) async {
+  Future<void> openMap(String location, BuildContext context) async {
     if (location.isEmpty) return;
     final query = Uri.encodeComponent(location);
     final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
@@ -343,8 +299,8 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     }
   }
 
-  void _seleccionarUbicacion(BuildContext context) async {
-    final TextEditingController _ubicacionController = TextEditingController(text: ubicacion);
+  void seleccionarUbicacion(BuildContext context) async {
+    final TextEditingController ubicacionController = TextEditingController(text: ubicacion);
     String? ubicacionSeleccionada = ubicacion;
     await showModalBottomSheet(
       context: context,
@@ -368,7 +324,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: TextField(
-                    controller: _ubicacionController,
+                    controller: ubicacionController,
                     decoration: const InputDecoration(
                       hintText: 'Escribe una ubicación',
                       prefixIcon: Icon(Icons.search),
@@ -409,7 +365,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     children: [
                       ElevatedButton.icon(
                         onPressed: () {
-                          _openMap(_ubicacionController.text, context);
+                          openMap(ubicacionController.text, context);
                         },
                         icon: const Icon(Icons.map),
                         label: const Text('Ver en mapa'),
@@ -424,7 +380,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                       ElevatedButton(
                         onPressed: () {
                           setState(() {
-                            ubicacionSeleccionada = _ubicacionController.text;
+                            ubicacionSeleccionada = ubicacionController.text;
                             if (ubicacionEsEncuesta) {
                               ubicacionesEncuesta.add(ubicacionSeleccionada!);
                             } else {
@@ -468,7 +424,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
             //ICONO
             GestureDetector(
-              onTap: () => _abrirSelectorIconoColor(context),
+              onTap: () => abrirSelectorIconoColor(context),
               child: Container(
                 width: double.infinity,
                 height: 120,
@@ -529,7 +485,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     ),
                     const SizedBox(height: 4),
                     TextFormField(
-                      controller: _titulo,
+                      controller: titulo,
                       maxLength: 250,
                       decoration: InputDecoration(
                         hintText: "Ingresa un título",
@@ -554,7 +510,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     ),
                     const SizedBox(height: 4),
                     TextFormField(
-                      controller: _descripcion,
+                      controller: descripcion,
                       maxLength: 1000,
                       minLines: 4,
                       maxLines: 8,
@@ -582,9 +538,9 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           child: ElevatedButton(
                             onPressed: () {
                               if (fechaEsEncuesta) {
-                                _agregarFechaEncuesta(context);
+                                agregarFechaEncuesta(context);
                               } else {
-                                _seleccionarFechaNormal(context);
+                                seleccionarFechaNormal(context);
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -694,9 +650,9 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           child: ElevatedButton(
                             onPressed: () {
                               if (horaEsEncuesta) {
-                                _agregarHoraEncuesta(context);
+                                agregarHoraEncuesta(context);
                               } else {
-                                _seleccionarHoraNormal(context);
+                                seleccionarHoraNormal(context);
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -805,7 +761,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           flex: 2,
                           child: ElevatedButton(
                             onPressed: () {
-                              _seleccionarUbicacion(context);
+                              seleccionarUbicacion(context);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
@@ -908,26 +864,26 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     //BOTÓN: GUARDAR
                     ElevatedButton(
                       onPressed: () {
-                          print("🐧 Guardando plan...");
+                          print("[🐧 planes] Guardando plan...");
                           db.collection("planes").doc(uuid.v4()).set({
                             "visibilidad": visibilidad,
                             "iconoNombre": getIconName(iconoNombre),
                             "iconoColor": getColorName(iconoColor),
                             "anfitrionID": anfitrionID,
                             "anfitrionNombre": anfitrionNombre,
-                            "titulo": _titulo.text,
-                            "descripcion": _descripcion.text,
+                            "titulo": titulo.text,
+                            "descripcion": descripcion.text,
                             "fechaEsEncuesta": fechaEsEncuesta,
                             "fecha": fecha != null ? Timestamp.fromDate(fecha!) : null,
                             "fechasEncuesta": fechasEncuesta.map((h) => Timestamp.fromDate(h)).toList(),
                             "horaEsEncuesta": horaEsEncuesta,
-                            "hora": hora != null ? _timeOfDayToString(hora!) : null,
-                            "horasEncuesta": horasEncuesta.map((h) => _timeOfDayToString(h)).toList(),
+                            "hora": hora != null ? timeOfDayToString(hora!) : null,
+                            "horasEncuesta": horasEncuesta.map((h) => timeOfDayToString(h)).toList(),
                             "ubicacionEsEncuesta": ubicacionEsEncuesta,
                             "ubicacion": ubicacion,
                             "ubicacionesEncuesta": ubicacionesEncuesta,
                           });
-                          print("🐧 Plan guardado correctamente...");
+                          print("[🐧 planes] Plan guardado correctamente...");
                       },
                       child: Text('Guardar'),
                     ),

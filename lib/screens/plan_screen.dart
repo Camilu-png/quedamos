@@ -1,9 +1,11 @@
 import 'package:intl/intl.dart';
 import "package:flutter/material.dart";
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import "package:quedamos/app_colors.dart";
+import 'package:quedamos/text_styles.dart';
+import 'package:quedamos/planes_components.dart';
 import 'package:quedamos/screens/add_planes_screen.dart';
-import "../app_colors.dart";
-import '../text_styles.dart';
 
 class PlanScreen extends StatelessWidget {
   final Map<String, dynamic> plan;
@@ -29,14 +31,42 @@ class PlanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final Color iconColor = plan["iconColor"] ?? primaryColor;
-    final int iconCode = plan["iconCode"] ?? Icons.event.codePoint;
-    final IconData iconData = IconData(iconCode, fontFamily: "MaterialIcons");
-    final bool esPropio = plan["esPropio"] ?? false;
-    final DateTime fecha = plan['fecha'];
-    final TimeOfDay hora = plan['hora'];
-    final String fechaBonita = DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fecha);
-    final String horaBonita = hora.format(context);
+    //ES PROPIO
+    final bool esPropio = plan["esPropio"] ?? true;
+    //ANFITRIÓN
+    final String anfitrionNombre = plan["anfitrionNombre"] ?? "";
+    //ICONO
+    final IconData iconoNombre = iconosMap[plan["iconoNombre"]] ?? Icons.event;
+    final Color iconoColor = coloresMap[plan["iconoColor"]] ?? secondary;
+    //TÍTULO
+    final String titulo = plan["titulo"] ?? "";
+    //FECHA
+    String fechaBonita;
+    if (plan["fechaEsEncuesta"] == true) {
+      fechaBonita = "Por determinar";
+    } else if (plan["fecha"] is Timestamp) {
+      fechaBonita = DateFormat("d 'de' MMMM 'de' y", "es_ES").format((plan["fecha"] as Timestamp).toDate());
+    } else {
+      fechaBonita = "Desconocida";
+    }
+    //HORA
+    String horaBonita;
+    if (plan["horaEsEncuesta"] == true) {
+      horaBonita = "Por determinar";
+    } else if (plan["hora"] is String) {
+      final partes = (plan["hora"] as String).split(":");
+      final horaObj = TimeOfDay(hour: int.parse(partes[0]), minute: int.parse(partes[1]));
+      horaBonita = horaObj.format(context);
+    } else if (plan["hora"] is TimeOfDay) {
+      horaBonita = (plan["hora"] as TimeOfDay).format(context);
+    } else {
+      horaBonita = "Desconocida";
+    }
+    //UBICACIÓN
+    String ubicacion = plan["ubicacion"] ?? "";
+    if (plan["ubicacionEsEncuesta"] == true) {
+      ubicacion = "Por determinar";
+    }
 
     //SCAFFOLD
     return Scaffold(
@@ -50,7 +80,7 @@ class PlanScreen extends StatelessWidget {
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: iconColor,
+        backgroundColor: iconoColor,
         elevation: 0,
         actions: [
           if (esPropio) 
@@ -106,9 +136,9 @@ class PlanScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               height: 120,
-              color: iconColor,
+              color: iconoColor,
               alignment: Alignment.center,
-              child: Icon(iconData, color: Colors.white, size: 60),
+              child: Icon(iconoNombre, color: Colors.white, size: 60),
             ),
 
             //CONTENIDO
