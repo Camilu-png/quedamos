@@ -1,5 +1,7 @@
+import 'package:intl/intl.dart';
 import "package:flutter/material.dart";
 import 'package:url_launcher/url_launcher.dart';
+import 'package:quedamos/screens/add_planes_screen.dart';
 import "../app_colors.dart";
 import '../text_styles.dart';
 
@@ -31,6 +33,10 @@ class PlanScreen extends StatelessWidget {
     final int iconCode = plan["iconCode"] ?? Icons.event.codePoint;
     final IconData iconData = IconData(iconCode, fontFamily: "MaterialIcons");
     final bool esPropio = plan["esPropio"] ?? false;
+    final DateTime fecha = plan['fecha'];
+    final TimeOfDay hora = plan['hora'];
+    final String fechaBonita = DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fecha);
+    final String horaBonita = hora.format(context);
 
     //SCAFFOLD
     return Scaffold(
@@ -44,7 +50,7 @@ class PlanScreen extends StatelessWidget {
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: primaryColor,
+        backgroundColor: iconColor,
         elevation: 0,
         actions: [
           if (esPropio) 
@@ -65,7 +71,12 @@ class PlanScreen extends StatelessWidget {
                           title: const Text("Editar plan"),
                           onTap: () {
                             Navigator.pop(context); //Cerrar modal
-                            //Editar
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddPlanesScreen(plan: plan),
+                              ),
+                            );
                           },
                         ),
                         ListTile(
@@ -182,7 +193,7 @@ class PlanScreen extends StatelessWidget {
                       const Icon(Icons.calendar_today, size: 24, color: primaryText),
                       const SizedBox(width: 4),
                       Text(
-                        "${plan["fecha"] ?? ""} - ${plan["hora"] ?? ""}",
+                        '$fechaBonita - $horaBonita',
                         style: bodyPrimaryText,
                       ),
                     ],
@@ -204,7 +215,7 @@ class PlanScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  if (plan["encuesta"])
+                  if (plan["fechaEsEncuesta"] || plan["horaEsEncuesta"] || plan["ubicacionEsEncuesta"])
                     //ENCUESTA
                     SizedBox(
                       width: double.infinity,
@@ -334,38 +345,6 @@ class PlanScreen extends StatelessWidget {
                   if (!esPropio)
                     Row(
                       children: [
-                        //BOTÓN ACEPTAR
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Plan aceptado")),
-                              );
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle, size: 24, color: Colors.white),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Aceptar",
-                                  style: bodyPrimaryText.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                         //BOTÓN RECHAZAR
                         Expanded(
                           child: ElevatedButton(
@@ -388,6 +367,38 @@ class PlanScreen extends StatelessWidget {
                                 SizedBox(width: 8),
                                 Text(
                                   "Rechazar",
+                                  style: bodyPrimaryText.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        //BOTÓN ACEPTAR
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Plan aceptado")),
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle, size: 24, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Aceptar",
                                   style: bodyPrimaryText.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,

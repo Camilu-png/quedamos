@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import '../widgets/plan_list.dart';
 import '../app_colors.dart';
 import '../text_styles.dart';
+
+final db = FirebaseFirestore.instance;
 
 class PlanesScreen extends StatefulWidget {
   const PlanesScreen({super.key});
@@ -83,15 +86,20 @@ class _PlanesScreenState extends State<PlanesScreen> {
     return {
       "anfitrion": anfitriones[index % anfitriones.length],
       "titulo": titulos[index % titulos.length] + " #${index + 1}",
-      "fecha": "${10 + (index % 20)} de octubre",
-      "hora": "${8 + (index % 12)}:00 ${index % 2 == 0 ? 'AM' : 'PM'}",
-      "ubicacion": ubicaciones[index % ubicaciones.length],
       "iconColor": colores[index % colores.length],
       "iconCode": iconos[index % iconos.length].codePoint,
       "visibilidad": visibilidades[index % visibilidades.length],
       "descripcion": "Únete a este plan para disfrutar de una experiencia única en ${ubicaciones[index % ubicaciones.length]}. ¡No te lo pierdas!",
       "esPropio": false,
-      "encuesta": true,
+      "fechaEsEncuesta": false,
+      "fecha": DateTime.now(),
+      "fechasEncuesta": [DateTime.now(), DateTime.now()],
+      "horaEsEncuesta": false,
+      "hora": TimeOfDay.now(),
+      "horasEncuesta": [TimeOfDay.now(), TimeOfDay.now()],
+      "ubicacionEsEncuesta": true,
+      "ubicacion": ubicaciones[index % ubicaciones.length],
+      "ubicacionesEncuesta": ["Av. Libertador Bernardo O'Higgins 1234, Santiago",  "Av. Libertador Bernardo O'Higgins 1234, Santiago"],
     };
   });
 
@@ -107,6 +115,15 @@ class _PlanesScreenState extends State<PlanesScreen> {
 
   //OBTENER PLANES
   Future<void> _fetchPage(int pageKey) async {
+    final snapshot = await db.collection("planes").get();;
+    // Convertir los docs en Map<String, dynamic>
+    final newItems = snapshot.docs.map((doc) {
+      final data = doc.data();
+      // Si quieres incluir el id:
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+    print(newItems);
     print("[planes] Fetching page starting at index: $pageKey"); 
     try {
       //FILTRO
@@ -185,7 +202,7 @@ class _PlanesScreenState extends State<PlanesScreen> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               //BUSCADOR
               SizedBox(
@@ -218,7 +235,7 @@ class _PlanesScreenState extends State<PlanesScreen> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               //LISTA DE PLANES
               Expanded(

@@ -18,6 +18,12 @@ const TextStyle helpText = TextStyle(
   color: primaryDark,
 );
 
+const TextStyle labelText = TextStyle(
+  fontSize: 16,
+  fontWeight: FontWeight.w500,
+  color: primaryText,
+);
+
 const TextStyle bodyPrimaryText = TextStyle(
   fontSize: 16,
   color: primaryText,

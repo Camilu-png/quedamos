@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../app_colors.dart';
 import '../text_styles.dart';
 import '../screens/plan_screen.dart';
+import 'package:intl/intl.dart';
+
 
 class PlanesList extends StatelessWidget {
   final Map<String, dynamic> plan;
@@ -13,6 +15,11 @@ class PlanesList extends StatelessWidget {
     final Color iconColor = plan['iconColor'] ?? Colors.grey;
     final int iconCode = plan['iconCode'] ?? Icons.event.codePoint;
     final IconData iconData = IconData(iconCode, fontFamily: 'MaterialIcons');
+    //PUEDE QUE ESTÉN ALMACENADAS COMO TIMESTAMP, POR LO QUE HAY QUE HACER CONVERSIÓN TIMESTAMP -> DATETIME
+    final DateTime fecha = plan['fecha'];
+    final TimeOfDay hora = plan['hora'];
+    final String fechaBonita = DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fecha);
+    final String horaBonita = hora.format(context);
 
     return InkWell(
 
@@ -82,7 +89,7 @@ class PlanesList extends StatelessWidget {
                           const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
                           const SizedBox(width: 4),
                           Text(
-                            '${plan['fecha'] ?? ''} - ${plan['hora'] ?? ''}',
+                            '$fechaBonita - $horaBonita',
                             style: const TextStyle(color: Colors.grey),
                           ),
                         ],
