@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import '../widgets/plan_list.dart';
 import '../app_colors.dart';
 import '../text_styles.dart';
+
+final db = FirebaseFirestore.instance;
 
 class PlanesScreen extends StatefulWidget {
   const PlanesScreen({super.key});
@@ -112,6 +115,15 @@ class _PlanesScreenState extends State<PlanesScreen> {
 
   //OBTENER PLANES
   Future<void> _fetchPage(int pageKey) async {
+    final snapshot = await db.collection("planes").get();;
+    // Convertir los docs en Map<String, dynamic>
+    final newItems = snapshot.docs.map((doc) {
+      final data = doc.data();
+      // Si quieres incluir el id:
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+    print(newItems);
     print("[planes] Fetching page starting at index: $pageKey"); 
     try {
       //FILTRO
