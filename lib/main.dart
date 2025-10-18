@@ -18,7 +18,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   // Descomentar y hot restart para desconectarse
-  await FirebaseAuth.instance.signOut();
+  // await FirebaseAuth.instance.signOut();
   runApp(const MyApp());
 }
 

@@ -3,6 +3,7 @@ import 'friends_screen.dart';
 import 'mis_planes_screen.dart';
 import 'add_planes_screen.dart';
 import 'planes_screen.dart';
+import 'profile_sreen.dart';
 import '../widgets/custom_navbar.dart';
 
 class MainScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class MainScreenState extends State<MainScreen> {
       MisPlanesScreen(userID: widget.userID),
       AddPlanesScreen(userID: widget.userID),
       FriendsScreen(userID: widget.userID),
+      ProfileScreen(userID: widget.userID),
     ];
     _currentIndex = widget.initialIndex;
     _currentScreen = _mainScreens[_currentIndex];
