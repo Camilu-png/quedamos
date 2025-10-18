@@ -18,16 +18,18 @@ class MainScreenState extends State<MainScreen> {
   late int _currentIndex;
   late Widget _currentScreen;
 
-  final List<Widget> _mainScreens = const [
-    PlanesScreen(),
-    MisPlanesScreen(),
-    AddPlanesScreen(),
-    FriendsScreen(),
-  ];
+
+  late final List<Widget> _mainScreens;
 
   @override
   void initState() {
     super.initState();
+    _mainScreens = [
+      PlanesScreen(userID: widget.userID),
+      MisPlanesScreen(userID: widget.userID),
+      AddPlanesScreen(userID: widget.userID),
+      FriendsScreen(userID: widget.userID),
+    ];
     _currentIndex = widget.initialIndex;
     _currentScreen = _mainScreens[_currentIndex];
   }
@@ -47,7 +49,6 @@ class MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("UID del usuario -> ${widget.userID}");
     return Scaffold(
       body: _currentScreen,
       bottomNavigationBar: CustomBottomNavBar(

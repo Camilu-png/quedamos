@@ -6,7 +6,8 @@ import '../app_colors.dart';
 import '../text_styles.dart';
 
 class MisPlanesScreen extends StatefulWidget {
-  const MisPlanesScreen({super.key});
+  final String userID;
+  const MisPlanesScreen({super.key, required this.userID});
 
   @override
   State<MisPlanesScreen> createState() => _MisPlanesScreenState();
@@ -148,6 +149,8 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userID = widget.userID;
+    print("UID del usuario -> ${widget.userID}");
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -205,7 +208,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const AddPlanesScreen()),
+                      MaterialPageRoute(builder: (context) => AddPlanesScreen(userID: userID,)),
                     );
                   },
                   icon: const Icon(Icons.add, size: 24, color: Colors.white),
@@ -234,7 +237,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
                 child: PagedListView<int, Map<String, dynamic>>(
                   pagingController: _pagingController,
                   builderDelegate: PagedChildBuilderDelegate<Map<String, dynamic>>(
-                    itemBuilder: (context, plan, index) => PlanesList(plan: plan),
+                    itemBuilder: (context, plan, index) => PlanesList(plan: plan, userID: userID,),
                     noItemsFoundIndicatorBuilder: (_) => const Center(
                       child: Text("No se encontraron planes"),
                     ),

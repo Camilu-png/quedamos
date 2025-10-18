@@ -6,9 +6,10 @@ import "../app_colors.dart";
 import '../text_styles.dart';
 
 class PlanScreen extends StatelessWidget {
+  final String userID;
   final Map<String, dynamic> plan;
 
-  const PlanScreen({super.key, required this.plan});
+  const PlanScreen({super.key, required this.plan, required this.userID});
 
   Future<void> _openMap(String location, BuildContext context) async {
     if (location.isEmpty) return;
@@ -39,6 +40,8 @@ class PlanScreen extends StatelessWidget {
     final String horaBonita = hora.format(context);
 
     //SCAFFOLD
+    
+    print("UID del usuario -> ${userID}");
     return Scaffold(
 
       //APP BAR
@@ -74,7 +77,7 @@ class PlanScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AddPlanesScreen(plan: plan),
+                                builder: (context) => AddPlanesScreen(plan: plan, userID: userID),
                               ),
                             );
                           },
