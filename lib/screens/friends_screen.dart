@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:quedamos/app_colors.dart';
 import 'package:quedamos/screens/add_friend_screen.dart';
@@ -16,7 +17,7 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   final FriendsService _friendsService = FriendsService();
-  final String _currentUserId = "uid_cristina"; // FirebaseAuth.instance.currentUser!.uid
+  final String _currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
   Future<void> _deleteFriend(String friendId) async {
     try {

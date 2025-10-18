@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:quedamos/services/friends_service.dart';
 import '../widgets/friend_list.dart';
@@ -13,7 +14,7 @@ class AddFriendsScreen extends StatefulWidget {
 
 class _AddFriendsScreenState extends State<AddFriendsScreen> {
   final FriendsService _friendsService = FriendsService();
-  final String _currentUserId = "uid_cristina"; // FirebaseAuth.instance.currentUser!.uid
+  final String _currentUserId = FirebaseAuth.instance.currentUser!.uid;
   String searchQuery = "";
 
   @override
