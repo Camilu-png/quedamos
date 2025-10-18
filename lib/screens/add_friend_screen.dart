@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:quedamos/services/friends_service.dart';
 import '../widgets/friend_list.dart';
@@ -6,7 +5,8 @@ import 'package:quedamos/text_styles.dart';
 import '../app_colors.dart';
 
 class AddFriendsScreen extends StatefulWidget {
-  const AddFriendsScreen({super.key});
+  final String userID;
+  const AddFriendsScreen({super.key, required this.userID});
 
   @override
   State<AddFriendsScreen> createState() => _AddFriendsScreenState();
@@ -14,7 +14,7 @@ class AddFriendsScreen extends StatefulWidget {
 
 class _AddFriendsScreenState extends State<AddFriendsScreen> {
   final FriendsService _friendsService = FriendsService();
-  final String _currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
   String searchQuery = "";
 
   @override
@@ -38,7 +38,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
           }
 
           return StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _friendsService.getFriends(_currentUserId),
+            stream: _friendsService.getFriends(widget.userID), 
             builder: (context, friendsSnapshot) {
               if (friendsSnapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -52,7 +52,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
               final filteredUsers = allUsers.where((user) {
                 final userId = user["id"];
                 final userName = (user["name"] ?? "").toLowerCase();
-                return userId != _currentUserId &&
+                return userId != widget.userID && 
                     !friendIds.contains(userId) &&
                     userName.contains(searchQuery.toLowerCase());
               }).toList();
@@ -95,15 +95,15 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
 
                     SizedBox(
                       height: 600,
-                      child:FriendList(
+                      child: FriendList(
                         friends: filteredUsers,
                         showIcons: true,
                         onAddFriend: (friendId) async {
-                          final friendData = filteredUsers.firstWhere((f) => f['id'] == friendId);
-                          await _friendsService.addFriend(_currentUserId, friendData);
+                          final friendData = filteredUsers
+                              .firstWhere((f) => f['id'] == friendId);
+                          await _friendsService.addFriend(widget.userID, friendData); 
                         },
                       ),
-
                     ),
                   ],
                 ),

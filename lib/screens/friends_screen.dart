@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:quedamos/app_colors.dart';
 import 'package:quedamos/screens/add_friend_screen.dart';
@@ -17,11 +16,10 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   final FriendsService _friendsService = FriendsService();
-  final String _currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
   Future<void> _deleteFriend(String friendId) async {
     try {
-      await _friendsService.deleteFriend(_currentUserId, friendId);
+      await _friendsService.deleteFriend(widget.userID, friendId);
     } catch (e) {
       debugPrint("Error al eliminar amigo: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,7 +34,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("UID del usuario -> ${widget.userID}");
+    print("👾 UID del usuario -> ${widget.userID}");
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -46,7 +44,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         surfaceTintColor: Colors.transparent,
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _friendsService.getFriends(_currentUserId),
+        stream: _friendsService.getFriends(widget.userID),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -58,42 +56,41 @@ class _FriendsScreenState extends State<FriendsScreen> {
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
-
-                children: [SizedBox(
-                  height: 45,
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      final mainState =
-                          context.findAncestorStateOfType<MainScreenState>();
-                      mainState?.navigateTo(const AddFriendsScreen());
-                    },
-                    icon: const Icon(Icons.add, size: 24, color: Colors.white),
-                    label: Text(
-                      "Nuevo amigo",
-                      style: bodyPrimaryText.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                children: [
+                  SizedBox(
+                    height: 45,
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final mainState =
+                            context.findAncestorStateOfType<MainScreenState>();
+                        mainState?.navigateTo(AddFriendsScreen(userID: widget.userID));
+                      },
+                      icon: const Icon(Icons.add, size: 24, color: Colors.white),
+                      label: Text(
+                        "Nuevo amigo",
+                        style: bodyPrimaryText.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      alignment: Alignment.centerLeft,
-                      backgroundColor: secondary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      style: ElevatedButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        backgroundColor: secondary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-
-                Text(
-                "Todavía no tienes amigos 😢",
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Todavía no tienes amigos 😢",
+                    style: const TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                ],
               ),
-              ],
-              )
             );
           }
 
@@ -108,7 +105,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     onPressed: () {
                       final mainState =
                           context.findAncestorStateOfType<MainScreenState>();
-                      mainState?.navigateTo(const AddFriendsScreen());
+                      mainState?.navigateTo(AddFriendsScreen(userID: widget.userID));
                     },
                     icon: const Icon(Icons.add, size: 24, color: Colors.white),
                     label: Text(
@@ -129,7 +126,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-
                 SizedBox(
                   height: 600,
                   child: FriendList(
