@@ -6,9 +6,10 @@ import 'package:intl/intl.dart';
 
 
 class PlanesList extends StatelessWidget {
+  final String userID;
   final Map<String, dynamic> plan;
 
-  const PlanesList({super.key, required this.plan});
+  const PlanesList({super.key, required this.plan, required this.userID});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +37,7 @@ class PlanesList extends StatelessWidget {
       //ACCIÓN
       onTap: () {
         print("[planes] Plan clickeado: ${plan['titulo']}");
-        Navigator.push(context, MaterialPageRoute(builder: (_) => PlanScreen(plan: plan)));
+        Navigator.push(context, MaterialPageRoute(builder: (_) => PlanScreen(plan: plan, userID: userID,)));
       },
 
       //CARD

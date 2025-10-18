@@ -47,9 +47,10 @@ final List<Color> coloresDisponibles = [
 ];
 
 class AddPlanesScreen extends StatefulWidget {
+  final String userID;
   final Map<String, dynamic>? plan;
 
-  const AddPlanesScreen({super.key, this.plan});
+  const AddPlanesScreen({super.key, this.plan, required this.userID});
 
   @override
   State<AddPlanesScreen> createState() => _AddPlanesScreenState();
@@ -398,6 +399,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("UID del usuario -> ${widget.userID}");
     return Scaffold(
 
       //APP BAR
