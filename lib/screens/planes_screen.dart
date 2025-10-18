@@ -9,7 +9,8 @@ final db = FirebaseFirestore.instance;
 
 //PLANES SCREEN
 class PlanesScreen extends StatefulWidget {
-  const PlanesScreen({super.key});
+  final String userID;
+  const PlanesScreen({super.key, required this.userID});
 
   @override
   State<PlanesScreen> createState() => _PlanesScreenState();
@@ -81,6 +82,7 @@ class _PlanesScreenState extends State<PlanesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("UID del usuario -> ${widget.userID}");
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -164,7 +166,7 @@ class _PlanesScreenState extends State<PlanesScreen> {
                 child: PagedListView<int, Map<String, dynamic>>(
                   pagingController: _pagingController,
                   builderDelegate: PagedChildBuilderDelegate<Map<String, dynamic>>(
-                    itemBuilder: (context, plan, index) => PlanesList(plan: plan),
+                    itemBuilder: (context, plan, index) => PlanesList(plan: plan, userID: widget.userID),
                     noItemsFoundIndicatorBuilder: (_) => const Center(
                       child: Text("No se encontraron planes"),
                     ),
