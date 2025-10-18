@@ -1,9 +1,13 @@
 import 'package:intl/intl.dart';
 import "package:flutter/material.dart";
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import "package:quedamos/app_colors.dart";
+import 'package:quedamos/text_styles.dart';
+import 'package:quedamos/planes_components.dart';
 import 'package:quedamos/screens/add_planes_screen.dart';
-import "../app_colors.dart";
-import '../text_styles.dart';
+
+final db = FirebaseFirestore.instance;
 
 class PlanScreen extends StatelessWidget {
   final String userID;
@@ -30,14 +34,49 @@ class PlanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final Color iconColor = plan["iconColor"] ?? primaryColor;
-    final int iconCode = plan["iconCode"] ?? Icons.event.codePoint;
-    final IconData iconData = IconData(iconCode, fontFamily: "MaterialIcons");
-    final bool esPropio = plan["esPropio"] ?? false;
-    final DateTime fecha = plan['fecha'];
-    final TimeOfDay hora = plan['hora'];
-    final String fechaBonita = DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fecha);
-    final String horaBonita = hora.format(context);
+    //ES PROPIO
+    final bool esPropio = plan["esPropio"] ?? true;
+    //VISIBILIDAD
+    final String visibilidad = plan["visibilidad"] ?? "Amigos";
+    //ANFITRIÓN
+    final String anfitrionNombre = plan["anfitrionNombre"] ?? "";
+    //ICONO
+    final IconData iconoNombre = iconosMap[plan["iconoNombre"]] ?? Icons.event;
+    final Color iconoColor = coloresMap[plan["iconoColor"]] ?? secondary;
+    //TÍTULO
+    final String titulo = plan["titulo"] ?? "";
+    //DESCRIPCIÓN
+    final String descripcion = plan["descripcion"] ?? "";
+    //FECHA
+    bool fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
+    String fechaBonita;
+    if (plan["fechaEsEncuesta"] == true) {
+      fechaBonita = "Por determinar";
+    } else if (plan["fecha"] is Timestamp) {
+      fechaBonita = DateFormat("d 'de' MMMM 'de' y", "es_ES").format((plan["fecha"] as Timestamp).toDate());
+    } else {
+      fechaBonita = "Desconocida";
+    }
+    //HORA
+    bool horaEsEncuesta = plan["horaEsEncuesta"] ?? false;
+    String horaBonita;
+    if (plan["horaEsEncuesta"] == true) {
+      horaBonita = "Por determinar";
+    } else if (plan["hora"] is String) {
+      final partes = (plan["hora"] as String).split(":");
+      final horaObj = TimeOfDay(hour: int.parse(partes[0]), minute: int.parse(partes[1]));
+      horaBonita = horaObj.format(context);
+    } else if (plan["hora"] is TimeOfDay) {
+      horaBonita = (plan["hora"] as TimeOfDay).format(context);
+    } else {
+      horaBonita = "Desconocida";
+    }
+    //UBICACIÓN
+    bool ubicacionEsEncuesta = plan["ubicacionEsEncuesta"] ?? false;
+    String ubicacion = plan["ubicacion"] ?? "";
+    if (plan["ubicacionEsEncuesta"] == true) {
+      ubicacion = "Por determinar";
+    }
 
     //SCAFFOLD
     
@@ -53,7 +92,7 @@ class PlanScreen extends StatelessWidget {
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: iconColor,
+        backgroundColor: iconoColor,
         elevation: 0,
         actions: [
           if (esPropio) 
@@ -85,9 +124,38 @@ class PlanScreen extends StatelessWidget {
                         ListTile(
                           leading: const Icon(Icons.delete),
                           title: const Text("Eliminar plan"),
-                          onTap: () {
-                            Navigator.pop(context); //Cerrar modal
-                            //Eliminar
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final bool? confirmar = await showDialog<bool>(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Eliminar plan"),
+                                  content: const Text("¿Estás seguro de que deseas eliminar este plan? Esta acción no se puede deshacer."),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, false),
+                                      child: const Text("Cancelar"),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(context, true),
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                      child: const Text("Eliminar"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                            if (confirmar == true) {
+                              try {
+                                await db.collection("planes").doc(plan["planID"]).delete();
+
+                                Navigator.pop(context); // Volver a la pantalla anterior después de eliminar
+                              } catch (e) {
+                                print(e);
+
+                              }
+                            }
                           },
                         ),
                       ],
@@ -109,9 +177,9 @@ class PlanScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               height: 120,
-              color: iconColor,
+              color: iconoColor,
               alignment: Alignment.center,
-              child: Icon(iconData, color: Colors.white, size: 60),
+              child: Icon(iconoNombre, color: Colors.white, size: 60),
             ),
 
             //CONTENIDO
@@ -133,13 +201,13 @@ class PlanScreen extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          plan["visibilidad"] == "Amigos" ? Icons.group : Icons.public,
+                          visibilidad == "Amigos" ? Icons.group : Icons.public,
                           size: 24,
                           color: Colors.white,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          plan["visibilidad"] ?? "",
+                          visibilidad,
                           style: bodyPrimaryText.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -154,19 +222,12 @@ class PlanScreen extends StatelessWidget {
                   //ANFITRIÓN
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: primaryColor,
-                        child: Text(
-                          (plan["anfitrion"] ?? "A")[0],
-                          style: const TextStyle(fontSize: 12, color: Colors.white),
-                        ),
-                      ),
+                      const Icon(Icons.star, size: 24, color: primaryText),
                       const SizedBox(width: 8),
                       Text(
-                        (plan["esPropio"] ?? false)
+                        (esPropio)
                           ? "Creado por ti"
-                          : "Creado por ${plan["anfitrion"] ?? ""}",
+                          : "Creado por $anfitrionNombre",
                         style: bodyPrimaryText,
                       ),
                     ],
@@ -176,7 +237,7 @@ class PlanScreen extends StatelessWidget {
 
                   //TÍTULO
                   Text(
-                    plan["titulo"] ?? "",
+                    titulo,
                     style: titleText,
                   ),
 
@@ -184,7 +245,7 @@ class PlanScreen extends StatelessWidget {
 
                   //DESCRIPCIÓN
                   Text(
-                    plan["descripcion"] ?? "",
+                    descripcion,
                     style: bodyPrimaryText,
                   ),
 
@@ -210,7 +271,7 @@ class PlanScreen extends StatelessWidget {
                       const Icon(Icons.location_on, size: 24, color: primaryText),
                       const SizedBox(width: 4),
                       Text(
-                        plan["ubicacion"] ?? "",
+                        ubicacion,
                         style: bodyPrimaryText,
                       ),
                     ],
@@ -218,7 +279,7 @@ class PlanScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  if (plan["fechaEsEncuesta"] || plan["horaEsEncuesta"] || plan["ubicacionEsEncuesta"])
+                  if (fechaEsEncuesta || horaEsEncuesta || ubicacionEsEncuesta)
                     //ENCUESTA
                     SizedBox(
                       width: double.infinity,
@@ -263,44 +324,46 @@ class PlanScreen extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   //VER UBICACIÓN EN MAPA
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryLight,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  if (!ubicacionEsEncuesta)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryLight,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      onPressed: () => _openMap(plan['ubicacion'] ?? "", context),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            const Icon(Icons.location_on, color: primaryText, size: 24),
-                            const SizedBox(width: 8),
-                            Text(
-                              "Ver ubicación en mapa",
-                              style: bodyPrimaryText.copyWith(
-                                fontWeight: FontWeight.bold,
+                        onPressed: () => _openMap(ubicacion, context),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.location_on, color: primaryText, size: 24),
+                              const SizedBox(width: 8),
+                              Text(
+                                "Ver ubicación en mapa",
+                                style: bodyPrimaryText.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const Spacer(),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: Center(
-                                child: Icon(Icons.arrow_forward_ios, color: primaryText, size: 18),
+                              const Spacer(),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Center(
+                                  child: Icon(Icons.arrow_forward_ios, color: primaryText, size: 18),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   
-                  const SizedBox(height: 12),
+                  if (!ubicacionEsEncuesta)
+                    const SizedBox(height: 12),
                   
                   //VER PARTICIPANTES
                   SizedBox(
