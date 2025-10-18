@@ -19,7 +19,8 @@ final List<Map<String, dynamic>> friends = [
 ];
 
 class FriendsScreen extends StatefulWidget {
-  const FriendsScreen({super.key});
+  final String userID;
+  const FriendsScreen({super.key, required this.userID});
 
   @override
   State<FriendsScreen> createState() => _FriendsScreenState();
@@ -28,6 +29,7 @@ class FriendsScreen extends StatefulWidget {
 class _FriendsScreenState extends State<FriendsScreen> {
   @override
   Widget build(BuildContext context) {
+    print("UID del usuario -> ${widget.userID}");
     return Scaffold(
       appBar: AppBar(
         title: const Text("Mis Amigos", style: titleText),
