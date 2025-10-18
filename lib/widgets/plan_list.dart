@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import '../app_colors.dart';
-import '../text_styles.dart';
-import '../screens/plan_screen.dart';
-import 'package:intl/intl.dart';
-
+import "package:intl/intl.dart";
+import "package:flutter/material.dart";
+import "package:cloud_firestore/cloud_firestore.dart";
+import "package:quedamos/app_colors.dart";
+import "package:quedamos/planes_components.dart";
+import "package:quedamos/screens/plan_screen.dart";
 
 class PlanesList extends StatelessWidget {
   final Map<String, dynamic> plan;
@@ -12,14 +12,40 @@ class PlanesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color iconColor = plan['iconColor'] ?? Colors.grey;
-    final int iconCode = plan['iconCode'] ?? Icons.event.codePoint;
-    final IconData iconData = IconData(iconCode, fontFamily: 'MaterialIcons');
-    //PUEDE QUE ESTÉN ALMACENADAS COMO TIMESTAMP, POR LO QUE HAY QUE HACER CONVERSIÓN TIMESTAMP -> DATETIME
-    final DateTime fecha = plan['fecha'];
-    final TimeOfDay hora = plan['hora'];
-    final String fechaBonita = DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fecha);
-    final String horaBonita = hora.format(context);
+    //ANFITRIÓN
+    final String anfitrionNombre = plan["anfitrionNombre"] ?? "Yo";
+    //ICONO
+    final IconData iconoNombre = iconosMap[plan["iconoNombre"]] ?? Icons.event;
+    final Color iconoColor = coloresMap[plan["iconoColor"]] ?? secondary;
+    //TÍTULO
+    final String titulo = plan["titulo"] ?? "";
+    //FECHA
+    String fechaBonita;
+    if (plan["fechaEsEncuesta"] == true) {
+      fechaBonita = "Por determinar";
+    } else if (plan["fecha"] is Timestamp) {
+      fechaBonita = DateFormat("d 'de' MMMM 'de' y", "es_ES").format((plan["fecha"] as Timestamp).toDate());
+    } else {
+      fechaBonita = "Desconocida";
+    }
+    //HORA
+    String horaBonita;
+    if (plan["horaEsEncuesta"] == true) {
+      horaBonita = "Por determinar";
+    } else if (plan["hora"] is String) {
+      final partes = (plan["hora"] as String).split(":");
+      final horaObj = TimeOfDay(hour: int.parse(partes[0]), minute: int.parse(partes[1]));
+      horaBonita = horaObj.format(context);
+    } else if (plan["hora"] is TimeOfDay) {
+      horaBonita = (plan["hora"] as TimeOfDay).format(context);
+    } else {
+      horaBonita = "Desconocida";
+    }
+    //UBICACIÓN
+    String ubicacion = plan["ubicacion"] ?? "";
+    if (plan["ubicacionEsEncuesta"] == true) {
+      ubicacion = "Por determinar";
+    }
 
     return InkWell(
 
@@ -35,7 +61,7 @@ class PlanesList extends StatelessWidget {
 
       //ACCIÓN
       onTap: () {
-        print("[planes] Plan clickeado: ${plan['titulo']}");
+        print("[planes] Plan clickeado: ${plan["titulo"]}");
         Navigator.push(context, MaterialPageRoute(builder: (_) => PlanScreen(plan: plan)));
       },
 
@@ -51,22 +77,22 @@ class PlanesList extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
 
-              // ÍCONO
+              //ICONO
               Container(
                 width: 80,
                 decoration: BoxDecoration(
-                  color: iconColor,
+                  color: iconoColor,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
                     bottomLeft: Radius.circular(12),
                   ),
                 ),
                 child: Center(
-                  child: Icon(iconData, color: Colors.white, size: 40),
+                  child: Icon(iconoNombre, color: Colors.white, size: 40),
                 ),
               ),
 
-              // INFORMACIÓN DEL PLAN
+              //INFORMACIÓN DEL PLAN
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -74,13 +100,15 @@ class PlanesList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      //ANFITRIÓN
                       Text(
-                        plan['anfitrion'] ?? '',
+                        anfitrionNombre,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
+                      //TÍTULO
                       Text(
-                        plan['titulo'] ?? '',
+                        titulo,
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 4),
@@ -88,20 +116,26 @@ class PlanesList extends StatelessWidget {
                         children: [
                           const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
                           const SizedBox(width: 4),
-                          Text(
-                            '$fechaBonita - $horaBonita',
-                            style: const TextStyle(color: Colors.grey),
-                          ),
+                          Expanded(
+                            //FECHA - HORA
+                            child: Text(
+                              "$fechaBonita - $horaBonita",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          )
                         ],
                       ),
                       Row(
                         children: [
                           const Icon(Icons.location_on, size: 14, color: Colors.grey),
                           const SizedBox(width: 4),
-                          Text(
-                            plan['ubicacion'] ?? '',
-                            style: const TextStyle(color: Colors.grey),
-                          ),
+                          Expanded(
+                            //UBICACIÓN
+                            child: Text(
+                              ubicacion,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          )
                         ],
                       ),
                     ],

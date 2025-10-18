@@ -39,6 +39,7 @@ dependencies:
   infinite_scroll_pagination: ^4.0.1
   url_launcher: ^6.1.12
   intl: ^0.19.0
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

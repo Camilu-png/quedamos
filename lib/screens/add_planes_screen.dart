@@ -1,51 +1,17 @@
-import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../app_colors.dart';
-import '../text_styles.dart';
+import "package:intl/intl.dart";
+import "package:uuid/uuid.dart";
+import "package:flutter/material.dart";
+import "package:url_launcher/url_launcher.dart";
+import "package:cloud_firestore/cloud_firestore.dart";
+import "package:quedamos/app_colors.dart";
+import "package:quedamos/text_styles.dart";
+import "package:quedamos/planes_components.dart";
 
 final db = FirebaseFirestore.instance;
 
-final List<IconData> iconosDisponibles = [
-  Icons.event,
-  Icons.star,
-  Icons.home,
-  Icons.work,
-  Icons.favorite,
-  Icons.sports_soccer,
-  Icons.coffee,
-  Icons.restaurant,
-  Icons.flight,
-  Icons.music_note,
-  Icons.movie,
-  Icons.book,
-  Icons.pets,
-  Icons.shopping_cart,
-  Icons.local_cafe,
-  Icons.beach_access,
-];
+final uuid = Uuid();
 
-final List<Color> coloresDisponibles = [
-  Colors.red,
-  Colors.green,
-  Colors.blue,
-  Colors.orange,
-  Colors.purple,
-  Colors.teal,
-  Colors.indigo,
-  Colors.pink,
-  Colors.amber,
-  Colors.cyan,
-  Colors.lime,
-  Colors.deepOrange,
-  Colors.deepPurple,
-  Colors.lightBlue,
-  Colors.lightGreen,
-  secondary,
-  primaryColor,
-];
-
+//ADD PLANES SCREEN
 class AddPlanesScreen extends StatefulWidget {
   final Map<String, dynamic>? plan;
 
@@ -55,18 +21,25 @@ class AddPlanesScreen extends StatefulWidget {
   State<AddPlanesScreen> createState() => _AddPlanesScreenState();
 }
 
+//ADD PLANES SCREEN STATE
 class _AddPlanesScreenState extends State<AddPlanesScreen> {
+
   final _formKey = GlobalKey<FormState>();
 
-  //ICONO
-  IconData selectedIcon = Icons.event;
-  Color selectedColor = secondary;
+  //PLAN
+  String planID = uuid.v4();
   //VISIBILIDAD
-  String selectedSegment = 'Amigos';
+  String visibilidad = "Amigos";
+  //ANFITRIÓN
+  String anfitrionID = uuid.v4();
+  String anfitrionNombre = "Yo";
+  //ICONO
+  IconData iconoNombre = Icons.event;
+  Color iconoColor = secondary;
   //TÍTULO
-  final TextEditingController _tituloController = TextEditingController();
+  final TextEditingController titulo = TextEditingController();
   //DESCRIPCIÓN
-  final TextEditingController _descripcionController = TextEditingController();
+  final TextEditingController descripcion = TextEditingController();
   //FECHA
   bool fechaEsEncuesta = false;
   DateTime? fecha;
@@ -86,32 +59,62 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     "Estadio Nacional",
   ];
 
+  //INIT STATE
   @override
   void initState() {
     super.initState();
+    //MODO EDITAR
     if (widget.plan != null) {
-      _tituloController.text = widget.plan!["titulo"] ?? '';
-      _descripcionController.text = widget.plan!["descripcion"] ?? '';
-      selectedSegment = widget.plan!["visibilidad"] ?? 'Amigos';
-      //CARGAR FECHA O ENCUESTA
+      //PLAN
+      planID = widget.plan!["planID"] ?? uuid.v4();
+      //VISIBILIDAD
+      visibilidad = widget.plan!["visibilidad"] ?? "Amigos";
+      //ANFITRIÓN
+      anfitrionID = widget.plan!["anfitrionID"] ?? uuid.v4();
+      anfitrionNombre = widget.plan!["anfitrionNombre"] ?? "";
+      //ICONO
+      iconoNombre = iconosMap[widget.plan!["iconoNombre"]] ?? Icons.event;
+      iconoColor = coloresMap[widget.plan!["iconoColor"]] ?? secondary;
+      //TÍTULO
+      titulo.text = widget.plan!["titulo"] ?? "";
+      //DESCRIPCIÓN
+      descripcion.text = widget.plan!["descripcion"] ?? "";
+      //FECHA
       fechaEsEncuesta = widget.plan!["fechaEsEncuesta"] ?? false;
       if (fechaEsEncuesta) {
-        fechasEncuesta = widget.plan!["fechasEncuesta"] != null
-            ? List<DateTime>.from(widget.plan!["fechasEncuesta"])
-            : [];
+        final rawFechas = widget.plan!["fechasEncuesta"];
+        if (rawFechas != null) {
+          fechasEncuesta = List<DateTime>.from(
+            (rawFechas as List).map((e) => (e as Timestamp).toDate())
+          );
+        } else {
+          fechasEncuesta = [];
+        }
       } else {
-        fecha = widget.plan!["fecha"];
+        if (widget.plan!["fecha"] is Timestamp) {
+          fecha = (widget.plan!["fecha"] as Timestamp).toDate();
+        } else {
+          fecha = widget.plan!["fecha"];
+        }
       }
-      //CARGAR HORA O ENCUESTA
+      //HORA
       horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
       if (horaEsEncuesta) {
-        horasEncuesta = widget.plan!["horasEncuesta"] != null
-            ? List<TimeOfDay>.from(widget.plan!["horasEncuesta"])
-            : [];
+        final rawHoras = widget.plan!["horasEncuesta"];
+        if (rawHoras != null) {
+          horasEncuesta = List<String>.from(rawHoras)
+              .map((h) => stringToTimeOfDay(h)!)
+              .toList();
+        }
       } else {
-        hora = widget.plan!["hora"];
+        final rawHora = widget.plan!["hora"];
+        if (rawHora is String) {
+          hora = stringToTimeOfDay(rawHora);
+        } else {
+          hora = null;
+        }
       }
-      //CARGAR UBICACIÓN O ENCUESTA
+      //UBICACIÓN
       ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
       if (ubicacionEsEncuesta) {
         ubicacionesEncuesta = widget.plan!["ubicacionesEncuesta"] != null
@@ -125,19 +128,47 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
   @override
   void dispose() {
-    _tituloController.dispose();
-    _descripcionController.dispose();
+    titulo.dispose();
+    descripcion.dispose();
     super.dispose();
   }
 
-  String _timeOfDayToString(TimeOfDay t) {
-    final hour = t.hour.toString().padLeft(2, '0');
-    final minute = t.minute.toString().padLeft(2, '0');
+  //STRING -> TIME OF DAY
+  TimeOfDay? stringToTimeOfDay(String? s) {
+    if (s == null || s.isEmpty) return null;
+    final parts = s.split(":");
+    if (parts.length != 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  //TIME OF DAY -> STRING
+  String timeOfDayToString(TimeOfDay t) {
+    final hour = t.hour.toString().padLeft(2, "0");
+    final minute = t.minute.toString().padLeft(2, "0");
     return "$hour:$minute";
+  }
+
+  //ICON DATA -> STRING
+  String getIconName(IconData icon) {
+    return iconosMap.entries
+      .firstWhere((entry) => entry.value == icon,
+          orElse: () => const MapEntry("event", Icons.event))
+      .key;
+  }
+
+  //COLOR -> STRING
+  String getColorName(Color color) {
+    return coloresMap.entries
+      .firstWhere((entry) => entry.value == color,
+          orElse: () => const MapEntry("secondary", secondary))
+      .key;
   }
   
   //ICONO: MODAL
-  void _abrirSelectorIconoColor(BuildContext context) {
+  void abrirSelectorIconoColor(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -160,55 +191,61 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      //PESTAÑA: ICONO
+                      //PESTAÑA: ICONOS
                       GridView.count(
                         crossAxisCount: 4,
                         padding: const EdgeInsets.all(16),
-                        children: [
-                          for (var icon in iconosDisponibles)
-                            GestureDetector(
-                              onTap: () {
-                                setState(() => selectedIcon = icon);
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: selectedIcon == icon ? primaryColor : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
+                        children: iconosMap.entries.map((entry) {
+                          final iconName = entry.key;
+                          final iconData = entry.value;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() => iconoNombre = iconData);
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: iconoNombre == iconData
+                                      ? primaryColor
+                                      : Colors.transparent,
+                                  width: 2,
                                 ),
-                                child: Icon(icon, size: 40),
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              child: Icon(iconData, size: 40),
                             ),
-                        ],
+                          );
+                        }).toList(),
                       ),
-                      //PESTAÑA: COLOR
+                      //PESTAÑA: COLORES
                       GridView.count(
                         crossAxisCount: 4,
                         padding: const EdgeInsets.all(16),
-                        children: [
-                          for (var color in coloresDisponibles)
-                            GestureDetector(
-                              onTap: () {
-                                setState(() => selectedColor = color);
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  border: Border.all(
-                                    color: selectedColor == color ? primaryColor : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
+                        children: coloresMap.entries.map((entry) {
+                          final colorName = entry.key;
+                          final colorValue = entry.value;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() => iconoColor = colorValue);
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: colorValue,
+                                border: Border.all(
+                                  color: iconoColor == colorValue
+                                      ? primaryColor
+                                      : Colors.transparent,
+                                  width: 2,
                                 ),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                        ],
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
@@ -222,7 +259,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   }
 
   //FECHA: NORMAL
-  void _seleccionarFechaNormal(BuildContext context) async {
+  void seleccionarFechaNormal(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: fecha ?? DateTime.now(),
@@ -237,7 +274,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   }
 
   //FECHA: ENCUESTA
-  void _agregarFechaEncuesta(BuildContext context) async {
+  void agregarFechaEncuesta(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -252,7 +289,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   }
 
   // HORA NORMAL
-  void _seleccionarHoraNormal(BuildContext context) async {
+  void seleccionarHoraNormal(BuildContext context) async {
     final picked = await showTimePicker(
       context: context,
       initialTime: hora ?? TimeOfDay.now(),
@@ -265,7 +302,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   }
 
   // HORA ENCUESTA
-  void _agregarHoraEncuesta(BuildContext context) async {
+  void agregarHoraEncuesta(BuildContext context) async {
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
@@ -277,10 +314,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     }
   }
 
-  Future<void> _openMap(String location, BuildContext context) async {
+  Future<void> openMap(String location, BuildContext context) async {
     if (location.isEmpty) return;
     final query = Uri.encodeComponent(location);
-    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+    final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
     try {
       await launchUrl(
         url,
@@ -288,13 +325,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir el mapa')),
+        const SnackBar(content: Text("No se pudo abrir el mapa")),
       );
     }
   }
 
-  void _seleccionarUbicacion(BuildContext context) async {
-    final TextEditingController _ubicacionController = TextEditingController(text: ubicacion);
+  void seleccionarUbicacion(BuildContext context) async {
+    final TextEditingController ubicacionController = TextEditingController(text: ubicacion);
     String? ubicacionSeleccionada = ubicacion;
     await showModalBottomSheet(
       context: context,
@@ -311,16 +348,16 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
               children: [
                 const SizedBox(height: 12),
                 const Text(
-                  'Selecciona ubicación',
+                  "Selecciona ubicación",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: TextField(
-                    controller: _ubicacionController,
+                    controller: ubicacionController,
                     decoration: const InputDecoration(
-                      hintText: 'Escribe una ubicación',
+                      hintText: "Escribe una ubicación",
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(),
                     ),
@@ -359,22 +396,21 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     children: [
                       ElevatedButton.icon(
                         onPressed: () {
-                          _openMap(_ubicacionController.text, context);
+                          openMap(ubicacionController.text, context);
                         },
                         icon: const Icon(Icons.map),
-                        label: const Text('Ver en mapa'),
+                        label: const Text("Ver en mapa"),
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          print("✅ cancelado");
                           Navigator.pop(context);
                         },
-                        child: const Text('Cancelar'),
+                        child: const Text("Cancelar"),
                       ),
                       ElevatedButton(
                         onPressed: () {
                           setState(() {
-                            ubicacionSeleccionada = _ubicacionController.text;
+                            ubicacionSeleccionada = ubicacionController.text;
                             if (ubicacionEsEncuesta) {
                               ubicacionesEncuesta.add(ubicacionSeleccionada!);
                             } else {
@@ -383,7 +419,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           });
                           Navigator.pop(context);
                         },
-                        child: const Text('OK'),
+                        child: const Text("OK"),
                       ),
                     ],
                   ),
@@ -407,7 +443,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
           style: subtitleText.copyWith(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: selectedColor,
+        backgroundColor: iconoColor,
         elevation: 0,
       ),
 
@@ -418,13 +454,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
             //ICONO
             GestureDetector(
-              onTap: () => _abrirSelectorIconoColor(context),
+              onTap: () => abrirSelectorIconoColor(context),
               child: Container(
                 width: double.infinity,
                 height: 120,
-                color: selectedColor,
+                color: iconoColor,
                 alignment: Alignment.center,
-                child: Icon(selectedIcon, color: Colors.white, size: 60),
+                child: Icon(iconoNombre, color: Colors.white, size: 60),
               ),
             ),
 
@@ -446,15 +482,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                       width: double.infinity,
                       child: SegmentedButton<String>(
                         segments: const [
-                          ButtonSegment(
-                              value: 'Amigos', label: Text('Amigos', style: helpText)),
-                          ButtonSegment(
-                              value: 'Público', label: Text('Público', style: helpText)),
+                          ButtonSegment(value: "Amigos", label: Text("Amigos", style: helpText)),
+                          ButtonSegment(value: "Público", label: Text("Público", style: helpText)),
                         ],
-                        selected: <String>{selectedSegment},
+                        selected: <String>{visibilidad},
                         onSelectionChanged: (newSelection) {
                           setState(() {
-                            selectedSegment = newSelection.first;
+                            visibilidad = newSelection.first;
                           });
                         },
                         style: SegmentedButton.styleFrom(
@@ -479,7 +513,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     ),
                     const SizedBox(height: 4),
                     TextFormField(
-                      controller: _tituloController,
+                      controller: titulo,
                       maxLength: 250,
                       decoration: InputDecoration(
                         hintText: "Ingresa un título",
@@ -504,7 +538,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     ),
                     const SizedBox(height: 4),
                     TextFormField(
-                      controller: _descripcionController,
+                      controller: descripcion,
                       maxLength: 1000,
                       minLines: 4,
                       maxLines: 8,
@@ -531,10 +565,11 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           flex: 2,
                           child: ElevatedButton(
                             onPressed: () {
+                              print(fecha);
                               if (fechaEsEncuesta) {
-                                _agregarFechaEncuesta(context);
+                                agregarFechaEncuesta(context);
                               } else {
-                                _seleccionarFechaNormal(context);
+                                seleccionarFechaNormal(context);
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -554,10 +589,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 fechaEsEncuesta
-                                    ? 'Agregar opción de encuesta'
+                                    ? "Agregar opción de encuesta"
                                     : (fecha != null
-                                        ? DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fecha!)
-                                        : 'Toca para elegir fecha'),
+                                        ? DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fecha!)
+                                        : "Toca para elegir fecha"),
                               ),
                             ),
                           ),
@@ -567,13 +602,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
-                              ButtonSegment(value: 'fecha', label: Icon(Icons.calendar_today)),
-                              ButtonSegment(value: 'encuesta', label: Icon(Icons.poll)),
+                              ButtonSegment(value: "fecha", label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: "encuesta", label: Icon(Icons.poll)),
                             ],
-                            selected: {fechaEsEncuesta ? 'encuesta' : 'fecha'},
+                            selected: {fechaEsEncuesta ? "encuesta" : "fecha"},
                             onSelectionChanged: (newSelection) {
                               setState(() {
-                                fechaEsEncuesta = newSelection.first == 'encuesta';
+                                fechaEsEncuesta = newSelection.first == "encuesta";
                               });
                             },
                             style: SegmentedButton.styleFrom(
@@ -609,7 +644,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Opción ${i + 1}: ${DateFormat('d \'de\' MMMM \'de\' y', 'es_ES').format(fechasEncuesta[i])}',
+                                    "Opción ${i + 1}: ${DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fechasEncuesta[i])}",
                                     style: bodyPrimaryText.copyWith(
                                       fontWeight: FontWeight.w500
                                     ),
@@ -644,9 +679,9 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           child: ElevatedButton(
                             onPressed: () {
                               if (horaEsEncuesta) {
-                                _agregarHoraEncuesta(context);
+                                agregarHoraEncuesta(context);
                               } else {
-                                _seleccionarHoraNormal(context);
+                                seleccionarHoraNormal(context);
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -666,10 +701,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 horaEsEncuesta
-                                    ? 'Agregar opción de encuesta'
+                                    ? "Agregar opción de encuesta"
                                     : (hora != null
                                         ? hora!.format(context)
-                                        : 'Toca para elegir hora'),
+                                        : "Toca para elegir hora"),
                               ),
                             ),
                           ),
@@ -679,13 +714,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
-                              ButtonSegment(value: 'hora', label: Icon(Icons.calendar_today)),
-                              ButtonSegment(value: 'encuesta', label: Icon(Icons.poll)),
+                              ButtonSegment(value: "hora", label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: "encuesta", label: Icon(Icons.poll)),
                             ],
-                            selected: {horaEsEncuesta ? 'encuesta' : 'hora'},
+                            selected: {horaEsEncuesta ? "encuesta" : "hora"},
                             onSelectionChanged: (newSelection) {
                               setState(() {
-                                horaEsEncuesta = newSelection.first == 'encuesta';
+                                horaEsEncuesta = newSelection.first == "encuesta";
                               });
                             },
                             style: SegmentedButton.styleFrom(
@@ -721,7 +756,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Opción ${i + 1}: ${horasEncuesta[i].format(context)}',
+                                    "Opción ${i + 1}: ${horasEncuesta[i].format(context)}",
                                     style: bodyPrimaryText.copyWith(
                                       fontWeight: FontWeight.w500
                                     ),
@@ -755,7 +790,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           flex: 2,
                           child: ElevatedButton(
                             onPressed: () {
-                              _seleccionarUbicacion(context);
+                              seleccionarUbicacion(context);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
@@ -775,10 +810,10 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                               child:
                                 Text(
                                   ubicacionEsEncuesta
-                                      ? 'Agregar opción de encuesta'
+                                      ? "Agregar opción de encuesta"
                                       : (ubicacion?.isNotEmpty == true
                                           ? ubicacion!
-                                          : 'Toca para elegir ubicación'),
+                                          : "Toca para elegir ubicación"),
                                   softWrap: true,
                                 ),
                             ),
@@ -789,13 +824,13 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
-                              ButtonSegment(value: 'ubicacion', label: Icon(Icons.calendar_today)),
-                              ButtonSegment(value: 'encuesta', label: Icon(Icons.poll)),
+                              ButtonSegment(value: "ubicacion", label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: "encuesta", label: Icon(Icons.poll)),
                             ],
-                            selected: {ubicacionEsEncuesta ? 'encuesta' : 'ubicacion'},
+                            selected: {ubicacionEsEncuesta ? "encuesta" : "ubicacion"},
                             onSelectionChanged: (newSelection) {
                               setState(() {
-                                ubicacionEsEncuesta = newSelection.first == 'encuesta';
+                                ubicacionEsEncuesta = newSelection.first == "encuesta";
                               });
                             },
                             style: SegmentedButton.styleFrom(
@@ -832,7 +867,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      'Opción ${i + 1}: ${ubicacionesEncuesta[i]}',
+                                      "Opción ${i + 1}: ${ubicacionesEncuesta[i]}",
                                       style: bodyPrimaryText.copyWith(
                                         fontWeight: FontWeight.w500
                                       ),
@@ -857,28 +892,45 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
                     //BOTÓN: GUARDAR
                     ElevatedButton(
-                      onPressed: () {
-                          print("✅ botón");
-                          db.collection("planes").add({
-                            "anfitrion": "yo",
-                            "titulo": _tituloController.text,
-                            "descripcion": _descripcionController.text,
-                            "visibilidad": selectedSegment,
+                      onPressed: () async {
+                          print("[🐧 planes] Guardando plan...");
+                          final planFinal = {
+                            "planID": planID,
+                            "visibilidad": visibilidad,
+                            "iconoNombre": getIconName(iconoNombre),
+                            "iconoColor": getColorName(iconoColor),
+                            "anfitrionID": anfitrionID,
+                            "anfitrionNombre": anfitrionNombre,
+                            "titulo": titulo.text,
+                            "descripcion": descripcion.text,
                             "fechaEsEncuesta": fechaEsEncuesta,
-                            "fecha": Timestamp.fromDate(fecha!),
+                            "fecha": fecha != null ? Timestamp.fromDate(fecha!) : null,
                             "fechasEncuesta": fechasEncuesta.map((h) => Timestamp.fromDate(h)).toList(),
                             "horaEsEncuesta": horaEsEncuesta,
-                            "hora": _timeOfDayToString(hora!),
-                            "horasEncuesta": horasEncuesta.map((h) => _timeOfDayToString(h)).toList(),
+                            "hora": hora != null ? timeOfDayToString(hora!) : null,
+                            "horasEncuesta": horasEncuesta.map((h) => timeOfDayToString(h)).toList(),
                             "ubicacionEsEncuesta": ubicacionEsEncuesta,
                             "ubicacion": ubicacion,
                             "ubicacionesEncuesta": ubicacionesEncuesta,
-                          });
-                          print("✅ Plan guardado correctamente");
-                        // Aquí agregas lo que quieras hacer al guardar
+                          };
+                          try {
+                            if (widget.plan != null) {
+                              await db.collection("planes").doc(planID).update(planFinal);
+                              print("[🐧 planes] Plan editado correctamente...");
+                            } else {
+                              await db.collection("planes").doc(planID).set(planFinal);
+                              print("[🐧 planes] Plan creado correctamente...");
+                            }
+                          } catch (e) {
+                            print("[🐧 planes] Error: $e");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("No se pudo guardar el plan: $e")),
+                            );
+                          }      
                       },
-                      child: Text('Guardar'),
+                      child: Text("Guardar"),
                     ),
+                    
                   ],
                 ),
               ),
