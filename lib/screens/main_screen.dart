@@ -4,36 +4,50 @@ import 'mis_planes_screen.dart';
 import 'add_planes_screen.dart';
 import 'planes_screen.dart';
 import '../widgets/custom_navbar.dart';
-import '../app_colors.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex;
+  const MainScreen({super.key, this.initialIndex = 0});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<MainScreen> createState() => MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+class MainScreenState extends State<MainScreen> {
+  late int _currentIndex;
+  late Widget _currentScreen;
 
-  //PANTALLAS
-  final List<Widget> _screens = const [
+  final List<Widget> _mainScreens = const [
     PlanesScreen(),
     MisPlanesScreen(),
     AddPlanesScreen(),
     FriendsScreen(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _currentScreen = _mainScreens[_currentIndex];
+  }
+
   void _onTap(int index) {
     setState(() {
       _currentIndex = index;
+      _currentScreen = _mainScreens[_currentIndex];
+    });
+  }
+
+  void navigateTo(Widget newScreen) {
+    setState(() {
+      _currentScreen = newScreen;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: _currentScreen,
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _currentIndex,
         onTap: _onTap,
