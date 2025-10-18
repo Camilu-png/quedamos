@@ -5,6 +5,7 @@ import 'screens/login_screen.dart';
 import 'app_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
         useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+        backgroundColor: primaryDark, // tu color
+        foregroundColor: Colors.white,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: primaryDark,
+          statusBarIconBrightness: Brightness.light,
+        ),
+        ),
       ),
       home: const LoginScreen(),
     );
