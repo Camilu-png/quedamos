@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:quedamos/app_colors.dart';
-import 'package:quedamos/text_styles.dart';
-import 'package:quedamos/widgets/plan_list.dart';
+import "package:flutter/material.dart";
+import "package:cloud_firestore/cloud_firestore.dart";
+import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
+import "package:quedamos/main.dart";
+import "package:quedamos/app_colors.dart";
+import "package:quedamos/text_styles.dart";
+import "package:quedamos/widgets/planes_list.dart";
+import "package:quedamos/screens/planes/plan_screen.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -17,8 +19,9 @@ class PlanesScreen extends StatefulWidget {
 }
 
 //PLANES SCREEN STATE
-class _PlanesScreenState extends State<PlanesScreen> {
-  String selectedSegment = 'Amigos';
+class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
+
+  String selectedSegment = "Amigos";
   String searchQuery = "";
 
   static const int _pageSize = 3; //Planes por página
@@ -27,36 +30,65 @@ class _PlanesScreenState extends State<PlanesScreen> {
   final PagingController<int, Map<String, dynamic>> _pagingController =
       PagingController(firstPageKey: 0);
 
+  //DID CHANGE DEPENDENCIES
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  //DID POP NEXT
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    _refreshPaging();
+  }
+
+  //DISPOSE
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    _pagingController.dispose();
+    super.dispose();
+  }
+
+  //INIT STATE
   @override
   void initState() {
     super.initState();
-
     _pagingController.addPageRequestListener((pageKey) {
       _fetchPage(pageKey);
     });
+  }
+
+  //REFRESH PAGING
+  void _refreshPaging() {
+    print("[🐧 planes] Refrescando paginación..."); 
+    _pagingController.refresh();
   }
 
   //OBTENER PLANES
   Future<void> _fetchPage(int pageKey) async {
     print("[🐧 planes] Recuperando planes de la base de datos...");
     final snapshot = await db.collection("planes").get();;
-    // Convertir los docs en Map<String, dynamic>
     final planes = snapshot.docs.map((doc) {
       final data = doc.data();
-      // Si quieres incluir el id:
-      data['id'] = doc.id;
+      data["id"] = doc.id;
       return data;
     }).toList();
-    print("[planes] Fetching page starting at index: $pageKey"); 
+    print("[🐧 planes] Fetching page starting at index: $pageKey"); 
     try {
       //FILTRO
       final filteredPlanes = planes.where((plan) {
-        final visibilidad = (plan['visibilidad'] ?? "").toLowerCase();
-        final titulo = (plan['titulo'] ?? "").toLowerCase();
-        final anfitrionNombre = (plan['anfitrionNombre'] ?? "").toLowerCase();
+        final visibilidad = (plan["visibilidad"] ?? "").toLowerCase();
+        final anfitrionID = plan["anfitrionID"] ?? "";
+        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
+        final titulo = (plan["titulo"] ?? "").toLowerCase();
         final query = searchQuery.toLowerCase();
-        return visibilidad == selectedSegment.toLowerCase() &&
-            (titulo.contains(query) || anfitrionNombre.contains(query));
+        return
+          visibilidad == selectedSegment.toLowerCase() &&
+          (titulo.contains(query) || anfitrionNombre.contains(query)) &&
+          anfitrionID != widget.userID; //Planes ajenos al usuario
       }).toList();
       final isLastPage = pageKey + _pageSize >= filteredPlanes.length;
       final newItems = filteredPlanes.skip(pageKey).take(_pageSize).toList();
@@ -70,19 +102,9 @@ class _PlanesScreenState extends State<PlanesScreen> {
     }
   }
 
-  void _refreshPaging() {
-    _pagingController.refresh();
-  }
-
-  @override
-  void dispose() {
-    _pagingController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    print("UID del usuario -> ${widget.userID}");
+    print("[🐧 planes] UID del usuario: ${widget.userID}");
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -103,8 +125,8 @@ class _PlanesScreenState extends State<PlanesScreen> {
                 width: double.infinity,
                 child: SegmentedButton<String>(
                   segments: const [
-                    ButtonSegment(value: 'Amigos', label: Text('Amigos', style: helpText)),
-                    ButtonSegment(value: 'Público', label: Text('Público', style: helpText)),
+                    ButtonSegment(value: "Amigos", label: Text("Amigos", style: helpText)),
+                    ButtonSegment(value: "Público", label: Text("Público", style: helpText)),
                   ],
                   selected: <String>{selectedSegment},
                   onSelectionChanged: (newSelection) {
@@ -140,7 +162,7 @@ class _PlanesScreenState extends State<PlanesScreen> {
                   },
                   style: helpText,
                   decoration: InputDecoration(
-                    hintText: 'Buscar planes...',
+                    hintText: "Buscar planes...",
                     hintStyle: helpText,
                     prefixIcon: const Icon(Icons.search, color: primaryDark),
                     isDense: true,
@@ -166,7 +188,16 @@ class _PlanesScreenState extends State<PlanesScreen> {
                 child: PagedListView<int, Map<String, dynamic>>(
                   pagingController: _pagingController,
                   builderDelegate: PagedChildBuilderDelegate<Map<String, dynamic>>(
-                    itemBuilder: (context, plan, index) => PlanesList(plan: plan, userID: widget.userID),
+                    itemBuilder: (context, plan, index) => PlanesList(
+                      plan: plan,
+                      userID: widget.userID,
+                      onTapOverride: (ctx, planData) async {
+                        final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: widget.userID)));
+                        if (result == 'deleted') {
+                          if (mounted) _refreshPaging();
+                        }
+                      },
+                    ),
                     noItemsFoundIndicatorBuilder: (_) => const Center(
                       child: Text("No se encontraron planes"),
                     ),

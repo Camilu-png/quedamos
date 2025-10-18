@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'friends_screen.dart';
-import 'mis_planes_screen.dart';
-import 'add_planes_screen.dart';
-import 'planes_screen.dart';
+import 'planes/planes_propios_screen.dart';
+import 'planes/planes_add_screen.dart';
+import 'planes/planes_screen.dart';
 import 'profile_sreen.dart';
 import '../widgets/custom_navbar.dart';
 

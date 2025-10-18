@@ -8,6 +8,8 @@ import 'app_colors.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/services.dart';
 
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -43,6 +45,7 @@ class MyApp extends StatelessWidget {
         ),
         ),
       ),
+      navigatorObservers: [routeObserver],
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {

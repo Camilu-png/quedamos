@@ -6,6 +6,7 @@ import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
 import "package:quedamos/text_styles.dart";
 import "package:quedamos/planes_components.dart";
+import "package:quedamos/screens/main_screen.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -32,7 +33,6 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
   //VISIBILIDAD
   String visibilidad = "Amigos";
   //ANFITRIÓN
-  String anfitrionID = uuid.v4();
   String anfitrionNombre = "Yo";
   //ICONO
   IconData iconoNombre = Icons.event;
@@ -59,6 +59,9 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
     "Avenida Principal, Edificio 123, Oficina 45B",
     "Estadio Nacional",
   ];
+  //PARTICIPANTES
+  List<String> participantesAceptados = [];
+  List<String> participantesRechazados = [];
 
   //INIT STATE
   @override
@@ -71,7 +74,6 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       //VISIBILIDAD
       visibilidad = widget.plan!["visibilidad"] ?? "Amigos";
       //ANFITRIÓN
-      anfitrionID = widget.plan!["anfitrionID"] ?? uuid.v4();
       anfitrionNombre = widget.plan!["anfitrionNombre"] ?? "";
       //ICONO
       iconoNombre = iconosMap[widget.plan!["iconoNombre"]] ?? Icons.event;
@@ -84,10 +86,20 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       fechaEsEncuesta = widget.plan!["fechaEsEncuesta"] ?? false;
       if (fechaEsEncuesta) {
         final rawFechas = widget.plan!["fechasEncuesta"];
-        if (rawFechas != null) {
-          fechasEncuesta = List<DateTime>.from(
-            (rawFechas as List).map((e) => (e as Timestamp).toDate())
-          );
+        if (rawFechas != null && rawFechas is List) {
+          fechasEncuesta = rawFechas
+              .where((e) => e != null)
+              .map<DateTime>((e) {
+                if (e is Timestamp) return e.toDate();
+                if (e is DateTime) return e;
+                // Fallback: try parsing string
+                try {
+                  return DateTime.parse(e.toString());
+                } catch (_) {
+                  return DateTime.now();
+                }
+              })
+              .toList();
         } else {
           fechasEncuesta = [];
         }
@@ -102,10 +114,22 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
       if (horaEsEncuesta) {
         final rawHoras = widget.plan!["horasEncuesta"];
-        if (rawHoras != null) {
-          horasEncuesta = List<String>.from(rawHoras)
-              .map((h) => stringToTimeOfDay(h)!)
+        if (rawHoras != null && rawHoras is List) {
+          horasEncuesta = rawHoras
+              .where((h) => h != null)
+              .map<TimeOfDay>((h) {
+                if (h is TimeOfDay) return h;
+                if (h is String) {
+                  final parsed = stringToTimeOfDay(h);
+                  return parsed ?? TimeOfDay.now();
+                }
+                // fallback: try toString
+                final parsed = stringToTimeOfDay(h.toString());
+                return parsed ?? TimeOfDay.now();
+              })
               .toList();
+        } else {
+          horasEncuesta = [];
         }
       } else {
         final rawHora = widget.plan!["hora"];
@@ -118,11 +142,27 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
       //UBICACIÓN
       ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
       if (ubicacionEsEncuesta) {
-        ubicacionesEncuesta = widget.plan!["ubicacionesEncuesta"] != null
-            ? List<String>.from(widget.plan!["ubicacionesEncuesta"])
-            : [];
+        final rawUbic = widget.plan!["ubicacionesEncuesta"];
+        if (rawUbic != null && rawUbic is List) {
+          ubicacionesEncuesta = rawUbic.where((u) => u != null).map((u) => u.toString()).toList();
+        } else {
+          ubicacionesEncuesta = [];
+        }
       } else {
         ubicacion = widget.plan!["ubicacion"];
+      }
+      //PARTICIPANTES
+      final rawAceptados = widget.plan!["participantesAceptados"];
+      if (rawAceptados != null && rawAceptados is List) {
+        participantesAceptados = rawAceptados.where((p) => p != null).map((p) => p.toString()).toList();
+      } else {
+        participantesAceptados = [];
+      }
+      final rawRechazados = widget.plan!["participantesRechazados"];
+      if (rawRechazados != null && rawRechazados is List) {
+        participantesRechazados = rawRechazados.where((p) => p != null).map((p) => p.toString()).toList();
+      } else {
+        participantesRechazados = [];
       }
     }
   }
@@ -197,7 +237,6 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                         crossAxisCount: 4,
                         padding: const EdgeInsets.all(16),
                         children: iconosMap.entries.map((entry) {
-                          final iconName = entry.key;
                           final iconData = entry.value;
                           return GestureDetector(
                             onTap: () {
@@ -225,7 +264,6 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                         crossAxisCount: 4,
                         padding: const EdgeInsets.all(16),
                         children: coloresMap.entries.map((entry) {
-                          final colorName = entry.key;
                           final colorValue = entry.value;
                           return GestureDetector(
                             onTap: () {
@@ -435,7 +473,7 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("UID del usuario -> ${widget.userID}");
+    print("[🐧 planes] UID del usuario: ${widget.userID}");
     return Scaffold(
 
       //APP BAR
@@ -567,7 +605,6 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                           flex: 2,
                           child: ElevatedButton(
                             onPressed: () {
-                              print(fecha);
                               if (fechaEsEncuesta) {
                                 agregarFechaEncuesta(context);
                               } else {
@@ -895,13 +932,27 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                     //BOTÓN: GUARDAR
                     ElevatedButton(
                       onPressed: () async {
+                        //OBTENER NOMBRE DEL USUARIO
+                        print("[🐧 planes] Obteniendo nombre del usuario...");
+                          anfitrionNombre = "";
+                          try {
+                            final userDoc = await db.collection("users").doc(widget.userID).get();
+                            if (userDoc.exists) {
+                              anfitrionNombre = userDoc.data()?["name"] ?? '';
+                            } else {
+                              print("[🐧 planes] Usuario no encontrado...");
+                            }
+                          } catch (e) {
+                            print("[🐧 planes] Error: $e");
+                          }
+                          //GUARDAR PLAN
                           print("[🐧 planes] Guardando plan...");
                           final planFinal = {
                             "planID": planID,
                             "visibilidad": visibilidad,
                             "iconoNombre": getIconName(iconoNombre),
                             "iconoColor": getColorName(iconoColor),
-                            "anfitrionID": anfitrionID,
+                            "anfitrionID": widget.userID,
                             "anfitrionNombre": anfitrionNombre,
                             "titulo": titulo.text,
                             "descripcion": descripcion.text,
@@ -914,14 +965,38 @@ class _AddPlanesScreenState extends State<AddPlanesScreen> {
                             "ubicacionEsEncuesta": ubicacionEsEncuesta,
                             "ubicacion": ubicacion,
                             "ubicacionesEncuesta": ubicacionesEncuesta,
+                            "participantesAceptados": participantesAceptados,
+                            "participantesRechazados": participantesRechazados,
                           };
                           try {
                             if (widget.plan != null) {
                               await db.collection("planes").doc(planID).update(planFinal);
                               print("[🐧 planes] Plan editado correctamente...");
+                              // Devolver el planID y volver a la vista anterior
+                              if (mounted) {
+                                print('[🐧 planes] Pop con plan editado, volviendo...');
+                                Navigator.of(context).pop(planID);
+                                return;
+                              }
                             } else {
                               await db.collection("planes").doc(planID).set(planFinal);
                               print("[🐧 planes] Plan creado correctamente...");
+                              // Al crear un plan, llevar al usuario a 'MisPlanesScreen'
+                              if (mounted) {
+                                // Si la pantalla fue pusheada (canPop == true), devolvemos el planID
+                                if (Navigator.of(context).canPop()) {
+                                  print('[🐧 planes] Pop con plan creado, volviendo...');
+                                  Navigator.of(context).pop(planID);
+                                  return;
+                                }
+                                // Si no se puede pop (estamos embebidos en MainScreen como pestaña),
+                                // reemplazamos la pantalla con MainScreen que muestra "Mis planes" (index 1)
+                                print('[🐧 planes] Reemplazando con MainScreen(initialIndex:1) tras crear plan...');
+                                Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(builder: (_) => MainScreen(userID: widget.userID, initialIndex: 1)),
+                                );
+                                return;
+                              }
                             }
                           } catch (e) {
                             print("[🐧 planes] Error: $e");

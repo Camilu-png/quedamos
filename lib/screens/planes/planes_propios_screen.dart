@@ -1,9 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:quedamos/screens/add_planes_screen.dart';
-import '../widgets/plan_list.dart';
-import '../app_colors.dart';
-import '../text_styles.dart';
+import "package:flutter/material.dart";
+import "package:cloud_firestore/cloud_firestore.dart";
+import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
+import "package:quedamos/main.dart";
+import "package:quedamos/screens/planes/planes_add_screen.dart";
+import "package:quedamos/screens/planes/plan_screen.dart";
+import "../../widgets/planes_list.dart";
+import "../../app_colors.dart";
+import "../../text_styles.dart";
+
+final db = FirebaseFirestore.instance;
 
 //MIS PLANES SCREEN
 class MisPlanesScreen extends StatefulWidget {
@@ -15,8 +20,8 @@ class MisPlanesScreen extends StatefulWidget {
 }
 
 //MIS PLANES SCREEN STATE
-class _MisPlanesScreenState extends State<MisPlanesScreen> {
-  String selectedSegment = 'Amigos';
+class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
+  String selectedSegment = "Amigos";
   String searchQuery = "";
 
   static const int _pageSize = 3; //Planes por página
@@ -34,28 +39,36 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    _refreshPaging();
+  }
+
   //OBTENER PLANES
   Future<void> _fetchPage(int pageKey) async {
-    //CONSULTA A LA BASE DE DATOS
     print("[🐧 planes] Recuperando planes de la base de datos...");
-    final snapshot = await db.collection("planes").get();;
-    // Convertir los docs en Map<String, dynamic>
+    final snapshot = await db.collection("planes").get();
     final planes = snapshot.docs.map((doc) {
       final data = doc.data();
-      // Si quieres incluir el id:
-      data['id'] = doc.id;
+      data["id"] = doc.id;
       return data;
     }).toList();
-    print("[planes] Fetching page starting at index: $pageKey"); 
+    print("[🐧 planes] Fetching page starting at index: $pageKey"); 
     try {
-      //FILTRO
+      //FILTRO: mostrar todos los planes cuyo anfitrión es el usuario (independiente de visibilidad)
       final filteredPlanes = planes.where((plan) {
-        final visibilidad = (plan['visibilidad'] ?? "").toLowerCase();
-        final titulo = (plan['titulo'] ?? "").toLowerCase();
-        final anfitrionNombre = (plan['anfitrionNombre'] ?? "").toLowerCase();
+        final anfitrionID = plan["anfitrionID"] ?? "";
+        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
+        final titulo = (plan["titulo"] ?? "").toLowerCase();
         final query = searchQuery.toLowerCase();
-        return visibilidad == selectedSegment.toLowerCase() &&
-            (titulo.contains(query) || anfitrionNombre.contains(query));
+        return (titulo.contains(query) || anfitrionNombre.contains(query)) && anfitrionID == widget.userID;
       }).toList();
       final isLastPage = pageKey + _pageSize >= filteredPlanes.length;
       final newItems = filteredPlanes.skip(pageKey).take(_pageSize).toList();
@@ -75,14 +88,17 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _pagingController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+
     final userID = widget.userID;
-    print("UID del usuario -> ${widget.userID}");
+    print("[🐧 planes] UID del usuario: ${userID}");
+    
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -111,7 +127,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
                   },
                   style: helpText,
                   decoration: InputDecoration(
-                    hintText: 'Buscar planes...',
+                    hintText: "Buscar planes...",
                     hintStyle: helpText,
                     prefixIcon: const Icon(Icons.search, color: primaryDark),
                     isDense: true,
@@ -137,11 +153,15 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
                 height: 45,
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final newPlanID = await Navigator.push<String?>(
                       context,
                       MaterialPageRoute(builder: (context) => AddPlanesScreen(userID: userID,)),
                     );
+                    if (newPlanID != null) {
+                      // Si se creó un plan, refrescar la lista
+                      _refreshPaging();
+                    }
                   },
                   icon: const Icon(Icons.add, size: 24, color: Colors.white),
                   label: Text(
@@ -169,7 +189,16 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> {
                 child: PagedListView<int, Map<String, dynamic>>(
                   pagingController: _pagingController,
                   builderDelegate: PagedChildBuilderDelegate<Map<String, dynamic>>(
-                    itemBuilder: (context, plan, index) => PlanesList(plan: plan, userID: userID,),
+                      itemBuilder: (context, plan, index) => PlanesList(
+                        plan: plan,
+                        userID: userID,
+                        onTapOverride: (ctx, planData) async {
+                          final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: userID)));
+                          if (result == 'deleted') {
+                            if (mounted) _refreshPaging();
+                          }
+                        },
+                      ),
                     noItemsFoundIndicatorBuilder: (_) => const Center(
                       child: Text("No se encontraron planes"),
                     ),
