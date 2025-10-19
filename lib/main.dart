@@ -6,6 +6,9 @@ import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
 import 'app_colors.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter/services.dart';
+
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +20,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   // Descomentar y hot restart para desconectarse
-  await FirebaseAuth.instance.signOut();
+  // await FirebaseAuth.instance.signOut();
   runApp(const MyApp());
 }
 
@@ -31,9 +34,21 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Quedamos?',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          secondary: Colors.deepOrange,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: primaryDark, // tu color
+          foregroundColor: Colors.white,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: primaryDark,
+            statusBarIconBrightness: Brightness.light,
+          ),
+        ),
       ),
+      navigatorObservers: [routeObserver],
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {

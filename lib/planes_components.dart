@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
-import '../app_colors.dart';
+import "package:flutter/material.dart";
+import "package:url_launcher/url_launcher.dart";
+import "package:quedamos/app_colors.dart";
 
 final Map<String, IconData> iconosMap = {
   "event": Icons.event,
@@ -45,3 +46,57 @@ final Map<String, Color> coloresMap = {
   "blueGrey": Colors.blueGrey,
   "secondary": secondary,
 };
+
+Future<void> showMap(BuildContext context, bool mounted, String ubicacion) async {
+  print("[🐧 Planes: componentes] Abriendo mapa...");
+  if (ubicacion.isEmpty) return;
+  final query = Uri.encodeComponent(ubicacion);
+  final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
+  try {
+    await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication,
+    );
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No se pudo abrir el mapa")),
+      );
+    }
+  }
+}
+
+//STRING -> TIME OF DAY
+TimeOfDay? stringToTimeOfDay(String? s) {
+  if (s == null || s.isEmpty) return null;
+  final parts = s.split(":");
+  if (parts.length != 2) return null;
+  final hour = int.tryParse(parts[0]);
+  final minute = int.tryParse(parts[1]);
+  if (hour == null || minute == null) return null;
+  return TimeOfDay(hour: hour, minute: minute);
+}
+
+//TIME OF DAY -> STRING
+  String timeOfDayToString(TimeOfDay t) {
+    final hour = t.hour.toString().padLeft(2, "0");
+    final minute = t.minute.toString().padLeft(2, "0");
+    return "$hour:$minute";
+  }
+
+  //ICON DATA -> STRING
+  String getIconName(IconData icon) {
+    return iconosMap.entries
+      .firstWhere((entry) => entry.value == icon,
+          orElse: () => const MapEntry("event", Icons.event))
+      .key;
+  }
+
+  //COLOR -> STRING
+  String getColorName(Color color) {
+    return coloresMap.entries
+      .firstWhere((entry) => entry.value == color,
+          orElse: () => const MapEntry("secondary", secondary))
+      .key;
+  }
+  
