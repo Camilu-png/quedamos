@@ -6,7 +6,7 @@ import 'package:quedamos/text_styles.dart';
 import 'package:quedamos/screens/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  final String userID; // ✅ Recibe el userId
+  final String userID;
 
   const ProfileScreen({super.key, required this.userID});
 
@@ -52,7 +52,6 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 const SizedBox(height: 40),
 
-                // 🖼️ Imagen de perfil
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: primaryColor.withOpacity(0.2),
@@ -109,7 +108,7 @@ class ProfileScreen extends StatelessWidget {
                     onPressed: () async {
                       await FirebaseAuth.instance.signOut();
                       if (context.mounted) {
-                        print("Cerrando Sesión");
+                        print("👾 Cerrando Sesión");
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (_) => const LoginScreen()),
