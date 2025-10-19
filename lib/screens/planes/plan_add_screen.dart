@@ -192,7 +192,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -205,12 +205,12 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
               children: [
                 //PESTAÑAS
                 Container(
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   child: TabBar(
                     labelColor: Theme.of(context).colorScheme.primary,
-                    labelStyle: Theme.of(context).textTheme.titleMedium,
+                    labelStyle: Theme.of(context).textTheme.titleSmall,
                     unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                    unselectedLabelStyle: Theme.of(context).textTheme.titleMedium,
+                    unselectedLabelStyle: Theme.of(context).textTheme.titleSmall,
                     indicatorColor: Theme.of(context).colorScheme.primary,
                     indicatorSize: TabBarIndicatorSize.tab,
                     tabs: [
@@ -219,7 +219,6 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     ],
                   ),
                 ),
-                const Divider(height: 1),
                 //PESTAÑAS
                 Expanded(
                   child: TabBarView(
@@ -364,7 +363,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -383,11 +382,12 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     controller: ubicacionController,
                     decoration: InputDecoration(
                       hintText: "Buscar ubicación...",
-                      prefixIcon: Icon(Icons.search),
+                      hintStyle: Theme.of(context).textTheme.bodyMedium,
+                      prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
+                      fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,
                       ),
                     ),
@@ -431,8 +431,21 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     children: [
                       OutlinedButton.icon(
                         onPressed: () => showMap(context, mounted, ubicacionController.text),
-                        icon: const Icon(Icons.map_outlined),
-                        label: const Text("Ver en mapa"),
+                        icon: Icon(
+                          Icons.map_outlined,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        label: Text(
+                          "Ver en mapa",
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Theme.of(context).colorScheme.secondary),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        ),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
@@ -470,19 +483,22 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
     return Scaffold(
 
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+
       //APP BAR
       appBar: AppBar(
         title: Text(
           widget.plan != null ? "Editar plan" : "Nuevo plan",
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: true,
         backgroundColor: iconoColor,
-        foregroundColor: Colors.white,
-        iconTheme: IconThemeData(color: Colors.white),
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
         elevation: 0,
       ),
 
@@ -1030,11 +1046,11 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                             backgroundColor: Theme.of(context).colorScheme.secondary,
                             minimumSize: const Size.fromHeight(48),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(24),
                             ),
                           ),
                           child: Text("Guardar", style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSecondary,
                             fontWeight: FontWeight.w600,
                           )),
                         ),

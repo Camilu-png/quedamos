@@ -2,10 +2,9 @@ import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
-import "package:quedamos/app_colors.dart";
-import "package:quedamos/text_styles.dart";
 import "package:quedamos/widgets/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
+import "package:quedamos/screens/planes/plan_add_screen.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -20,14 +19,22 @@ class PlanesScreen extends StatefulWidget {
 //PLANES SCREEN STATE
 class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
 
-  String selectedSegment = "Amigos";
-  String searchQuery = "";
+  String visibilidadSelected = "Amigos";
+  String busqueda = "";
 
-  static const int _pageSize = 3; //Planes por página
+  static const int _pageSize = 3;
+
+  //INIT STATE
+  @override
+  void initState() {
+    super.initState();
+    _pagingController.addPageRequestListener((pageKey) {
+      _fetchPage(pageKey);
+    });
+  }
 
   //PAGING CONTROLLER
-  final PagingController<int, Map<String, dynamic>> _pagingController =
-      PagingController(firstPageKey: 0);
+  final PagingController<int, Map<String, dynamic>> _pagingController = PagingController(firstPageKey: 0);
 
   //DID CHANGE DEPENDENCIES
   @override
@@ -51,50 +58,70 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
     super.dispose();
   }
 
-  //INIT STATE
-  @override
-  void initState() {
-    super.initState();
-    _pagingController.addPageRequestListener((pageKey) {
-      _fetchPage(pageKey);
-    });
-  }
-
   //REFRESH PAGING
   void _refreshPaging() {
-    print("[🐧 planes] Refrescando paginación..."); 
+    print("[🐧 planes] Refrescando paginación...");
+    _lastDocument = null;
     _pagingController.refresh();
   }
 
   //OBTENER PLANES
+  DocumentSnapshot? _lastDocument;
   Future<void> _fetchPage(int pageKey) async {
-    print("[🐧 planes] Recuperando planes de la base de datos...");
-    final snapshot = await db.collection("planes").get();;
-    final planes = snapshot.docs.map((doc) {
-      final data = doc.data();
-      data["id"] = doc.id;
-      return data;
-    }).toList();
-    print("[🐧 planes] Fetching page starting at index: $pageKey"); 
+    print("[🐧 planes] Recuperando planes de la base de datos, página: $pageKey");
     try {
-      //FILTRO
-      final filteredPlanes = planes.where((plan) {
-        final visibilidad = (plan["visibilidad"] ?? "").toLowerCase();
-        final anfitrionID = plan["anfitrionID"] ?? "";
-        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
-        final titulo = (plan["titulo"] ?? "").toLowerCase();
-        final query = searchQuery.toLowerCase();
-        return
-          visibilidad == selectedSegment.toLowerCase() &&
-          (titulo.contains(query) || anfitrionNombre.contains(query)) &&
-          anfitrionID != widget.userID; //Planes ajenos al usuario
+      List<String> amigosIDs = [];
+      if (visibilidadSelected == "Amigos") {
+        final amigosSnapshot = await db
+            .collection("users")
+            .doc(widget.userID)
+            .collection("amigos")
+            .get();
+        amigosIDs = amigosSnapshot.docs.map((doc) => doc.id).toList();
+      }
+      Query query = db.collection("planes")
+          .where("visibilidad", isEqualTo: visibilidadSelected)
+          .orderBy("titulo")
+          .limit(_pageSize);
+      if (_lastDocument != null) {
+        query = query.startAfterDocument(_lastDocument!);
+      }
+      final snapshot = await query.get();
+      final planes = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data["id"] = doc.id;
+        return data;
       }).toList();
-      final isLastPage = pageKey + _pageSize >= filteredPlanes.length;
-      final newItems = filteredPlanes.skip(pageKey).take(_pageSize).toList();
+      final planesFiltrados = planes.where((plan) {
+        final titulo = (plan["titulo"] ?? "").toLowerCase();
+        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
+        final queryText = busqueda.toLowerCase();
+        final anfitrionID = plan["anfitrionID"] ?? "";
+        final fecha = plan["fecha"] ?? DateTime.now();
+        final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
+        //TODO: VERIFICAR QUE SEA VÁLIDO TAMBIÉN CON LA HORA
+        if (visibilidadSelected == "Amigos") {
+          return plan["visibilidad"] == "Amigos" &&
+                amigosIDs.contains(anfitrionID) &&
+                anfitrionID != widget.userID &&
+                (fechaEsEncuesta || (!fechaEsEncuesta && fecha is Timestamp && fecha.toDate().isAfter(DateTime.now()))) &&
+                (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
+        } else if (visibilidadSelected == "Público") {
+          return plan["visibilidad"] == "Público" &&
+                anfitrionID != widget.userID &&
+                (fechaEsEncuesta || (!fechaEsEncuesta && fecha is Timestamp && fecha.toDate().isAfter(DateTime.now()))) &&
+                (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
+        }
+        return false;
+      }).toList();
+      if (planesFiltrados.isNotEmpty) {
+        _lastDocument = snapshot.docs.last;
+      }
+      final isLastPage = planesFiltrados.length < _pageSize;
       if (isLastPage) {
-        _pagingController.appendLastPage(newItems);
+        _pagingController.appendLastPage(planesFiltrados);
       } else {
-        _pagingController.appendPage(newItems, pageKey + _pageSize);
+        _pagingController.appendPage(planesFiltrados, pageKey + _pageSize);
       }
     } catch (error) {
       _pagingController.error = error;
@@ -103,79 +130,95 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+
     print("[🐧 planes] UID del usuario: ${widget.userID}");
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
         appBar: AppBar(
-          title: const Text("Planes", style: titleText),
+          title: Text(
+            "Planes",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.w600,
+            )
+          ),
           centerTitle: true,
-          backgroundColor: backgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
           elevation: 0,
-          shadowColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
+        ),
+        //NUEVO PLAN
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final newPlanID = await Navigator.push<String?>(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => AddPlanScreen(userID: widget.userID)),
+            );
+            if (newPlanID != null) _refreshPaging();
+          },
+          icon: const Icon(Icons.add),
+          label: const Text("Nuevo plan"),
+          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+          foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
         ),
         body: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+
               //SEGMENTED BUTTON
               SizedBox(
                 width: double.infinity,
                 child: SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: "Amigos", label: Text("Amigos", style: helpText)),
-                    ButtonSegment(value: "Público", label: Text("Público", style: helpText)),
+                  segments: [
+                    ButtonSegment(value: "Amigos", label: Text("Amigos", style: Theme.of(context).textTheme.bodyMedium)),
+                    ButtonSegment(value: "Público", label: Text("Público", style: Theme.of(context).textTheme.bodyMedium)),
                   ],
-                  selected: <String>{selectedSegment},
-                  onSelectionChanged: (newSelection) {
+                  selected: <String>{visibilidadSelected},
+                  onSelectionChanged: (visibilidadSelection) {
                     setState(() {
-                      selectedSegment = newSelection.first;
+                      visibilidadSelected = visibilidadSelection.first;
                       _refreshPaging();
                     });
                   },
                   style: SegmentedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    selectedBackgroundColor: primaryLight,
-                    foregroundColor: primaryDark,
-                    selectedForegroundColor: primaryDark,
-                    side: const BorderSide(color: primaryDark, width: 1),
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    selectedBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    selectedForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(24),
                     ),
+                    side: BorderSide.none,
                   ),
                 ),
               ),
 
-              const SizedBox(height: 12),
-
               //BUSCADOR
-              SizedBox(
-                height: 45,
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
                 child: TextField(
-                  onChanged: (value) {
+                  onChanged: (busquedaValor) {
                     setState(() {
-                      searchQuery = value;
+                      busqueda = busquedaValor;
                       _refreshPaging();
                     });
                   },
-                  style: helpText,
                   decoration: InputDecoration(
                     hintText: "Buscar planes...",
-                    hintStyle: helpText,
-                    prefixIcon: const Icon(Icons.search, color: primaryDark),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: primaryDark, width: 1),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: primaryDark, width: 1),
-                    ),
-                    fillColor: Colors.white,
+                    hintStyle: Theme.of(context).textTheme.bodyMedium,
+                    prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     filled: true,
+                    fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
               ),
@@ -192,13 +235,13 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                       userID: widget.userID,
                       onTapOverride: (ctx, planData) async {
                         final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: widget.userID)));
-                        if (result == 'deleted') {
+                        if (result == "deleted") {
                           if (mounted) _refreshPaging();
                         }
                       },
                     ),
                     noItemsFoundIndicatorBuilder: (_) => const Center(
-                      child: Text("No se encontraron planes"),
+                      child: Text("No se encontraron planes."),
                     ),
                     firstPageProgressIndicatorBuilder: (_) => const Center(
                       child: CircularProgressIndicator(),
