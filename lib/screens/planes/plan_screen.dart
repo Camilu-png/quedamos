@@ -11,14 +11,13 @@ final db = FirebaseFirestore.instance;
 class PlanScreen extends StatefulWidget {
   final String userID;
   final Map<String, dynamic> plan;
-
   const PlanScreen({super.key, required this.plan, required this.userID});
-
   @override
   State<PlanScreen> createState() => _PlanScreenState();
 }
 
 class _PlanScreenState extends State<PlanScreen> {
+
   late Map<String, dynamic> plan;
   late List<dynamic> participantesAceptados;
   late List<dynamic> participantesRechazados;
@@ -52,54 +51,65 @@ class _PlanScreenState extends State<PlanScreen> {
     return nombres;
   }
 
-  void _showModalParticipantes(BuildContext context, List<dynamic> participantesAceptados, List<dynamic> participantesRechazados) {
+  void _showParticipantesModal(BuildContext context, List<dynamic> participantesAceptados, List<dynamic> participantesRechazados) {
     print("[🐧 planes] Abriendo modal de participantes...");
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
         return DefaultTabController(
-          length: 2, //Pestañas
+          length: 2,
           child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.6,
             child: Column(
               children: [
-                const SizedBox(height: 12),
-                const TabBar(
-                  tabs: [
-                    //ACEPTADOS
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.check_circle, size: 24, color: Colors.green),
-                          SizedBox(width: 8),
-                          Text("Aceptados"),
-                        ],
+                //PESTAÑAS
+                Container(
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  child: TabBar(
+                    labelColor: Theme.of(context).colorScheme.primary,
+                    labelStyle: Theme.of(context).textTheme.titleMedium,
+                    unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    unselectedLabelStyle: Theme.of(context).textTheme.titleMedium,
+                    indicatorColor: Theme.of(context).colorScheme.primary,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    tabs: [
+                      //ACEPTADOS
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.green),
+                            SizedBox(width: 8),
+                            Text("Aceptados"),
+                          ],
+                        ),
                       ),
-                    ),
-                    //RECHAZADOS
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.cancel, size: 24, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text("Rechazados"),
-                        ],
+                      //RECHAZADOS
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cancel, color: Theme.of(context).colorScheme.error),
+                             SizedBox(width: 8),
+                            Text("Rechazados"),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                  labelColor: Colors.black,
-                  indicatorColor: primaryColor,
+                    ],
+                  )
                 ),
+                const Divider(height: 1),
+                //PESTAÑAS
                 Expanded(
                   child: TabBarView(
                     children: [
-
                       //ACEPTADOS
                       FutureBuilder<List<String>>(
                         future: _getUsersNames(participantesAceptados),
@@ -121,7 +131,6 @@ class _PlanScreenState extends State<PlanScreen> {
                           }
                         },
                       ),
-
                       //RECHAZADOS
                       FutureBuilder<List<String>>(
                         future: _getUsersNames(participantesRechazados),
@@ -143,7 +152,6 @@ class _PlanScreenState extends State<PlanScreen> {
                           }
                         },
                       ),
-
                     ],
                   ),
                 ),
@@ -154,8 +162,10 @@ class _PlanScreenState extends State<PlanScreen> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
+
     print("[🐧 planes] UID del usuario: ${widget.userID}");
 
     //ES PROPIO
@@ -201,23 +211,25 @@ class _PlanScreenState extends State<PlanScreen> {
     if (plan["ubicacionEsEncuesta"] == true) {
       ubicacion = "Por determinar";
     }
-    //PARTICIPANTES (usar estado local)
+    //PARTICIPANTE
     final bool participantesAceptadosUsuario = participantesAceptados.contains(widget.userID);
     final bool participantesRechazadosUsuario = participantesRechazados.contains(widget.userID);
 
-    //SCAFFOLD
     return Scaffold(
 
       //APP BAR
       appBar: AppBar(
         title: Text(
           "Detalle del plan",
-          style: subtitleText.copyWith(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: Colors.white,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
         backgroundColor: iconoColor,
+        foregroundColor: Colors.white,
+        iconTheme: IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
           if (esPropio) 
@@ -226,21 +238,24 @@ class _PlanScreenState extends State<PlanScreen> {
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
+                  isScrollControlled: true,
+                  useSafeArea: true,
+                  showDragHandle: true,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                   shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                   ),
                   builder: (sheetContext) {
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-
                         //EDITAR
                         ListTile(
                           leading: const Icon(Icons.edit),
                           title: const Text("Editar plan"),
                           onTap: () async {
                             print("[🐧 planes] Editando plan: ${plan["planID"]}");
-                            Navigator.pop(context); //Cerrar modal
+                            Navigator.pop(context);
                             final updatedPlanID = await Navigator.push<String?>(
                               context,
                               MaterialPageRoute(
@@ -264,15 +279,12 @@ class _PlanScreenState extends State<PlanScreen> {
                             }
                           },
                         ),
-
                         //ELIMINAR
                         ListTile(
                           leading: const Icon(Icons.delete),
                           title: const Text("Eliminar plan"),
                           onTap: () async {
-                            // cerrar el bottom sheet usando su propio contexto
                             Navigator.pop(sheetContext);
-                            // luego abrir el diálogo usando el contexto exterior (build context)
                             final bool? confirmar = await showDialog<bool>(
                               context: context,
                               builder: (dialogContext) {
@@ -593,7 +605,7 @@ class _PlanScreenState extends State<PlanScreen> {
                         ),
                       ),
                       onPressed: () {
-                        _showModalParticipantes(context, participantesAceptados, participantesRechazados);
+                        _showParticipantesModal(context, participantesAceptados, participantesRechazados);
                       },
                       child: Padding(
                         padding: const EdgeInsets.only(left: 16),

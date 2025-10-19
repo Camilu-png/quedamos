@@ -3,7 +3,6 @@ import "package:uuid/uuid.dart";
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
-import "package:quedamos/text_styles.dart";
 import "package:quedamos/planes_components.dart";
 import "package:quedamos/screens/main_screen.dart";
 
@@ -199,33 +198,11 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       ),
       builder: (context) {
         return DefaultTabController(
-          length: 2, //Cantidad de pestañas
+          length: 2,
           child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.6,
             child: Column(
               children: [
-                Container(
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Selecciona icono",
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
-                          tooltip: "Cerrar",
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 //PESTAÑAS
                 Container(
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -399,27 +376,6 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //HEADER
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Selecciona ubicación",
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                        tooltip: "Cerrar",
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
                 //BUSCADOR
                 Padding(
                   padding: const EdgeInsets.all(16),
