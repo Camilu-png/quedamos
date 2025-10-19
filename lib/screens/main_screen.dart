@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'friends_screen.dart';
 import 'planes/planes_propios_screen.dart';
-import 'planes/planes_add_screen.dart';
+import 'planes/plan_add_screen.dart';
 import 'planes/planes_screen.dart';
 import 'profile_sreen.dart';
 import '../widgets/custom_navbar.dart';
@@ -28,7 +28,7 @@ class MainScreenState extends State<MainScreen> {
     _mainScreens = [
       PlanesScreen(userID: widget.userID),
       MisPlanesScreen(userID: widget.userID),
-      AddPlanesScreen(userID: widget.userID),
+      AddPlanScreen(userID: widget.userID),
       FriendsScreen(userID: widget.userID),
       ProfileScreen(userID: widget.userID),
     ];

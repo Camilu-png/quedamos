@@ -1,11 +1,10 @@
 import "package:intl/intl.dart";
 import "package:flutter/material.dart";
-import "package:url_launcher/url_launcher.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
 import "package:quedamos/text_styles.dart";
 import "package:quedamos/planes_components.dart";
-import "package:quedamos/screens/planes/planes_add_screen.dart";
+import "package:quedamos/screens/planes/plan_add_screen.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -30,25 +29,6 @@ class _PlanScreenState extends State<PlanScreen> {
     plan = Map<String, dynamic>.from(widget.plan);
     participantesAceptados = List<dynamic>.from(plan["participantesAceptados"] ?? []);
     participantesRechazados = List<dynamic>.from(plan["participantesRechazados"] ?? []);
-  }
-
-  Future<void> _showMap(String location, BuildContext context) async {
-    print("[🐧 planes] Abriendo mapa...");
-    if (location.isEmpty) return;
-    final query = Uri.encodeComponent(location);
-    final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
-    try {
-      await launchUrl(
-        url,
-        mode: LaunchMode.externalApplication,
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No se pudo abrir el mapa")),
-        );
-      }
-    }
   }
 
   String? _getPlanID() {
@@ -264,7 +244,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             final updatedPlanID = await Navigator.push<String?>(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AddPlanesScreen(plan: plan, userID: widget.userID),
+                                builder: (context) => AddPlanScreen(plan: plan, userID: widget.userID),
                               ),
                             );
                             if (updatedPlanID != null) {
@@ -571,7 +551,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () => _showMap(ubicacion, context),
+                        onPressed: () => showMap(context, mounted, ubicacion),
                         child: Padding(
                           padding: const EdgeInsets.only(left: 16),
                           child: Row(

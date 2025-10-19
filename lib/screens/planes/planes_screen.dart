@@ -13,7 +13,6 @@ final db = FirebaseFirestore.instance;
 class PlanesScreen extends StatefulWidget {
   final String userID;
   const PlanesScreen({super.key, required this.userID});
-
   @override
   State<PlanesScreen> createState() => _PlanesScreenState();
 }

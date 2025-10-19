@@ -34,15 +34,18 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Quedamos?',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
         useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-        backgroundColor: primaryDark, // tu color
-        foregroundColor: Colors.white,
-        systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarColor: primaryDark,
-          statusBarIconBrightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          secondary: Colors.deepOrange,
         ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: primaryDark, // tu color
+          foregroundColor: Colors.white,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: primaryDark,
+            statusBarIconBrightness: Brightness.light,
+          ),
         ),
       ),
       navigatorObservers: [routeObserver],
