@@ -2,7 +2,6 @@ import "package:intl/intl.dart";
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
-// import "package:quedamos/text_styles.dart"; // unused
 import "package:quedamos/planes_components.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
 
@@ -67,14 +66,14 @@ class PlanesList extends StatelessWidget {
     final bool participantesRechazadosUsuario = participantesRechazados.contains(userID);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
+      splashFactory: InkSparkle.splashFactory,
       overlayColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.pressed)) {
-          return primaryColor.withAlpha(30);
+          return Theme.of(context).colorScheme.tertiary;
         }
         return null;
       }),
-      splashFactory: InkRipple.splashFactory,
       highlightColor: Colors.transparent,
 
       // ACCIÓN
@@ -92,103 +91,127 @@ class PlanesList extends StatelessWidget {
         );
       },
 
-      // CARD + BADGE
       child: Stack(
         children: [
-          // --- CARD PRINCIPAL ---
+
+          //CARD
           Card(
+            color: Theme.of(context).colorScheme.surface,
             margin: const EdgeInsets.symmetric(vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 3,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            elevation: 2,
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ICONO
+                  //ICONO
                   Container(
-                    width: 80,
+                    width: 60,
                     decoration: BoxDecoration(
                       color: iconoColor,
                       borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        bottomLeft: Radius.circular(12),
+                        topLeft: Radius.circular(24),
+                        bottomLeft: Radius.circular(24),
                       ),
                     ),
                     child: Center(
-                      child: Icon(iconoNombre, color: Colors.white, size: 40),
+                      child: Icon(
+                        iconoNombre,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        size: 40
+                      ),
                     ),
                   ),
 
-                  // INFORMACIÓN DEL PLAN
+                  //INFORMACIÓN
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.all(12.0),
+                      padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // ANFITRIÓN
+                          //ANFITRIÓN
                           if (!esPropio)
-                            Text(
-                              anfitrionNombre,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          if (!esPropio) const SizedBox(height: 4),
-
-                          // TÍTULO
-                          Text(
-                            titulo,
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(height: 4),
-
-                          Column(children: [
                             Row(
                               children: [
-                                const Icon(Icons.calendar_today,
-                                    size: 14, color: Colors.grey),
-                                const SizedBox(width: 4),
                                 Expanded(
-                                  // FECHA
                                   child: Text(
-                                    fechaBonita,
-                                    style:
-                                        const TextStyle(color: Colors.grey),
+                                    "$anfitrionNombre te invita a:",
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w500
+                                    ),
                                   ),
                                 )
                               ],
                             ),
+                          if (!esPropio) const SizedBox(height: 4),
+
+                          //TÍTULO
+                          Text(
+                            titulo,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w900
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+
+                          Column(children: [
+                            //FECHA
                             Row(
                               children: [
-                                const Icon(Icons.access_time,
-                                    size: 14, color: Colors.grey),
+                                Icon(
+                                  Icons.calendar_today,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  size: 15,
+                                ),
                                 const SizedBox(width: 4),
                                 Expanded(
-                                  // HORA
+                                  child: Text(
+                                    fechaBonita,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                            //HORA
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  size: 15,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
                                   child: Text(
                                     horaBonita,
-                                    style:
-                                        const TextStyle(color: Colors.grey),
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant
+                                    ),
                                   ),
                                 )
                               ],
                             ),
                           ]),
+                          //UBICACIÓN
                           Row(
                             children: [
-                              const Icon(Icons.location_on,
-                                  size: 14, color: Colors.grey),
+                              Icon(
+                                Icons.location_on,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 15,
+                              ),
                               const SizedBox(width: 4),
                               Expanded(
                                 // UBICACIÓN
                                 child: Text(
                                   ubicacion,
-                                  style:
-                                      const TextStyle(color: Colors.grey),
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
+                                  ),
                                 ),
                               )
                             ],
@@ -198,12 +221,15 @@ class PlanesList extends StatelessWidget {
                     ),
                   ),
 
-                  // FLECHA
+                  //FLECHA
                   Padding(
-                    padding: const EdgeInsets.only(right: 12.0),
+                    padding: const EdgeInsets.only(right: 12),
                     child: Center(
-                      child: Icon(Icons.arrow_forward_ios,
-                          color: Colors.grey, size: 18),
+                      child: Icon(
+                        Icons.arrow_forward_ios,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        size: 15
+                      ),
                     ),
                   ),
                 ],
@@ -211,47 +237,46 @@ class PlanesList extends StatelessWidget {
             ),
           ),
 
-          // --- BADGE EN LA ESQUINA ---
+          //BADGE
           if (participantesAceptadosUsuario || participantesRechazadosUsuario)
             Positioned(
-              top: 8,
-              right: 8,
+              top: 4,
+              right: -4,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: participantesAceptadosUsuario
-                      ? Colors.green
-                      : Colors.red,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                      ? Color(0xFFC8E6C9)
+                      : Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(12),
+                    bottomLeft: Radius.circular(12),
+                  ),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.surface,
+                    width: 2,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       participantesAceptadosUsuario
-                          ? Icons.check_circle
-                          : Icons.cancel,
-                      size: 14,
-                      color: Colors.white,
+                        ? Icons.check_circle
+                        : Icons.cancel,
+                      size: 15,
+                      color: participantesAceptadosUsuario
+                        ? Color(0xFF0D2610)
+                        : Theme.of(context).colorScheme.onErrorContainer,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      participantesAceptadosUsuario
-                          ? "Aceptado"
-                          : "Rechazado",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                        letterSpacing: 0.5,
+                      participantesAceptadosUsuario ? "Aceptado" : "Rechazado",
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: participantesAceptadosUsuario
+                          ? Color(0xFF0D2610)
+                          : Theme.of(context).colorScheme.onErrorContainer,
                       ),
                     ),
                   ],

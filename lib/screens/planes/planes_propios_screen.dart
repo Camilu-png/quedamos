@@ -2,8 +2,6 @@ import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
-import "package:quedamos/app_colors.dart";
-import "package:quedamos/text_styles.dart";
 import "package:quedamos/widgets/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
 import "package:quedamos/screens/planes/plan_add_screen.dart";
@@ -14,83 +12,101 @@ final db = FirebaseFirestore.instance;
 class MisPlanesScreen extends StatefulWidget {
   final String userID;
   const MisPlanesScreen({super.key, required this.userID});
-
   @override
   State<MisPlanesScreen> createState() => _MisPlanesScreenState();
 }
 
 //MIS PLANES SCREEN STATE
 class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
-  String selectedSegment = "Amigos";
-  String searchQuery = "";
+  
+  String visibilidadSelected = "Amigos";
+  String busqueda = "";
 
   static const int _pageSize = 3; //Planes por página
 
-  //PAGING CONTROLLER
-  final PagingController<int, Map<String, dynamic>> _pagingController =
-      PagingController(firstPageKey: 0);
-
+  //INIT STATE
   @override
   void initState() {
     super.initState();
-
     _pagingController.addPageRequestListener((pageKey) {
       _fetchPage(pageKey);
     });
   }
 
+  //PAGING CONTROLLER
+  final PagingController<int, Map<String, dynamic>> _pagingController = PagingController(firstPageKey: 0);
+
+  //DID CHANGE DEPENDENCIES
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     routeObserver.subscribe(this, ModalRoute.of(context)!);
   }
 
+  //DID POP NEXT
   @override
   void didPopNext() {
     super.didPopNext();
     _refreshPaging();
   }
 
-  //OBTENER PLANES
-  Future<void> _fetchPage(int pageKey) async {
-    print("[🐧 planes] Recuperando planes de la base de datos...");
-    final snapshot = await db.collection("planes").get();
-    final planes = snapshot.docs.map((doc) {
-      final data = doc.data();
-      data["id"] = doc.id;
-      return data;
-    }).toList();
-    print("[🐧 planes] Fetching page starting at index: $pageKey"); 
-    try {
-      //FILTRO: mostrar todos los planes cuyo anfitrión es el usuario (independiente de visibilidad)
-      final filteredPlanes = planes.where((plan) {
-        final anfitrionID = plan["anfitrionID"] ?? "";
-        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
-        final titulo = (plan["titulo"] ?? "").toLowerCase();
-        final query = searchQuery.toLowerCase();
-        return (titulo.contains(query) || anfitrionNombre.contains(query)) && anfitrionID == widget.userID;
-      }).toList();
-      final isLastPage = pageKey + _pageSize >= filteredPlanes.length;
-      final newItems = filteredPlanes.skip(pageKey).take(_pageSize).toList();
-      if (isLastPage) {
-        _pagingController.appendLastPage(newItems);
-      } else {
-        _pagingController.appendPage(newItems, pageKey + _pageSize);
-      }
-    } catch (error) {
-      _pagingController.error = error;
-    }
-  }
-
-  void _refreshPaging() {
-    _pagingController.refresh();
-  }
-
+  //DISPOSE
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
     _pagingController.dispose();
     super.dispose();
+  }
+
+  //REFRESH PAGING
+  void _refreshPaging() {
+    print("[🐧 planes] Refrescando paginación...");
+    _lastDocument = null;
+    _pagingController.refresh();
+  }
+
+  //OBTENER PLANES
+  DocumentSnapshot? _lastDocument;
+  Future<void> _fetchPage(int pageKey) async {
+    print("[🐧 planes] Recuperando planes de la base de datos, página: $pageKey");
+    try {
+      Query query = db.collection("planes")
+          .orderBy("titulo")
+          .limit(_pageSize);
+      if (_lastDocument != null) {
+        query = query.startAfterDocument(_lastDocument!);
+      }
+      final snapshot = await query.get();
+      final planes = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data["id"] = doc.id;
+        return data;
+      }).toList();
+      final planesFiltrados = planes.where((plan) {
+        final titulo = (plan["titulo"] ?? "").toLowerCase();
+        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
+        final queryText = busqueda.toLowerCase();
+        final anfitrionID = plan["anfitrionID"] ?? "";
+        final fecha = plan["fecha"] ?? DateTime.now();
+        final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
+        //TODO: VERIFICAR QUE SEA VÁLIDO TAMBIÉN CON LA HORA
+        return anfitrionID == 
+          widget.userID &&
+          (fechaEsEncuesta || (!fechaEsEncuesta && fecha is Timestamp && fecha.toDate().isAfter(DateTime.now()))) &&
+          (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
+      }).toList();
+      if (planesFiltrados.isNotEmpty) {
+        _lastDocument = snapshot.docs.last;
+      }
+      final isLastPage = planesFiltrados.length < _pageSize;
+      if (isLastPage) {
+        _pagingController.appendLastPage(planesFiltrados);
+      } else {
+        _pagingController.appendPage(planesFiltrados, pageKey + _pageSize);
+      }
+    } catch (error) {
+      _pagingController.error = error;
+    }
   }
 
   @override
@@ -102,82 +118,59 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+        //APP BAR
         appBar: AppBar(
-          title: const Text("Mis planes", style: titleText),
+          title: Text(
+            "Mis planes",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           centerTitle: true,
-          backgroundColor: backgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
           elevation: 0,
-          shadowColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
+        ),
+        //NUEVO PLAN
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final newPlanID = await Navigator.push<String?>(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => AddPlanScreen(userID: widget.userID)),
+            );
+            if (newPlanID != null) _refreshPaging();
+          },
+          icon: const Icon(Icons.add),
+          label: const Text("Nuevo plan"),
+          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+          foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
         ),
         body: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
 
               //BUSCADOR
-              SizedBox(
-                height: 45,
-                child: TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      searchQuery = value;
-                      _refreshPaging();
-                    });
-                  },
-                  style: helpText,
-                  decoration: InputDecoration(
-                    hintText: "Buscar planes...",
-                    hintStyle: helpText,
-                    prefixIcon: const Icon(Icons.search, color: primaryDark),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: primaryDark, width: 1),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: primaryDark, width: 1),
-                    ),
-                    fillColor: Colors.white,
-                    filled: true,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              //NUEVO PLAN
-              SizedBox(
-                height: 45,
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final newPlanID = await Navigator.push<String?>(
-                      context,
-                      MaterialPageRoute(builder: (context) => AddPlanScreen(userID: userID,)),
-                    );
-                    if (newPlanID != null) {
-                      // Si se creó un plan, refrescar la lista
-                      _refreshPaging();
-                    }
-                  },
-                  icon: const Icon(Icons.add, size: 24, color: Colors.white),
-                  label: Text(
-                    "Nuevo plan",
-                    style: bodyPrimaryText.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    alignment: Alignment.centerLeft,
-                    backgroundColor: secondary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              TextField(
+                onChanged: (busquedaValor) {
+                  setState(() {
+                    busqueda = busquedaValor;
+                    _refreshPaging();
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: "Buscar planes...",
+                  hintStyle: Theme.of(context).textTheme.bodyMedium,
+                  prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
@@ -200,7 +193,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
                         },
                       ),
                     noItemsFoundIndicatorBuilder: (_) => const Center(
-                      child: Text("No se encontraron planes"),
+                      child: Text("No se encontraron planes."),
                     ),
                     firstPageProgressIndicatorBuilder: (_) => const Center(
                       child: CircularProgressIndicator(),

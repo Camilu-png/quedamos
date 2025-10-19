@@ -2,7 +2,6 @@ import "package:intl/intl.dart";
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
-import "package:quedamos/text_styles.dart";
 import "package:quedamos/planes_components.dart";
 import "package:quedamos/screens/planes/plan_add_screen.dart";
 
@@ -58,7 +57,7 @@ class _PlanScreenState extends State<PlanScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -71,7 +70,7 @@ class _PlanScreenState extends State<PlanScreen> {
               children: [
                 //PESTAÑAS
                 Container(
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   child: TabBar(
                     labelColor: Theme.of(context).colorScheme.primary,
                     labelStyle: Theme.of(context).textTheme.titleMedium,
@@ -105,7 +104,6 @@ class _PlanScreenState extends State<PlanScreen> {
                     ],
                   )
                 ),
-                const Divider(height: 1),
                 //PESTAÑAS
                 Expanded(
                   child: TabBarView(
@@ -120,6 +118,14 @@ class _PlanScreenState extends State<PlanScreen> {
                             return Center(child: Text("Error al cargar participantes"));
                           } else {
                             final nombres = snapshot.data ?? [];
+                            if (nombres.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  "No se encontraron participantes.",
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                              );
+                            }
                             return ListView.builder(
                               itemCount: nombres.length,
                               itemBuilder: (context, index) {
@@ -141,6 +147,14 @@ class _PlanScreenState extends State<PlanScreen> {
                             return Center(child: Text("Error al cargar participantes"));
                           } else {
                             final nombres = snapshot.data ?? [];
+                            if (nombres.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  "No se encontraron participantes.",
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                              );
+                            }
                             return ListView.builder(
                               itemCount: nombres.length,
                               itemBuilder: (context, index) {
@@ -222,26 +236,27 @@ class _PlanScreenState extends State<PlanScreen> {
         title: Text(
           "Detalle del plan",
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: true,
         backgroundColor: iconoColor,
-        foregroundColor: Colors.white,
-        iconTheme: IconThemeData(color: Colors.white),
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        surfaceTintColor: Theme.of(context).colorScheme.primaryContainer, 
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
         elevation: 0,
         actions: [
           if (esPropio) 
             IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
+              icon: Icon(Icons.more_vert, color: Theme.of(context).colorScheme.onPrimary),
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
                   useSafeArea: true,
                   showDragHandle: true,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                   ),
@@ -251,8 +266,8 @@ class _PlanScreenState extends State<PlanScreen> {
                       children: [
                         //EDITAR
                         ListTile(
-                          leading: const Icon(Icons.edit),
-                          title: const Text("Editar plan"),
+                          leading: Icon(Icons.edit, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          title: Text("Editar plan", style: Theme.of(context).textTheme.bodyLarge),
                           onTap: () async {
                             print("[🐧 planes] Editando plan: ${plan["planID"]}");
                             Navigator.pop(context);
@@ -264,7 +279,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             );
                             if (updatedPlanID != null) {
                               try {
-                                final doc = await db.collection('planes').doc(updatedPlanID).get();
+                                final doc = await db.collection("planes").doc(updatedPlanID).get();
                                 if (doc.exists && doc.data() != null) {
                                   final updated = doc.data()!;
                                   setState(() {
@@ -274,15 +289,15 @@ class _PlanScreenState extends State<PlanScreen> {
                                   });
                                 }
                               } catch (e) {
-                                print('[🐧 planes] Error al refetchear plan: $e');
+                                print("[🐧 planes] Error al refetchear plan: $e");
                               }
                             }
                           },
                         ),
                         //ELIMINAR
                         ListTile(
-                          leading: const Icon(Icons.delete),
-                          title: const Text("Eliminar plan"),
+                          leading: Icon(Icons.delete, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          title: Text("Eliminar plan", style: Theme.of(context).textTheme.bodyLarge),
                           onTap: () async {
                             Navigator.pop(sheetContext);
                             final bool? confirmar = await showDialog<bool>(
@@ -294,12 +309,12 @@ class _PlanScreenState extends State<PlanScreen> {
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(dialogContext, false),
-                                      child: const Text("Cancelar"),
+                                      child: Text("Cancelar", style: Theme.of(context).textTheme.bodyMedium),
                                     ),
-                                    ElevatedButton(
+                                    FilledButton(
                                       onPressed: () => Navigator.pop(dialogContext, true),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                      child: const Text("Eliminar"),
+                                      style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+                                      child: Text("Eliminar", style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onError)),
                                     ),
                                   ],
                                 );
@@ -320,7 +335,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               try {
                                 await db.collection("planes").doc(docId).delete();
                                 if (mounted) {
-                                  Navigator.pop(context, 'deleted'); //Volver y notificar eliminación
+                                  Navigator.pop(context, "deleted"); //Volver y notificar eliminación
                                 }
                               } catch (e) {
                                 print("[🐧 planes] Error: $e");
@@ -355,7 +370,7 @@ class _PlanScreenState extends State<PlanScreen> {
               height: 120,
               color: iconoColor,
               alignment: Alignment.center,
-              child: Icon(iconoNombre, color: Colors.white, size: 60),
+              child: Icon(iconoNombre, color: Theme.of(context).colorScheme.onPrimary, size: 60),
             ),
 
             //CONTENIDO
@@ -374,8 +389,8 @@ class _PlanScreenState extends State<PlanScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: primaryColor,
-                          borderRadius: BorderRadius.circular(25),
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -383,15 +398,12 @@ class _PlanScreenState extends State<PlanScreen> {
                             Icon(
                               visibilidad == "Amigos" ? Icons.group : Icons.public,
                               size: 24,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               visibilidad,
-                              style: bodyPrimaryText.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer),
                             ),
                           ],
                         ),
@@ -405,8 +417,8 @@ class _PlanScreenState extends State<PlanScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: participantesAceptadosUsuario ? Colors.green : Colors.red,
-                            borderRadius: BorderRadius.circular(25),
+                            color: participantesAceptadosUsuario ? Color(0xFFC8E6C9) : Theme.of(context).colorScheme.errorContainer,
+                            borderRadius: BorderRadius.circular(24),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -414,14 +426,17 @@ class _PlanScreenState extends State<PlanScreen> {
                               Icon(
                                 participantesAceptadosUsuario ? Icons.check_circle : Icons.cancel,
                                 size: 24,
-                                color: Colors.white,
+                                color: participantesAceptadosUsuario 
+                                  ? Color(0xFF0D2610)
+                                  : Theme.of(context).colorScheme.onErrorContainer,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 participantesAceptadosUsuario ? "Aceptado" : "Rechazado",
-                                style: bodyPrimaryText.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  color: participantesAceptadosUsuario 
+                                    ? Color(0xFF0D2610)
+                                    : Theme.of(context).colorScheme.onErrorContainer,
                                 ),
                               ),
                             ],
@@ -436,13 +451,13 @@ class _PlanScreenState extends State<PlanScreen> {
                   //ANFITRIÓN
                   Row(
                     children: [
-                      const Icon(Icons.star, size: 24, color: primaryText),
+                      Icon(Icons.star, size: 24, color: Theme.of(context).colorScheme.onSurface),
                       const SizedBox(width: 8),
                       Text(
                         (esPropio)
                           ? "Creado por ti"
                           : "Creado por $anfitrionNombre",
-                        style: bodyPrimaryText,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
                       ),
                     ],
                   ),
@@ -452,7 +467,10 @@ class _PlanScreenState extends State<PlanScreen> {
                   //TÍTULO
                   Text(
                     titulo,
-                    style: titleText,
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
 
                   const SizedBox(height: 12),
@@ -460,7 +478,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   //DESCRIPCIÓN
                   Text(
                     descripcion,
-                    style: bodyPrimaryText,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
                   ),
 
                   const SizedBox(height: 12),
@@ -468,11 +486,11 @@ class _PlanScreenState extends State<PlanScreen> {
                   //FECHA
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 24, color: primaryText),
+                      Icon(Icons.calendar_today, size: 24, color: Theme.of(context).colorScheme.onSurface),
                       const SizedBox(width: 4),
                       Text(
                         fechaBonita,
-                        style: bodyPrimaryText,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
                       ),
                     ],
                   ),
@@ -482,11 +500,11 @@ class _PlanScreenState extends State<PlanScreen> {
                   //HORA
                   Row(
                     children: [
-                      const Icon(Icons.access_time, size: 24, color: primaryText),
+                      Icon(Icons.access_time, size: 24, color: Theme.of(context).colorScheme.onSurface),
                       const SizedBox(width: 4),
                       Text(
                         horaBonita,
-                        style: bodyPrimaryText,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
                       ),
                     ],
                   ),
@@ -496,11 +514,11 @@ class _PlanScreenState extends State<PlanScreen> {
                   //UBICACIÓN
                   Row(
                     children: [
-                      const Icon(Icons.location_on, size: 24, color: primaryText),
+                      Icon(Icons.location_on, size: 24, color: Theme.of(context).colorScheme.onSurface),
                       const SizedBox(width: 4),
                       Text(
                         ubicacion,
-                        style: bodyPrimaryText,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
                       ),
                     ],
                   ),
@@ -511,12 +529,12 @@ class _PlanScreenState extends State<PlanScreen> {
                     //ENCUESTA
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: secondary,
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(24),
                           ),
                         ),
                         onPressed: () {
@@ -527,12 +545,12 @@ class _PlanScreenState extends State<PlanScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              const Icon(Icons.poll, color: Colors.white, size: 24),
+                              Icon(Icons.poll, color: Theme.of(context).colorScheme.onSecondary, size: 24),
                               const SizedBox(width: 8),
                               Text(
                                 "Ver y participar en encuesta",
-                                style: bodyPrimaryText.copyWith(
-                                  color: Colors.white,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSecondary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -540,7 +558,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(right: 12),
                                 child: Center(
-                                  child: Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+                                  child: Icon(Icons.arrow_forward_ios, color: Theme.of(context).colorScheme.onSecondary, size: 15),
                                 ),
                               ),
                             ],
@@ -555,12 +573,12 @@ class _PlanScreenState extends State<PlanScreen> {
                   if (!ubicacionEsEncuesta)
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryLight,
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(24),
                           ),
                         ),
                         onPressed: () => showMap(context, mounted, ubicacion),
@@ -569,11 +587,12 @@ class _PlanScreenState extends State<PlanScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              const Icon(Icons.location_on, color: primaryText, size: 24),
+                              Icon(Icons.location_on, color: Theme.of(context).colorScheme.onPrimaryContainer, size: 24),
                               const SizedBox(width: 8),
                               Text(
                                 "Ver ubicación en mapa",
-                                style: bodyPrimaryText.copyWith(
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -581,7 +600,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(right: 12),
                                 child: Center(
-                                  child: Icon(Icons.arrow_forward_ios, color: primaryText, size: 18),
+                                  child: Icon(Icons.arrow_forward_ios, color: Theme.of(context).colorScheme.onPrimaryContainer, size: 15),
                                 ),
                               ),
                             ],
@@ -596,12 +615,12 @@ class _PlanScreenState extends State<PlanScreen> {
                   //VER PARTICIPANTES
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: FilledButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryLight,
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                       ),
                       onPressed: () {
@@ -612,11 +631,12 @@ class _PlanScreenState extends State<PlanScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            const Icon(Icons.group, color: primaryText, size: 24),
+                            Icon(Icons.group, color: Theme.of(context).colorScheme.onPrimaryContainer, size: 24),
                             const SizedBox(width: 8),
                             Text(
                               "Ver participantes",
-                              style: bodyPrimaryText.copyWith(
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -624,7 +644,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             Padding(
                               padding: const EdgeInsets.only(right: 12),
                               child: Center(
-                                child: Icon(Icons.arrow_forward_ios, color: primaryText, size: 18),
+                                child: Icon(Icons.arrow_forward_ios, color: Theme.of(context).colorScheme.onPrimaryContainer, size: 15),
                               ),
                             ),
                           ],
@@ -642,16 +662,15 @@ class _PlanScreenState extends State<PlanScreen> {
 
                         //BOTÓN: RECHAZAR
                         Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Theme.of(context).colorScheme.error,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(24),
                               ),
                             ),
                             onPressed: () async {
-                              // Optimistic UI: update local state first
                               setState(() {
                                 participantesAceptados.remove(widget.userID);
                                 if (!participantesRechazados.contains(widget.userID)) {
@@ -667,11 +686,10 @@ class _PlanScreenState extends State<PlanScreen> {
                                   const SnackBar(content: Text("Plan rechazado")),
                                 );
                               } catch (e) {
-                                // rollback on error
                                 setState(() {
                                   participantesRechazados.remove(widget.userID);
                                 });
-                                print('[🐧 planes] Error al actualizar rechazo: $e');
+                                print("[🐧 planes] Error al actualizar rechazo: $e");
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text("Error al rechazar plan")),
                                 );
@@ -680,12 +698,12 @@ class _PlanScreenState extends State<PlanScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.cancel, size: 24, color: Colors.white),
+                                Icon(Icons.cancel, size: 24, color: Theme.of(context).colorScheme.onError),
                                 SizedBox(width: 8),
                                 Text(
                                   "Rechazar",
-                                  style: bodyPrimaryText.copyWith(
-                                    color: Colors.white,
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: Theme.of(context).colorScheme.onError,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -703,11 +721,10 @@ class _PlanScreenState extends State<PlanScreen> {
                               backgroundColor: Colors.green,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(24),
                               ),
                             ),
                             onPressed: () async {
-                              // Optimistic UI: update local state first
                               setState(() {
                                 participantesRechazados.remove(widget.userID);
                                 if (!participantesAceptados.contains(widget.userID)) {
@@ -723,11 +740,10 @@ class _PlanScreenState extends State<PlanScreen> {
                                   const SnackBar(content: Text("Plan aceptado")),
                                 );
                               } catch (e) {
-                                // rollback on error
                                 setState(() {
                                   participantesAceptados.remove(widget.userID);
                                 });
-                                print('[🐧 planes] Error al actualizar aceptación: $e');
+                                print("[🐧 planes] Error al actualizar aceptación: $e");
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text("Error al aceptar plan")),
                                 );
@@ -740,7 +756,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                 SizedBox(width: 8),
                                 Text(
                                   "Aceptar",
-                                  style: bodyPrimaryText.copyWith(
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
