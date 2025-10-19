@@ -121,10 +121,15 @@ class FriendRequestList extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: _TextButtonAction(
-                              text: "Aceptar",
-                              color: Colors.greenAccent.shade400,
-                              onTap: () {
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(vertical: 5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            onPressed: () {
                                   if (onAccept != null) {
                                     onAccept!(friend["id"]);
                                   }
@@ -132,33 +137,61 @@ class FriendRequestList extends StatelessWidget {
                                     SnackBar(
                                       content: Text(
                                           '${friend["name"]} ahora es tu amigo 🎉'),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: secondary,
                                     ),
                                   );
-                              },
+                              }, child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle, size: 20, color: Colors.white),
+                                SizedBox(width: 5),
+                                Text(
+                                  "Aceptar",
+                                  style: bodyPrimaryText.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 5),
                           Expanded(
-                            child: _TextButtonAction(
-                              text: "Rechazar",
-                              color: Colors.redAccent.shade200,
-                              onTap: () {
-                                if (onReject != null) {
-                                  onReject!(friend["id"]);
-                                }
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: const EdgeInsets.symmetric(vertical: 5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            onPressed: () {
+                                  if (onReject != null) {
+                                    onReject!(friend["id"]);
+                                  }
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                          'Solicitud de ${friend["name"]} rechazada ❌'),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: Colors.redAccent,
+                                          'Rechazaste a ${friend["name"]}'),
                                     ),
                                   );
-                              },
+                              }, child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle, size: 20, color: Colors.white),
+                                SizedBox(width: 5),
+                                Text(
+                                  "Rechazar",
+                                  style: bodyPrimaryText.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                             ),
                           ),
+                          const SizedBox(width: 5),
                         ],
                       ),
                     ],
@@ -189,8 +222,7 @@ class _ActionButton extends StatefulWidget {
 
   const _ActionButton({
     required this.icon,
-    required this.color,
-    this.onTap,
+    required this.color, this.onTap,
   });
 
   @override

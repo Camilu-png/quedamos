@@ -99,8 +99,6 @@ class FriendList extends StatelessWidget {
                                 SnackBar(
                                   content: Text(
                                       'Se le ha enviado una solicitud a ${friend["name"]}'),
-                                  behavior: SnackBarBehavior.floating,
-                                  backgroundColor: secondary,
                                 ),
                               );
                             }
@@ -134,8 +132,6 @@ class FriendList extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('${friend["name"]} fue eliminado'),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: Colors.redAccent,
                 ),
               );
             },

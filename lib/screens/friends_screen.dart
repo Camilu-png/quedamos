@@ -32,8 +32,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error al eliminar amigo'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
         ),
       );
     }
@@ -228,8 +226,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Error al aceptar la solicitud'),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
                           ),
                         );
                       }
@@ -242,8 +238,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Error al rechazar la solicitud'),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
                           ),
                         );
                       }
