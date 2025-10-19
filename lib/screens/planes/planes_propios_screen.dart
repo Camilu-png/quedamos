@@ -2,11 +2,11 @@ import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
-import "package:quedamos/screens/planes/plan_add_screen.dart";
+import "package:quedamos/app_colors.dart";
+import "package:quedamos/text_styles.dart";
+import "package:quedamos/widgets/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
-import "../../widgets/planes_list.dart";
-import "../../app_colors.dart";
-import "../../text_styles.dart";
+import "package:quedamos/screens/planes/plan_add_screen.dart";
 
 final db = FirebaseFirestore.instance;
 

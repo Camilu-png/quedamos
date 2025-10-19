@@ -62,39 +62,72 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
 
   //REFRESH PAGING
   void _refreshPaging() {
-    print("[🐧 planes] Refrescando paginación..."); 
+    print("[🐧 planes] Refrescando paginación...");
+    _lastDocument = null;
     _pagingController.refresh();
   }
 
   //OBTENER PLANES
+  DocumentSnapshot? _lastDocument;
   Future<void> _fetchPage(int pageKey) async {
-    print("[🐧 planes] Recuperando planes de la base de datos...");
-    final snapshot = await db.collection("planes").get();;
-    final planes = snapshot.docs.map((doc) {
-      final data = doc.data();
-      data["id"] = doc.id;
-      return data;
-    }).toList();
-    print("[🐧 planes] Fetching page starting at index: $pageKey"); 
+    print("[🐧 planes] Recuperando planes de la base de datos, página: $pageKey");
     try {
-      //FILTRO
-      final filteredPlanes = planes.where((plan) {
-        final visibilidad = (plan["visibilidad"] ?? "").toLowerCase();
-        final anfitrionID = plan["anfitrionID"] ?? "";
-        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
-        final titulo = (plan["titulo"] ?? "").toLowerCase();
-        final query = searchQuery.toLowerCase();
-        return
-          visibilidad == selectedSegment.toLowerCase() &&
-          (titulo.contains(query) || anfitrionNombre.contains(query)) &&
-          anfitrionID != widget.userID; //Planes ajenos al usuario
+      // Si es Amigos, obtenemos los IDs de amigos del usuario
+      List<String> amigosIDs = [];
+      if (selectedSegment == "Amigos") {
+        final amigosSnapshot = await db
+            .collection("users")
+            .doc(widget.userID)
+            .collection("amigos")
+            .get();
+        amigosIDs = amigosSnapshot.docs.map((doc) => doc.id).toList();
+      }
+      // Consulta base a Firestore
+      Query query = db.collection("planes")
+          .where("visibilidad", isEqualTo: selectedSegment)
+          .orderBy("titulo")
+          .limit(_pageSize);
+
+      if (_lastDocument != null) {
+        query = query.startAfterDocument(_lastDocument!);
+      }
+      final snapshot = await query.get();
+      // Mapear documentos a Map<String,dynamic>
+      final planes = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data["id"] = doc.id;
+        return data;
       }).toList();
-      final isLastPage = pageKey + _pageSize >= filteredPlanes.length;
-      final newItems = filteredPlanes.skip(pageKey).take(_pageSize).toList();
+      // Filtrado en memoria según segmento y búsqueda
+      final filteredPlanes = planes.where((plan) {
+        final titulo = (plan["titulo"] ?? "").toLowerCase();
+        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
+        final queryText = searchQuery.toLowerCase();
+        final anfitrionID = plan["anfitrionID"] ?? "";
+        if (selectedSegment == "Amigos") {
+          // Solo planes de amigos, visibilidad "Amigos" y que no sean del usuario
+          return plan["visibilidad"] == "Amigos" &&
+                amigosIDs.contains(anfitrionID) &&
+                anfitrionID != widget.userID &&
+                (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
+        } else if (selectedSegment == "Público") {
+          // Todos los planes públicos, opcionalmente también se puede excluir los propios
+          return plan["visibilidad"] == "Público" &&
+                anfitrionID != widget.userID &&
+                (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
+        }
+        return false;
+      }).toList();
+      // Actualizar el último documento para la paginación
+      if (filteredPlanes.isNotEmpty) {
+        _lastDocument = snapshot.docs.last;
+      }
+      // Paginación infinita
+      final isLastPage = filteredPlanes.length < _pageSize;
       if (isLastPage) {
-        _pagingController.appendLastPage(newItems);
+        _pagingController.appendLastPage(filteredPlanes);
       } else {
-        _pagingController.appendPage(newItems, pageKey + _pageSize);
+        _pagingController.appendPage(filteredPlanes, pageKey + _pageSize);
       }
     } catch (error) {
       _pagingController.error = error;

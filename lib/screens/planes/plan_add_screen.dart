@@ -385,7 +385,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                       hintText: "Buscar ubicación...",
                       prefixIcon: Icon(Icons.search),
                       filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
+                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
@@ -393,6 +393,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     ),
                   ),
                 ),
+                const Divider(height: 1),
                 //UBICACIONES RECOMENDADAS
                 Expanded(
                   child: ListView.builder(
@@ -423,6 +424,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     },
                   ),
                 ),
+                const Divider(height: 1),
                 //ACCIONES
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
