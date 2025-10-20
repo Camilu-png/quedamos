@@ -19,16 +19,21 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: const Text(
-          "Nuevo Amigo",
-          style: titleText,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+        appBar: AppBar(
+          title: Text(
+            "Nuevo Amigo",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.w600,
+            )
+          ),
+          centerTitle: true,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
+          elevation: 0,
         ),
-        centerTitle: true,
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
-      ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _friendsService.getAllUsers(),
         builder: (context, allUsersSnapshot) {

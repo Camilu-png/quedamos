@@ -45,13 +45,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget build(BuildContext context) {
     print("👾 UID del usuario -> ${widget.userID}");
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: const Text("Mis Amigos", style: titleText),
-        centerTitle: true,
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
-      ),
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+        appBar: AppBar(
+          title: Text(
+            "Mis Amigos",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.w600,
+            )
+          ),
+          centerTitle: true,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
+          elevation: 0,
+        ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
     stream: selectedSegment == 'Amigos'
         ? _friendsService.getFriends(widget.userID)
