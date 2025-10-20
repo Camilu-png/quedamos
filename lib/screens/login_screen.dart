@@ -1,56 +1,65 @@
-import 'package:flutter/material.dart';
-import 'main_screen.dart';
-import 'register_screen.dart';
-import '../app_colors.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import "package:flutter/material.dart";
+import "package:firebase_auth/firebase_auth.dart";
+import "main_screen.dart";
+import "register_screen.dart";
+import "package:quedamos/app_colors.dart";
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Controladores para los campos
+  
+  //CONTROLADORES
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Función para hacer login
+  //FUNCIÓN: LOGIN
   Future<void> _login() async {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
-
+    if (
+      email.isEmpty ||
+      password.isEmpty
+    ) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Por favor, completa todos los campos."),
+        ),
+      );
+      return;
+    }
     try {
       final credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
-
-      print("✅ Login OK: ${credential.user?.uid}");
-
+      print("[🕵️‍♀️ login] Login OK: ${credential.user?.uid}");
       if (!mounted) return;
-
-      // Navegar a la pantalla principal
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => MainScreen(userID: credential.user!.uid)),
       );
     } on FirebaseAuthException catch (e) {
-      print("Error login");
-      print(e.code);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Ocurrió un error. Por favor, intenta nuevamente."),
+        ),
+      );
+      print("[🕵️‍♀️ login] Error: ${e.code}");
     }
   }
 
-   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: primaryColor,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              //Logo calendario
               Image.asset(
                 "assets/logo.png",
                  height: 120,
@@ -64,70 +73,89 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: Colors.white,
                 ),
               ),
+              
               const SizedBox(height: 32),
 
-              // Input correo
+              //INPUT: CORREO
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
                   hintText: "Dirección de correo electrónico",
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
                   ),
                 ),
+                style: Theme.of(context).textTheme.bodyLarge,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Por favor, ingresa un correo electrónico.";
+                  }
+                  return null;
+                },
               ),
+
               const SizedBox(height: 16),
 
-              // Input contraseña
+              //INPUT: CONTRASEÑA
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: "Contraseña",
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
                   ),
                 ),
+                style: Theme.of(context).textTheme.bodyLarge,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Por favor, ingresa un título.";
+                  }
+                  return null;
+                },
               ),
-              const SizedBox(height: 24),
 
-              // Botón ingresar
+              const SizedBox(height: 16),
+
+              //BOTÓN: INGRESAR
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: secondary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
                   onPressed: _login,
-                  child: const Text(
+                  child: Text(
                     "Ingresar",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold
-                    ),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontWeight: FontWeight.w600,
+                    )
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
 
-              // Botón registrarse
+              const SizedBox(height: 16),
+
+              //BOTÓN: REGISTRASE
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: secondary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
                   onPressed: () {
@@ -136,18 +164,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       MaterialPageRoute(builder: (context) => const RegisterScreen()),
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     "Registrarse",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold
-                    ),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      fontWeight: FontWeight.w600,
+                    )
                   ),
                 ),
               ),
+
               const SizedBox(height: 16),
 
+              //BOTÓN: INGRESAR CON GOOGLE
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -156,14 +185,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 24,
                   ),
                   onPressed: () {},
-                  label: const Text(
+                  label: Text(
                     "Ingresar con Google",
-                    style: TextStyle(fontSize: 16, color: Colors.black87),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    )
                   ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: const BorderSide(color: Colors.grey),
-                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh),
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                 ),
               ),

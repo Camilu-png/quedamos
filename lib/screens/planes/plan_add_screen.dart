@@ -3,7 +3,7 @@ import "package:uuid/uuid.dart";
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
-import "package:quedamos/planes_components.dart";
+import "package:quedamos/screens/planes/planes_components.dart";
 import "package:quedamos/screens/main_screen.dart";
 
 final db = FirebaseFirestore.instance;
@@ -582,7 +582,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                       style: Theme.of(context).textTheme.bodyMedium,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return "Por favor, ingresa un título";
+                          return "Por favor, ingresa un título.";
                         }
                         return null;
                       },
@@ -991,6 +991,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                             print("[🐧 planes] Guardando plan...");
                             final planFinal = {
                               "planID": planID,
+                              "fecha_creacion": Timestamp.fromDate(DateTime.now()),
                               "visibilidad": visibilidad,
                               "iconoNombre": getIconName(iconoNombre),
                               "iconoColor": getColorName(iconoColor),
@@ -1049,10 +1050,13 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               borderRadius: BorderRadius.circular(24),
                             ),
                           ),
-                          child: Text("Guardar", style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            fontWeight: FontWeight.w600,
-                          )),
+                          child: Text(
+                            "Guardar",
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: Theme.of(context).colorScheme.onSecondary,
+                              fontWeight: FontWeight.w600,
+                            )
+                          ),
                         ),
                       )
                     )

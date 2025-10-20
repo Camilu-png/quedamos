@@ -2,7 +2,7 @@ import "package:intl/intl.dart";
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
-import "package:quedamos/planes_components.dart";
+import "package:quedamos/screens/planes/planes_components.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
 
 class PlanesList extends StatelessWidget {

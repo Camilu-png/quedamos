@@ -2,7 +2,7 @@ import "package:intl/intl.dart";
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
-import "package:quedamos/planes_components.dart";
+import "package:quedamos/screens/planes/planes_components.dart";
 import "package:quedamos/screens/planes/plan_add_screen.dart";
 
 final db = FirebaseFirestore.instance;
@@ -516,10 +516,12 @@ class _PlanScreenState extends State<PlanScreen> {
                     children: [
                       Icon(Icons.location_on, size: 24, color: Theme.of(context).colorScheme.onSurface),
                       const SizedBox(width: 4),
-                      Text(
-                        ubicacion,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                      ),
+                      Expanded(
+                        child: Text(
+                          ubicacion,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                        ),
+                      )
                     ],
                   ),
 
