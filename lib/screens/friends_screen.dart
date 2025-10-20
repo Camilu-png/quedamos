@@ -56,6 +56,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
         surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
         elevation: 0,
       ),
+
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          final mainState =
+              context.findAncestorStateOfType<MainScreenState>();
+          mainState?.navigateTo(AddFriendsScreen(userID: widget.userID));
+        },
+        icon: const Icon(Icons.add),
+        label: const Text("Nuevo amigo"),
+        backgroundColor:
+            Theme.of(context).colorScheme.secondaryContainer,
+        foregroundColor:
+            Theme.of(context).colorScheme.onSecondaryContainer,
+      ),
+
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: selectedSegment == 'Amigos'
             ? _friendsService.getFriends(widget.userID)
@@ -72,37 +87,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  SizedBox(
-                    height: 45,
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        final mainState =
-                            context.findAncestorStateOfType<MainScreenState>();
-                        mainState
-                            ?.navigateTo(AddFriendsScreen(userID: widget.userID));
-                      },
-                      icon: const Icon(Icons.add, size: 24, color: Colors.white),
-                      label: Text(
-                        "Nuevo amigo",
-                        style: bodyPrimaryText.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        alignment: Alignment.centerLeft,
-                        backgroundColor: secondary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-              // SEGMENTED BUTTON
                   SizedBox(
                     width: double.infinity,
                     child: SegmentedButton<String>(
@@ -141,8 +125,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-
+                  const SizedBox(height: 16),
                   Text(
                     selectedSegment == 'Amigos'
                         ? "Todavía no tienes amigos 😢"
@@ -158,35 +141,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                SizedBox(
-                  height: 45,
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      final mainState =
-                          context.findAncestorStateOfType<MainScreenState>();
-                      mainState
-                          ?.navigateTo(AddFriendsScreen(userID: widget.userID));
-                    },
-                    icon: const Icon(Icons.add, size: 24, color: Colors.white),
-                    label: Text(
-                      "Nuevo amigo",
-                      style: bodyPrimaryText.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      alignment: Alignment.centerLeft,
-                      backgroundColor: secondary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: SegmentedButton<String>(
@@ -223,8 +177,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-
+                const SizedBox(height: 16),
                 SizedBox(
                   height: 600,
                   child: selectedSegment == 'Amigos'
@@ -245,8 +198,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               debugPrint("Error al aceptar solicitud: $e");
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content:
-                                        Text('Error al aceptar la solicitud')),
+                                    content: Text(
+                                        'Error al aceptar la solicitud')),
                               );
                             }
                           },
@@ -258,8 +211,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               debugPrint("Error al rechazar solicitud: $e");
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content:
-                                        Text('Error al rechazar la solicitud')),
+                                    content: Text(
+                                        'Error al rechazar la solicitud')),
                               );
                             }
                           },
