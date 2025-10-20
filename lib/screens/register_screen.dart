@@ -1,7 +1,8 @@
-import "package:flutter/material.dart";
-import "package:firebase_auth/firebase_auth.dart";
-import "package:cloud_firestore/cloud_firestore.dart";
-import "main_screen.dart";
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'main_screen.dart';
 import "package:quedamos/app_colors.dart";
 
 class RegisterScreen extends StatefulWidget {
@@ -30,6 +31,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   //FUNCIÓN: REGISTRO
   Future<void> _register() async {
+    
+    final FirebaseMessaging messaging = FirebaseMessaging.instance;
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -48,12 +51,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: password,
       );
       final userID = credential.user?.uid;
-      //CREAR DOCUMENTO DE USUARIOS EN FIRESTORE
-      await FirebaseFirestore.instance.collection("users").doc(userID).set({
-        "name": name,
-        "email": email,
-        "amigos": [],
-      });
+      String? token = await messaging.getToken();
+        if (token != null) {
+        // Crear el documento del usuario en Firestore
+          await FirebaseFirestore.instance.collection('users').doc(userID).set({
+            'name': name,
+            'email': email,
+            'fcmToken': token,
+          });
+        }
+
       if (userID != null && mounted) {
         Navigator.pushReplacement(
           context,

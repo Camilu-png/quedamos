@@ -1,8 +1,10 @@
-import "package:flutter/material.dart";
-import "package:firebase_auth/firebase_auth.dart";
-import "main_screen.dart";
-import "register_screen.dart";
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'main_screen.dart';
+import 'register_screen.dart';
 import "package:quedamos/app_colors.dart";
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +17,8 @@ class _LoginScreenState extends State<LoginScreen> {
   //CONTROLADORES
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  final FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   //FUNCIÓN: LOGIN
   Future<void> _login() async {
@@ -34,7 +38,17 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
+      // REVISAR PQ NO SIRVE UPDATE DE TOKEN
+      String? token = await messaging.getToken();
+      if (token != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(credential.user?.uid)
+            .update({'fcmToken': token});
+      }
+
       print("[🕵️‍♀️ login] Login OK: ${credential.user?.uid}");
+
       if (!mounted) return;
       Navigator.pushReplacement(
         context,

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'friends_screen.dart';
 import 'planes/planes_propios_screen.dart';
@@ -14,6 +16,15 @@ class MainScreen extends StatefulWidget {
   @override
   State<MainScreen> createState() => MainScreenState();
 }
+// REVISAR PQ NO SIRVE UPDATE DE TOKEN
+void listenTokenChanges(String uid) {
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .update({'fcmToken': newToken});
+  });
+}
 
 class MainScreenState extends State<MainScreen> {
   late int _currentIndex;
@@ -25,6 +36,9 @@ class MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+
+    listenTokenChanges(widget.userID);
+
     _mainScreens = [
       PlanesScreen(userID: widget.userID),
       MisPlanesScreen(userID: widget.userID),
