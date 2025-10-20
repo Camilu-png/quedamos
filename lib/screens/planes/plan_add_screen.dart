@@ -582,7 +582,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                       style: Theme.of(context).textTheme.bodyMedium,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return "Por favor, ingresa un título";
+                          return "Por favor, ingresa un título.";
                         }
                         return null;
                       },
@@ -1050,10 +1050,13 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               borderRadius: BorderRadius.circular(24),
                             ),
                           ),
-                          child: Text("Guardar", style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSecondary,
-                            fontWeight: FontWeight.w600,
-                          )),
+                          child: Text(
+                            "Guardar",
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: Theme.of(context).colorScheme.onSecondary,
+                              fontWeight: FontWeight.w600,
+                            )
+                          ),
                         ),
                       )
                     )
