@@ -111,93 +111,93 @@ class FriendRequestList extends StatelessWidget {
 
                 // Nombre del usuario
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(friend["name"] ?? '', style: subtitleText),
-
-                      const SizedBox(height: 8),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                padding: const EdgeInsets.symmetric(vertical: 5),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            onPressed: () {
-                                  if (onAccept != null) {
-                                    onAccept!(friend["id"]);
-                                  }
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          '${friend["name"]} ahora es tu amigo 🎉'),
-                                    ),
-                                  );
-                              }, child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle, size: 20, color: Colors.white),
-                                SizedBox(width: 5),
-                                Text(
-                                  "Aceptar",
-                                  style: bodyPrimaryText.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(friend["name"] ?? '', style: subtitleText),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
                                   ),
                                 ),
-                              ],
-                            ),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: const EdgeInsets.symmetric(vertical: 5),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            onPressed: () {
-                                  if (onReject != null) {
-                                    onReject!(friend["id"]);
-                                  }
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                onPressed: () {
+                                  if (onAccept != null) onAccept!(friend["id"]);
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                          'Rechazaste a ${friend["name"]}'),
+                                      content: Text('${friend["name"]} ahora es tu amigo 🎉'),
                                     ),
                                   );
-                              }, child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle, size: 20, color: Colors.white),
-                                SizedBox(width: 5),
-                                Text(
-                                  "Rechazar",
-                                  style: bodyPrimaryText.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(Icons.check_circle, size: 20, color: Colors.white),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      "Aceptar",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Theme.of(context).colorScheme.error,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
                                   ),
                                 ),
-                              ],
+                                onPressed: () {
+                                  if (onReject != null) onReject!(friend["id"]);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Rechazaste a ${friend["name"]}'),
+                                    ),
+                                  );
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.cancel,
+                                        size: 20,
+                                        color: Theme.of(context).colorScheme.onError),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      "Rechazar",
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onError,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),],
-            ),
+                ),
+          ],
+          ),
           ),
         );
       },
