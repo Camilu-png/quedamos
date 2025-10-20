@@ -62,8 +62,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           await FirebaseFirestore.instance.collection('users').doc(userID).set({
             'name': name,
             'email': email,
-            'amigos': [],
-            'misEventos': [],
             'fcmToken': token,
           });
         }
