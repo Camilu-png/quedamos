@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:quedamos/services/friends_service.dart';
 import '../widgets/friend_list.dart';
-import 'package:quedamos/text_styles.dart';
-import '../app_colors.dart';
 
 class AddFriendsScreen extends StatefulWidget {
   final String userID;
@@ -20,20 +18,20 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
-        appBar: AppBar(
-          title: Text(
-            "Nuevo Amigo",
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onPrimary,
-              fontWeight: FontWeight.w600,
-            )
-          ),
-          centerTitle: true,
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-          surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
-          elevation: 0,
+      appBar: AppBar(
+        title: Text(
+          "Nuevo Amigo",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontWeight: FontWeight.w600,
+              ),
         ),
+        centerTitle: true,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
+        elevation: 0,
+      ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _friendsService.getAllUsers(),
         builder: (context, allUsersSnapshot) {
@@ -82,42 +80,46 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        SizedBox(
-                          height: 45,
+                        // Buscador
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
                           child: TextField(
                             onChanged: (value) {
                               setState(() {
                                 searchQuery = value;
                               });
                             },
-                            style: helpText,
-                            decoration: const InputDecoration(
-                              hintText: 'Buscar amigo...',
-                              prefixIcon: Icon(Icons.search, color: primaryDark),
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(12)),
-                                borderSide: BorderSide(color: primaryDark, width: 1),
+                            decoration: InputDecoration(
+                              hintText: "Buscar amigo...",
+                              hintStyle: Theme.of(context).textTheme.bodyMedium,
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(12)),
-                                borderSide: BorderSide(color: primaryDark, width: 1),
-                              ),
-                              fillColor: Colors.white,
                               filled: true,
+                              fillColor:
+                                  Theme.of(context).colorScheme.surfaceContainerHigh,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+
+                        // Lista de amigos
                         SizedBox(
                           height: 600,
                           child: FriendList(
                             friends: filteredUsers,
                             showIcons: true,
                             onAddFriend: (friendId) async {
-                              final friendData = filteredUsers.firstWhere((f) => f['id'] == friendId);
-                              await _friendsService.sendFriendRequest(widget.userID, friendData);
+                              final friendData =
+                                  filteredUsers.firstWhere((f) => f['id'] == friendId);
+                              await _friendsService.sendFriendRequest(
+                                  widget.userID, friendData);
                             },
                           ),
                         ),
