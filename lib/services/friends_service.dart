@@ -155,30 +155,53 @@ Stream<List<Map<String, dynamic>>> getAllFriendRequests(String userId) {
 
 
   // Aceptar solicitud
-  Future<void> acceptFriendRequest(String currentUserId, Map<String, dynamic> requestData) async {
-    final fromUserId = requestData['from'];
+Future<void> acceptFriendRequest(String currentUserId, Map<String, dynamic> requestData) async {
+  final fromUserId = requestData['from'];
+  final batch = _firestore.batch();
 
-    // 1. Agregar a amigos
-    await addFriend(currentUserId, requestData);
+  // Agregar como amigos en ambos sentidos
+  await addFriend(currentUserId, requestData);
 
-    // 2. Eliminar solicitud
-    final requestRef = _firestore
-        .collection('users')
-        .doc(currentUserId)
-        .collection('friendRequests')
-        .doc(fromUserId);
+  // Eliminar la solicitud del receptor
+  final currentRequestRef = _firestore
+      .collection('users')
+      .doc(currentUserId)
+      .collection('friendRequests')
+      .doc(fromUserId);
 
-    await requestRef.delete();
-  }
+  // Eliminar la solicitud del emisor
+  final fromRequestRef = _firestore
+      .collection('users')
+      .doc(fromUserId)
+      .collection('friendRequests')
+      .doc(currentUserId);
 
-  // Rechazar solicitud
-  Future<void> rejectFriendRequest(String currentUserId, String fromUserId) async {
-    final requestRef = _firestore
-        .collection('users')
-        .doc(currentUserId)
-        .collection('friendRequests')
-        .doc(fromUserId);
+  batch.delete(currentRequestRef);
+  batch.delete(fromRequestRef);
 
-    await requestRef.delete();
-  }
+  await batch.commit();
+}
+
+// Eliminar la solicitud
+Future<void> rejectFriendRequest(String currentUserId, String fromUserId) async {
+  final batch = _firestore.batch();
+
+  final currentRequestRef = _firestore
+      .collection('users')
+      .doc(currentUserId)
+      .collection('friendRequests')
+      .doc(fromUserId);
+
+  final fromRequestRef = _firestore
+      .collection('users')
+      .doc(fromUserId)
+      .collection('friendRequests')
+      .doc(currentUserId);
+
+  batch.delete(currentRequestRef);
+  batch.delete(fromRequestRef);
+
+  await batch.commit();
+}
+
 }

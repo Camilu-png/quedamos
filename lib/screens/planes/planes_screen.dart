@@ -76,7 +76,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
         final amigosSnapshot = await db
             .collection("users")
             .doc(widget.userID)
-            .collection("amigos")
+            .collection("friends")
             .get();
         amigosIDs = amigosSnapshot.docs.map((doc) => doc.id).toList();
       }
