@@ -8,8 +8,6 @@
  */
 
 import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
-import * as logger from "firebase-functions/logger";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -24,7 +22,52 @@ import * as logger from "firebase-functions/logger";
 // functions should each use functions.runWith({ maxInstances: 10 }) instead.
 // In the v1 API, each function can only serve one request per container, so
 // this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+setGlobalOptions({maxInstances: 10});
+
+import * as functions from "firebase-functions/v2/firestore";
+import * as admin from "firebase-admin";
+
+admin.initializeApp();
+
+export const notifyFriendRequest = functions.onDocumentCreated(
+  {
+    document: "users/{toUid}/friendRequests/{fromUid}",
+    region: "southamerica-west1",
+  },
+  async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) return;
+
+    const data = snapshot.data();
+    if (!data) return;
+
+    if (data.status !== "pending") return;
+
+    const toUid = data.to;
+    const fromName = data.name;
+
+    const user = await admin.firestore().collection("users").doc(toUid).get();
+    const fcmToken = user.get("fcmToken");
+
+    if (!fcmToken) return;
+
+    const message = {
+      token: fcmToken,
+      notification: {
+        title: "Nueva solicitud de amistad",
+        body: `${fromName} te ha enviado una solicitud de amistad`,
+      },
+    };
+
+    try {
+      await admin.messaging().send(message);
+      console.log(`Notificación enviada a ${toUid}`);
+    } catch (error) {
+      console.error("Error enviando notificación:", error);
+    }
+  }
+);
+
 
 // export const helloWorld = onRequest((request, response) => {
 //   logger.info("Hello logs!", {structuredData: true});

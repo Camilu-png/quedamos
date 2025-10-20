@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -31,6 +32,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // Función de registro
   Future<void> _register() async {
+    
+    final FirebaseMessaging messaging = FirebaseMessaging.instance;
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -53,14 +56,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       final userID = credential.user?.uid;
-
-      // 🔹 Crear el documento del usuario en Firestore
-      await FirebaseFirestore.instance.collection('users').doc(userID).set({
-        'name': name,
-        'email': email,
-        'amigos': [],
-        'misEventos': [],
-      });
+      String? token = await messaging.getToken();
+        if (token != null) {
+        // Crear el documento del usuario en Firestore
+          await FirebaseFirestore.instance.collection('users').doc(userID).set({
+            'name': name,
+            'email': email,
+            'amigos': [],
+            'misEventos': [],
+            'fcmToken': token,
+          });
+        }
 
       if (userID != null && mounted) {
         // Ir a la pantalla principal y reemplazar la de registro

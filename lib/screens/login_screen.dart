@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
 import 'register_screen.dart';
@@ -16,6 +18,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  final FirebaseMessaging messaging = FirebaseMessaging.instance;
+
   // Función para hacer login
   Future<void> _login() async {
     String email = _emailController.text.trim();
@@ -24,6 +28,14 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
+      // REVISAR PQ NO SIRVE UPDATE DE TOKEN
+      String? token = await messaging.getToken();
+      if (token != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(credential.user?.uid)
+            .update({'fcmToken': token});
+      }
 
       print("✅ Login OK: ${credential.user?.uid}");
 
