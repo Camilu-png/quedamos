@@ -111,60 +111,93 @@ class FriendRequestList extends StatelessWidget {
 
                 // Nombre del usuario
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(friend["name"] ?? '', style: subtitleText),
-
-                      const SizedBox(height: 8),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _TextButtonAction(
-                              text: "Aceptar",
-                              color: Colors.greenAccent.shade400,
-                              onTap: () {
-                                  if (onAccept != null) {
-                                    onAccept!(friend["id"]);
-                                  }
-                                ScaffoldMessenger.of(context).showSnackBar(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(friend["name"] ?? '', style: subtitleText),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  if (onAccept != null) onAccept!(friend["id"]);
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                          '${friend["name"]} ahora es tu amigo 🎉'),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: secondary,
+                                      content: Text('${friend["name"]} ahora es tu amigo 🎉'),
                                     ),
                                   );
-                              },
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(Icons.check_circle, size: 20, color: Colors.white),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      "Aceptar",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _TextButtonAction(
-                              text: "Rechazar",
-                              color: Colors.redAccent.shade200,
-                              onTap: () {
-                                if (onReject != null) {
-                                  onReject!(friend["id"]);
-                                }
-                                ScaffoldMessenger.of(context).showSnackBar(
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Theme.of(context).colorScheme.error,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  if (onReject != null) onReject!(friend["id"]);
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                          'Solicitud de ${friend["name"]} rechazada ❌'),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: Colors.redAccent,
+                                      content: Text('Rechazaste a ${friend["name"]}'),
                                     ),
                                   );
-                              },
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.cancel,
+                                        size: 20,
+                                        color: Theme.of(context).colorScheme.onError),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      "Rechazar",
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onError,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),],
-            ),
+                ),
+          ],
+          ),
           ),
         );
       },
@@ -189,8 +222,7 @@ class _ActionButton extends StatefulWidget {
 
   const _ActionButton({
     required this.icon,
-    required this.color,
-    this.onTap,
+    required this.color, this.onTap,
   });
 
   @override
