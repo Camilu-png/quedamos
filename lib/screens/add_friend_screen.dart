@@ -84,7 +84,8 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
                             userName.contains(query.toLowerCase());
                       }).toList();
 
-                      return SingleChildScrollView(
+                      return SafeArea(
+                        child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
@@ -98,8 +99,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
                             const SizedBox(height: 12),
 
                             // Lista de amigos
-                            SizedBox(
-                              height: 600,
+                            Expanded(
                               child: FriendList(
                                 friends: filteredUsers,
                                 showIcons: true,
@@ -113,6 +113,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
                             ),
                           ],
                         ),
+                      )
                       );
                     },
                   );

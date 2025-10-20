@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
+import "package:quedamos/screens/planes/planes_components.dart";
 import "package:quedamos/widgets/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
 import "package:quedamos/screens/planes/plan_add_screen.dart";
@@ -97,19 +98,27 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
         final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
         final queryText = busqueda.toLowerCase();
         final anfitrionID = plan["anfitrionID"] ?? "";
-        final fecha = plan["fecha"] ?? DateTime.now();
         final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
-        //TODO: VERIFICAR QUE SEA VÁLIDO TAMBIÉN CON LA HORA
+        final fecha = !fechaEsEncuesta
+          ? plan["fecha"].toDate() ?? DateTime.now()
+          : DateTime.now();
+        final horaEsEncuesta = plan["horaEsEncuesta"] ?? false;
+        final hora = !horaEsEncuesta
+          ? stringToTimeOfDay(plan["hora"]) ?? TimeOfDay.fromDateTime(DateTime.now())
+          : TimeOfDay.fromDateTime(DateTime.now());
+        final fechaHora = !fechaEsEncuesta && !horaEsEncuesta
+          ? DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute)
+          : DateTime.now();
         if (visibilidadSelected == "Amigos") {
           return plan["visibilidad"] == "Amigos" &&
                 amigosIDs.contains(anfitrionID) &&
                 anfitrionID != widget.userID &&
-                (fechaEsEncuesta || (!fechaEsEncuesta && fecha is Timestamp && fecha.toDate().isAfter(DateTime.now()))) &&
+                (fechaEsEncuesta || horaEsEncuesta || (!fechaEsEncuesta && !horaEsEncuesta && fechaHora.isAfter(DateTime.now()))) &&
                 (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
         } else if (visibilidadSelected == "Público") {
           return plan["visibilidad"] == "Público" &&
                 anfitrionID != widget.userID &&
-                (fechaEsEncuesta || (!fechaEsEncuesta && fecha is Timestamp && fecha.toDate().isAfter(DateTime.now()))) &&
+                (fechaEsEncuesta || horaEsEncuesta || (!fechaEsEncuesta && !horaEsEncuesta && fechaHora.isAfter(DateTime.now()))) &&
                 (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
         }
         return false;
