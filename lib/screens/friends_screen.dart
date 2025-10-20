@@ -20,7 +20,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
   String selectedSegment = 'Amigos';
   final FriendsService _friendsService = FriendsService();
 
-    //PAGING CONTROLLER
   final PagingController<int, Map<String, dynamic>> _pagingController =
       PagingController(firstPageKey: 0);
 
@@ -30,232 +29,200 @@ class _FriendsScreenState extends State<FriendsScreen> {
     } catch (e) {
       debugPrint("Error al eliminar amigo: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error al eliminar amigo'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
+        const SnackBar(content: Text('Error al eliminar amigo')),
       );
     }
   }
 
-    void _refreshPaging() {
+  void _refreshPaging() {
     _pagingController.refresh();
   }
 
   @override
   Widget build(BuildContext context) {
-    print("👾 UID del usuario -> ${widget.userID}");
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: const Text("Mis Amigos", style: titleText),
+        title: Text(
+          "Mis Amigos",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
         centerTitle: true,
-        backgroundColor: backgroundColor,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
+        elevation: 0,
       ),
+
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          final mainState =
+              context.findAncestorStateOfType<MainScreenState>();
+          mainState?.navigateTo(AddFriendsScreen(userID: widget.userID));
+        },
+        icon: const Icon(Icons.add),
+        label: const Text("Nuevo amigo"),
+        backgroundColor:
+            Theme.of(context).colorScheme.secondaryContainer,
+        foregroundColor:
+            Theme.of(context).colorScheme.onSecondaryContainer,
+      ),
+
       body: StreamBuilder<List<Map<String, dynamic>>>(
-    stream: selectedSegment == 'Amigos'
-        ? _friendsService.getFriends(widget.userID)
-        : _friendsService.getFriendRequests(widget.userID),
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return const Center(child: CircularProgressIndicator());
-      }
+        stream: selectedSegment == 'Amigos'
+            ? _friendsService.getFriends(widget.userID)
+            : _friendsService.getFriendRequests(widget.userID),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-      final items = snapshot.data ?? [];
+          final items = snapshot.data ?? [];
 
-      if (items.isEmpty) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 45,
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    final mainState =
-                        context.findAncestorStateOfType<MainScreenState>();
-                    mainState?.navigateTo(AddFriendsScreen(userID: widget.userID));
-                  },
-                  icon: const Icon(Icons.add, size: 24, color: Colors.white),
-                  label: Text(
-                    "Nuevo amigo",
-                    style: bodyPrimaryText.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+          if (items.isEmpty) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<String>(
+                      segments: [
+                        ButtonSegment(
+                            value: "Amigos",
+                            label: Text("Amigos",
+                                style: Theme.of(context).textTheme.bodyMedium)),
+                        ButtonSegment(
+                            value: "Solicitudes",
+                            label: Text("Solicitudes",
+                                style: Theme.of(context).textTheme.bodyMedium)),
+                      ],
+                      selected: <String>{selectedSegment},
+                      onSelectionChanged: (newSelection) {
+                        setState(() {
+                          selectedSegment = newSelection.first;
+                          _refreshPaging();
+                        });
+                      },
+                      style: SegmentedButton.styleFrom(
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHigh,
+                        selectedBackgroundColor:
+                            Theme.of(context).colorScheme.primaryContainer,
+                        foregroundColor: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant,
+                        selectedForegroundColor:
+                            Theme.of(context).colorScheme.onPrimaryContainer,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        side: BorderSide.none,
+                      ),
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    alignment: Alignment.centerLeft,
-                    backgroundColor: secondary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // SEGMENTED BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(
-                      value: 'Amigos',
-                      label: Text('Amigos', style: helpText),
-                    ),
-                    ButtonSegment(
-                      value: 'Solicitudes',
-                      label: Text('Solicitudes', style: helpText),
-                    ),
-                  ],
-                  selected: <String>{selectedSegment},
-                  onSelectionChanged: (newSelection) {
-                    setState(() {
-                      selectedSegment = newSelection.first;
-                      _refreshPaging();
-                    });
-                  },
-                  style: SegmentedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    selectedBackgroundColor: primaryLight,
-                    foregroundColor: primaryDark,
-                    selectedForegroundColor: primaryDark,
-                    side: const BorderSide(color: primaryDark, width: 1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                selectedSegment == 'Amigos'
-                    ? "Todavía no tienes amigos 😢"
-                    : "No tienes solicitudes pendientes 😊",
-                style: const TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-            ],
-          ),
-        );
-      }
-
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 45,
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  final mainState =
-                      context.findAncestorStateOfType<MainScreenState>();
-                  mainState?.navigateTo(AddFriendsScreen(userID: widget.userID));
-                },
-                icon: const Icon(Icons.add, size: 24, color: Colors.white),
-                label: Text(
-                  "Nuevo amigo",
-                  style: bodyPrimaryText.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  alignment: Alignment.centerLeft,
-                  backgroundColor: secondary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(
-                    value: 'Amigos',
-                    label: Text('Amigos', style: helpText),
-                  ),
-                  ButtonSegment(
-                    value: 'Solicitudes',
-                    label: Text('Solicitudes', style: helpText),
+                  const SizedBox(height: 16),
+                  Text(
+                    selectedSegment == 'Amigos'
+                        ? "Todavía no tienes amigos 😢"
+                        : "No tienes solicitudes pendientes 😊",
+                    style: const TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                 ],
-                selected: <String>{selectedSegment},
-                onSelectionChanged: (newSelection) {
-                  setState(() {
-                    selectedSegment = newSelection.first;
-                    _refreshPaging();
-                  });
-                },
-                style: SegmentedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  selectedBackgroundColor: primaryLight,
-                  foregroundColor: primaryDark,
-                  selectedForegroundColor: primaryDark,
-                  side: const BorderSide(color: primaryDark, width: 1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              ),
+            );
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<String>(
+                    segments: [
+                      ButtonSegment(
+                          value: "Amigos",
+                          label: Text("Amigos",
+                              style: Theme.of(context).textTheme.bodyMedium)),
+                      ButtonSegment(
+                          value: "Solicitudes",
+                          label: Text("Solicitudes",
+                              style: Theme.of(context).textTheme.bodyMedium)),
+                    ],
+                    selected: <String>{selectedSegment},
+                    onSelectionChanged: (newSelection) {
+                      setState(() {
+                        selectedSegment = newSelection.first;
+                        _refreshPaging();
+                      });
+                    },
+                    style: SegmentedButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.surfaceContainerHigh,
+                      selectedBackgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onSurfaceVariant,
+                      selectedForegroundColor:
+                          Theme.of(context).colorScheme.onPrimaryContainer,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      side: BorderSide.none,
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 600,
+                  child: selectedSegment == 'Amigos'
+                      ? FriendList(
+                          friends: items,
+                          showIcons: false,
+                          onDelete: _deleteFriend,
+                        )
+                      : FriendRequestList(
+                          friends: items,
+                          onAccept: (friendId) async {
+                            try {
+                              final request =
+                                  items.firstWhere((r) => r['id'] == friendId);
+                              await _friendsService.acceptFriendRequest(
+                                  widget.userID, request);
+                            } catch (e) {
+                              debugPrint("Error al aceptar solicitud: $e");
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Error al aceptar la solicitud')),
+                              );
+                            }
+                          },
+                          onReject: (friendId) async {
+                            try {
+                              await _friendsService.rejectFriendRequest(
+                                  widget.userID, friendId);
+                            } catch (e) {
+                              debugPrint("Error al rechazar solicitud: $e");
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Error al rechazar la solicitud')),
+                              );
+                            }
+                          },
+                        ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-
-            SizedBox(
-              height: 600,
-              child: selectedSegment == 'Amigos'
-                  ? FriendList(
-                      friends: items,
-                      showIcons: false,
-                      onDelete: _deleteFriend,
-                    )
-                  : FriendRequestList(
-                    friends: items,
-                    onAccept: (friendId) async {
-                      try {
-                        final request = items.firstWhere((r) => r['id'] == friendId);
-                        await _friendsService.acceptFriendRequest(widget.userID, request);
-                      } catch (e) {
-                        debugPrint("Error al aceptar solicitud: $e");
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Error al aceptar la solicitud'),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                    onReject: (friendId) async {
-                      try {
-                        await _friendsService.rejectFriendRequest(widget.userID, friendId);
-                      } catch (e) {
-                        debugPrint("Error al rechazar solicitud: $e");
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Error al rechazar la solicitud'),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                  ),
-
-            ),
-          ],
-        ),
-      );
-    },
-  ),
-  );
+          );
+        },
+      ),
+    );
   }
 }
