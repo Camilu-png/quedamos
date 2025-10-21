@@ -1,9 +1,8 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'main_screen.dart';
-import "package:quedamos/app_colors.dart";
+import "package:flutter/material.dart";
+import "package:firebase_auth/firebase_auth.dart";
+import "package:cloud_firestore/cloud_firestore.dart";
+import "package:firebase_messaging/firebase_messaging.dart";
+import "main_screen.dart";
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -54,10 +53,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       String? token = await messaging.getToken();
         if (token != null) {
         // Crear el documento del usuario en Firestore
-          await FirebaseFirestore.instance.collection('users').doc(userID).set({
-            'name': name,
-            'email': email,
-            'fcmToken': token,
+          await FirebaseFirestore.instance.collection("users").doc(userID).set({
+            "name": name,
+            "email": email,
+            "fcmToken": token,
           });
         }
 
