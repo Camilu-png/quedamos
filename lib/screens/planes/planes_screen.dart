@@ -23,7 +23,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
   String visibilidadSelected = "Amigos";
   String busqueda = "";
 
-  static const int _pageSize = 3;
+  static const int _pageSize = 25;
 
   //INIT STATE
   @override

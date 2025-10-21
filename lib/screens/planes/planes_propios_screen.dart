@@ -23,7 +23,8 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
   String visibilidadSelected = "Amigos";
   String busqueda = "";
 
-  static const int _pageSize = 3; //Planes por página
+  //Quizás acá hay que quitar la paginación...
+  static const int _pageSize = 25; //Planes por página
 
   //INIT STATE
   @override
