@@ -269,16 +269,6 @@ class PlanesList extends StatelessWidget {
                         ? Color(0xFF0D2610)
                         : Theme.of(context).colorScheme.onErrorContainer,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      participantesAceptadosUsuario ? "Aceptado" : "Rechazado",
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: participantesAceptadosUsuario
-                          ? Color(0xFF0D2610)
-                          : Theme.of(context).colorScheme.onErrorContainer,
-                      ),
-                    ),
                   ],
                 ),
               ),
