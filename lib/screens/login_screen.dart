@@ -23,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
+
     if (
       email.isEmpty ||
       password.isEmpty
@@ -37,7 +38,32 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
-      // REVISAR PQ NO SIRVE UPDATE DE TOKEN
+      
+      final user = credential.user;
+
+      // Comprobamos si el correo está verificado
+      if (user != null && !user.emailVerified) {
+        // Permitimos usuarios antiguos
+        final creation = user.metadata.creationTime;
+        final isOldUser = creation != null && creation.isBefore(DateTime(2025, 10, 22));
+        
+        if (!isOldUser) {
+          await user.sendEmailVerification();
+
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Tu correo aún no está verificado. Se envió un nuevo enlace a ${user.email}.",
+              ),
+            ),
+          );
+          await FirebaseAuth.instance.signOut();
+          return;
+        }
+      }
+
       String? token = await messaging.getToken();
       if (token != null) {
         await FirebaseFirestore.instance
@@ -183,6 +209,81 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Theme.of(context).colorScheme.onSecondaryContainer,
                       fontWeight: FontWeight.w600,
                     )
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // TEXTO: ¿Olvidaste tu contraseña?
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () async {
+                    final TextEditingController resetController = TextEditingController();
+
+                    await showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Restablecer contraseña"),
+                        content: TextField(
+                          controller: resetController,
+                          decoration: const InputDecoration(
+                            hintText: "Ingresa tu correo electrónico",
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancelar"),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              final email = resetController.text.trim();
+
+                              if (email.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Por favor, ingresa tu correo."),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              try {
+                                await FirebaseAuth.instance
+                                    .sendPasswordResetEmail(email: email);
+
+                                if (!mounted) return;
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Se envió un enlace de recuperación a $email.",
+                                    ),
+                                  ),
+                                );
+                              } on FirebaseAuthException catch (e) {
+                                String message = "Error al enviar el correo.";
+                                if (e.code == 'user-not-found') {
+                                  message = "No existe una cuenta con ese correo.";
+                                }
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(SnackBar(content: Text(message)));
+                              }
+                            },
+                            child: const Text("Enviar"),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "¿Olvidaste tu contraseña?",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),

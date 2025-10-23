@@ -59,6 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             "fcmToken": token,
           });
         }
+      await credential.user?.sendEmailVerification();
 
       if (userID != null && mounted) {
         Navigator.pushReplacement(
