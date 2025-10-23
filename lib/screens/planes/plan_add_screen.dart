@@ -1,10 +1,11 @@
 import "package:intl/intl.dart";
 import "package:uuid/uuid.dart";
 import "package:flutter/material.dart";
+import 'package:geolocator/geolocator.dart';
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
-import "package:quedamos/screens/planes/planes_components.dart";
 import "package:quedamos/screens/main_screen.dart";
+import "package:quedamos/screens/planes/planes_components.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -14,7 +15,8 @@ final uuid = Uuid();
 class AddPlanScreen extends StatefulWidget {
   final String userID;
   final Map<String, dynamic>? plan;
-  const AddPlanScreen({super.key, this.plan, required this.userID});
+  final Position? currentLocation;
+  const AddPlanScreen({super.key, this.plan, required this.userID, this.currentLocation});
   @override
   State<AddPlanScreen> createState() => _AddPlanScreenState();
 }
@@ -47,30 +49,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   List<TimeOfDay> horasEncuesta = [];
   //UBICACIÓN
   bool ubicacionEsEncuesta = false;
-  String? ubicacion;
-  List<String> ubicacionesEncuesta = [];
-  final List<String> ubicacionesRecomendadas = [
-    "Parque Bicentenario, Vitacura",
-    "Parque Forestal, Santiago Centro",
-    "Cerro San Cristóbal, Providencia",
-    "Plaza Ñuñoa, Ñuñoa",
-    "Estadio Nacional, Ñuñoa",
-    "Costanera Center, Providencia",
-    "Mall Plaza Egaña, La Reina",
-    "Centro Gabriela Mistral (GAM), Santiago Centro",
-    "Barrio Italia, Providencia",
-    "Parque Araucano, Las Condes",
-    "Café Literario Balmaceda, Providencia",
-    "Museo Nacional de Bellas Artes, Santiago Centro",
-    "Terraza del Cerro Santa Lucía, Santiago Centro",
-    "Café del Patio, Lastarria",
-    "Biblioteca Nacional, Alameda 651, Santiago Centro",
-    "Campus San Joaquín, PUC, Macul",
-    "Mall Sport, Las Condes",
-    "Sky Costanera, Providencia",
-    "Museo Interactivo Mirador (MIM), La Granja",
-    "Parque O'Higgins, Santiago Centro",
-  ];
+  Map<String, dynamic>? ubicacion;
+  List<Map<String, dynamic>> ubicacionesEncuesta = [];
   //PARTICIPANTES
   List<String> participantesAceptados = [];
   List<String> participantesRechazados = [];
@@ -151,16 +131,29 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       }
       //UBICACIÓN
       ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
-      if (ubicacionEsEncuesta) {
-        final ubicacionRaw = widget.plan!["ubicacionesEncuesta"];
-        if (ubicacionRaw != null && ubicacionRaw is List) {
-          ubicacionesEncuesta = ubicacionRaw.where((u) => u != null).map((u) => u.toString()).toList();
+      if (ubicacionEsEncuesta == true) {
+        final ubicacionesRaw = widget.plan!["ubicacionesEncuesta"];
+        if (ubicacionesRaw != null && ubicacionesRaw is List) {
+          ubicacionesEncuesta = ubicacionesRaw
+              .where((u) => u != null && u is Map)
+              .map<Map<String, dynamic>>((u) => Map<String, dynamic>.from(u))
+              .toList();
         } else {
           ubicacionesEncuesta = [];
         }
       } else {
-        ubicacion = widget.plan!["ubicacion"];
+        if (widget.plan!["ubicacion"] != null && widget.plan!["ubicacion"] is Map) {
+          ubicacion = Map<String, dynamic>.from(widget.plan!["ubicacion"]);
+        } else {
+          ubicacion = {
+            "nombre": "Casa Central, UTFSM",
+            "latitud": -33.0458,
+            "longitud": -71.6197,
+          };
+        }
+        print("[🐧 planes] Ubicación cargada: $ubicacion");
       }
+
       //PARTICIPANTES
       final participantesAceptadosRaw = widget.plan!["participantesAceptados"];
       if (participantesAceptadosRaw != null && participantesAceptadosRaw is List) {
@@ -354,125 +347,25 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   }
 
   //UBICACIÓN: SELECTOR
-  void _ubicacionSelector(BuildContext context) async {
-    print("[🐧 planes] Abriendo modal selector de ubicación...");
-    final TextEditingController ubicacionController = TextEditingController(text: ubicacion);
-    String? ubicacionSelected = ubicacion;
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: MediaQuery.of(context).viewInsets,
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                //BUSCADOR
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: TextField(
-                    controller: ubicacionController,
-                    decoration: InputDecoration(
-                      hintText: "Buscar ubicación...",
-                      hintStyle: Theme.of(context).textTheme.bodyMedium,
-                      prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-                //UBICACIONES RECOMENDADAS
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: ubicacionesRecomendadas.length,
-                    itemBuilder: (context, index) {
-                      final ubicacionEntry = ubicacionesRecomendadas[index];
-                      return ListTile(
-                        leading: Icon(
-                          Icons.place_outlined,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        title: Text(
-                          ubicacionEntry,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        onTap: () {
-                          setState(() {
-                            ubicacionSelected = ubicacionEntry;
-                            if (ubicacionEsEncuesta) {
-                              ubicacionesEncuesta.add(ubicacionSelected!);
-                            } else {
-                              ubicacion = ubicacionSelected;
-                            }
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    },
-                  ),
-                ),
-                //ACCIONES
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: () => showMap(context, mounted, ubicacionController.text),
-                        icon: Icon(
-                          Icons.map_outlined,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                        label: Text(
-                          "Ver en mapa",
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Theme.of(context).colorScheme.secondary),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancelar"),
-                      ),
-                      FilledButton(
-                        onPressed: () {
-                          setState(() {
-                            ubicacionSelected = ubicacionController.text;
-                            if (ubicacionEsEncuesta) {
-                              ubicacionesEncuesta.add(ubicacionSelected!);
-                            } else {
-                              ubicacion = ubicacionSelected;
-                            }
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: const Text("OK"),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+  void _ubicacionSelector(BuildContext context) {
+    showUbicacionSelector(
+      context,
+      (latLng, nombre) {
+      setState(() {
+        final nuevaUbicacion = {
+          "nombre": nombre.split(",")[0],
+          "latitud": latLng.latitude,
+          "longitud": latLng.longitude
+        };
+        if (!ubicacionEsEncuesta) {
+          ubicacion = nuevaUbicacion;
+        } else {
+          ubicacionesEncuesta.add(nuevaUbicacion);
+        }
+        print("[🐧 planes] Ubicación seleccionada: $nuevaUbicacion");
+      });
       },
+      initialPosition: widget.currentLocation,
     );
   }
 
@@ -849,7 +742,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        //BOTÓN: INPUT HORA
+                        //BOTÓN: INPUT UBICACIÓN
                         Expanded(
                           flex: 2,
                           child: FilledButton(
@@ -868,7 +761,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                 ubicacionEsEncuesta
                                     ? "Agregar opción de encuesta"
                                     : (ubicacion?.isNotEmpty == true
-                                      ? ubicacion!
+                                      ? ubicacion!["nombre"] ?? "Ubicación desconocida"
                                       : "Toca para elegir ubicación"),
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
@@ -921,7 +814,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                   children: [
                                     Flexible(
                                       child: Text(
-                                        "Opción ${i + 1}: ${ubicacionesEncuesta[i]}",
+                                        "Opción ${i + 1}: ${ubicacionesEncuesta[i]["nombre"]}",
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium

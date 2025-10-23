@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
+import 'package:geolocator/geolocator.dart';
 import "package:quedamos/widgets/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
 import "package:quedamos/screens/planes/planes_components.dart";
@@ -11,7 +12,8 @@ final db = FirebaseFirestore.instance;
 //MIS PLANES SCREEN
 class MisPlanesScreen extends StatefulWidget {
   final String userID;
-  const MisPlanesScreen({super.key, required this.userID});
+  final Position? currentLocation;
+  const MisPlanesScreen({super.key, required this.userID, this.currentLocation});
   @override
   State<MisPlanesScreen> createState() => _MisPlanesScreenState();
 }
@@ -23,7 +25,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
   String busqueda = "";
 
   //Quizás acá hay que quitar la paginación...
-  static const int _pageSize = 25; //Planes por página
+  static const int _pageSize = 100; //Planes por página
 
   //INIT STATE
   @override
@@ -179,8 +181,9 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
                       itemBuilder: (context, plan, index) => PlanesList(
                         plan: plan,
                         userID: userID,
+                        currentLocation: widget.currentLocation,
                         onTapOverride: (ctx, planData) async {
-                          final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: userID)));
+                          final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: userID, currentLocation: widget.currentLocation)));
                           if (result == 'deleted') {
                             if (mounted) _refreshPaging();
                           }

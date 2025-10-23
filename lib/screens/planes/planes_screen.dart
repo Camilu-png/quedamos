@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
+import 'package:geolocator/geolocator.dart';
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
 import "package:quedamos/widgets/planes_list.dart";
@@ -11,7 +12,8 @@ final db = FirebaseFirestore.instance;
 //PLANES SCREEN
 class PlanesScreen extends StatefulWidget {
   final String userID;
-  const PlanesScreen({super.key, required this.userID});
+  final Position? currentLocation;
+  const PlanesScreen({super.key, required this.userID, this.currentLocation});
   @override
   State<PlanesScreen> createState() => _PlanesScreenState();
 }
@@ -22,7 +24,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
   String visibilidadSelected = "Amigos";
   String busqueda = "";
 
-  static const int _pageSize = 25;
+  static const int _pageSize = 100;
 
   //INIT STATE
   @override
@@ -226,8 +228,9 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                     itemBuilder: (context, plan, index) => PlanesList(
                       plan: plan,
                       userID: widget.userID,
+                      currentLocation: widget.currentLocation,
                       onTapOverride: (ctx, planData) async {
-                        final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: widget.userID)));
+                        final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: widget.userID, currentLocation: widget.currentLocation)));
                         if (result == "deleted") {
                           if (mounted) _refreshPaging();
                         }
