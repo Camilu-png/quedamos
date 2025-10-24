@@ -1,18 +1,19 @@
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
+import 'package:geolocator/geolocator.dart';
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
-import "package:quedamos/screens/planes/planes_components.dart";
 import "package:quedamos/widgets/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
-import "package:quedamos/screens/planes/plan_add_screen.dart";
+import "package:quedamos/screens/planes/planes_components.dart";
 
 final db = FirebaseFirestore.instance;
 
 //PLANES SCREEN
 class PlanesScreen extends StatefulWidget {
   final String userID;
-  const PlanesScreen({super.key, required this.userID});
+  final Position? currentLocation;
+  const PlanesScreen({super.key, required this.userID, this.currentLocation});
   @override
   State<PlanesScreen> createState() => _PlanesScreenState();
 }
@@ -23,7 +24,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
   String visibilidadSelected = "Amigos";
   String busqueda = "";
 
-  static const int _pageSize = 25;
+  static const int _pageSize = 100;
 
   //INIT STATE
   @override
@@ -160,21 +161,6 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
           surfaceTintColor: Theme.of(context).colorScheme.primaryContainer,
           elevation: 0,
         ),
-        //NUEVO PLAN
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () async {
-            final newPlanID = await Navigator.push<String?>(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => AddPlanScreen(userID: widget.userID)),
-            );
-            if (newPlanID != null) _refreshPaging();
-          },
-          icon: const Icon(Icons.add),
-          label: const Text("Nuevo plan"),
-          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-          foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
-        ),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -242,8 +228,9 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                     itemBuilder: (context, plan, index) => PlanesList(
                       plan: plan,
                       userID: widget.userID,
+                      currentLocation: widget.currentLocation,
                       onTapOverride: (ctx, planData) async {
-                        final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: widget.userID)));
+                        final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: widget.userID, currentLocation: widget.currentLocation)));
                         if (result == "deleted") {
                           if (mounted) _refreshPaging();
                         }

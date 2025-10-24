@@ -2,6 +2,7 @@ import "package:intl/intl.dart";
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
+import 'package:geolocator/geolocator.dart';
 import "package:quedamos/screens/planes/planes_components.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
 
@@ -9,12 +10,14 @@ class PlanesList extends StatelessWidget {
   final String userID;
   final Map<String, dynamic> plan;
   final Future<void> Function(BuildContext, Map<String, dynamic>)? onTapOverride;
+  final Position? currentLocation;
 
   const PlanesList({
     super.key,
     required this.plan,
     required this.userID,
     this.onTapOverride,
+    this.currentLocation,
   });
 
   @override
@@ -54,10 +57,19 @@ class PlanesList extends StatelessWidget {
     } else {
       horaBonita = "Desconocida";
     }
-    // UBICACIÓN
-    String ubicacion = plan["ubicacion"] ?? "";
+    //UBICACIÓN
+    Map<String, dynamic> ubicacion = {
+      "nombre": "Casa Central, UTFSM",
+      "latitud": -33.0458,
+      "longitud": -71.6197,
+    };
+    if (plan["ubicacion"] is Map<String, dynamic>) {
+      ubicacion = plan["ubicacion"];
+    }
     if (plan["ubicacionEsEncuesta"] == true) {
-      ubicacion = "Por determinar";
+      ubicacion = {
+        "nombre": "Por determinar",
+      };
     }
     //PARTICIPANTES (usar estado local)
     late List<dynamic> participantesAceptados = List<dynamic>.from(plan["participantesAceptados"] ?? []);
@@ -86,7 +98,7 @@ class PlanesList extends StatelessWidget {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => PlanScreen(plan: plan, userID: userID),
+            builder: (_) => PlanScreen(plan: plan, userID: userID, currentLocation: currentLocation),
           ),
         );
       },
@@ -206,9 +218,8 @@ class PlanesList extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Expanded(
-                                // UBICACIÓN
                                 child: Text(
-                                  ubicacion,
+                                  ubicacion["nombre"].split(",")[0],
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Theme.of(context).colorScheme.onSurfaceVariant
                                   ),
@@ -268,16 +279,6 @@ class PlanesList extends StatelessWidget {
                       color: participantesAceptadosUsuario
                         ? Color(0xFF0D2610)
                         : Theme.of(context).colorScheme.onErrorContainer,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      participantesAceptadosUsuario ? "Aceptado" : "Rechazado",
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: participantesAceptadosUsuario
-                          ? Color(0xFF0D2610)
-                          : Theme.of(context).colorScheme.onErrorContainer,
-                      ),
                     ),
                   ],
                 ),
