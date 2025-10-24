@@ -7,6 +7,7 @@ import 'screens/main_screen.dart';
 import 'app_colors.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
@@ -21,8 +22,9 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // Descomentar y hot restart para desconectarse
-  // await FirebaseAuth.instance.signOut();
+
+  await dotenv.load(fileName: ".env");
+
   runApp(const MyApp());
 }
 
