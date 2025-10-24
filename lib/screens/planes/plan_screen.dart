@@ -334,10 +334,10 @@ class _PlanScreenState extends State<PlanScreen> {
                             if (confirmar == true) {
                               final String? docId = _getPlanID();
                               if (docId == null || docId.isEmpty) {
-                                print("[🐧 planes] ID del plan ausente, no se puede eliminar");
+                                print("[🐧 planes] Error al eliminar plan: no se encontró ID");
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("No se encontró el ID del plan para eliminar")),
+                                    const SnackBar(content: Text("Error al eliminar plan.")),
                                   );
                                 }
                                 return;
@@ -352,7 +352,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                 print("[🐧 planes] Error: $e");
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text("Error al eliminar plan: $e")),
+                                    SnackBar(content: Text("Error al eliminar plan.")),
                                   );
                                 }
                               }
@@ -683,30 +683,32 @@ class _PlanScreenState extends State<PlanScreen> {
                                 borderRadius: BorderRadius.circular(24),
                               ),
                             ),
-                            onPressed: () async {
-                              setState(() {
-                                participantesAceptados.remove(widget.userID);
-                                if (!participantesRechazados.contains(widget.userID)) {
-                                  participantesRechazados.add(widget.userID);
-                                }
-                              });
-                              try {
-                                await db.collection("planes").doc(plan["planID"]).update({
-                                  "participantesAceptados": FieldValue.arrayRemove([widget.userID]),
-                                  "participantesRechazados": FieldValue.arrayUnion([widget.userID]),
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Plan rechazado")),
-                                );
-                              } catch (e) {
+                            onPressed: participantesRechazadosUsuario
+                              ? null
+                              : () async {
                                 setState(() {
-                                  participantesRechazados.remove(widget.userID);
+                                  participantesAceptados.remove(widget.userID);
+                                  if (!participantesRechazados.contains(widget.userID)) {
+                                    participantesRechazados.add(widget.userID);
+                                  }
                                 });
-                                print("[🐧 planes] Error al actualizar rechazo: $e");
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Error al rechazar plan")),
-                                );
-                              }
+                                try {
+                                  await db.collection("planes").doc(plan["planID"]).update({
+                                    "participantesAceptados": FieldValue.arrayRemove([widget.userID]),
+                                    "participantesRechazados": FieldValue.arrayUnion([widget.userID]),
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Plan rechazado.")),
+                                  );
+                                } catch (e) {
+                                  setState(() {
+                                    participantesRechazados.remove(widget.userID);
+                                  });
+                                  print("[🐧 planes] Error al actualizar rechazo: $e");
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Error al rechazar plan.")),
+                                  );
+                                }
                             },
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -737,30 +739,32 @@ class _PlanScreenState extends State<PlanScreen> {
                                 borderRadius: BorderRadius.circular(24),
                               ),
                             ),
-                            onPressed: () async {
-                              setState(() {
-                                participantesRechazados.remove(widget.userID);
-                                if (!participantesAceptados.contains(widget.userID)) {
-                                  participantesAceptados.add(widget.userID);
-                                }
-                              });
-                              try {
-                                await db.collection("planes").doc(plan["planID"]).update({
-                                  "participantesAceptados": FieldValue.arrayUnion([widget.userID]),
-                                  "participantesRechazados": FieldValue.arrayRemove([widget.userID]),
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Plan aceptado")),
-                                );
-                              } catch (e) {
+                            onPressed: participantesAceptadosUsuario
+                              ? null
+                              : () async {
                                 setState(() {
-                                  participantesAceptados.remove(widget.userID);
+                                  participantesRechazados.remove(widget.userID);
+                                  if (!participantesAceptados.contains(widget.userID)) {
+                                    participantesAceptados.add(widget.userID);
+                                  }
                                 });
-                                print("[🐧 planes] Error al actualizar aceptación: $e");
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Error al aceptar plan")),
-                                );
-                              }
+                                try {
+                                  await db.collection("planes").doc(plan["planID"]).update({
+                                    "participantesAceptados": FieldValue.arrayUnion([widget.userID]),
+                                    "participantesRechazados": FieldValue.arrayRemove([widget.userID]),
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Plan aceptado.")),
+                                  );
+                                } catch (e) {
+                                  setState(() {
+                                    participantesAceptados.remove(widget.userID);
+                                  });
+                                  print("[🐧 planes] Error al actualizar aceptación: $e");
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Error al aceptar plan.")),
+                                  );
+                                }
                             },
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,

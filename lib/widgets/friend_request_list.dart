@@ -134,7 +134,7 @@ class FriendRequestList extends StatelessWidget {
                                   if (onAccept != null) onAccept!(friend["id"]);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('${friend["name"]} ahora es tu amigo 🎉'),
+                                      content: Text('${friend["name"]} ahora es tu amigo 🎉.'),
                                     ),
                                   );
                                 },
@@ -168,7 +168,7 @@ class FriendRequestList extends StatelessWidget {
                                   if (onReject != null) onReject!(friend["id"]);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Rechazaste a ${friend["name"]}'),
+                                      content: Text('Rechazaste a ${friend["name"]}.'),
                                     ),
                                   );
                                 },

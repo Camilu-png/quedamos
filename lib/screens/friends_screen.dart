@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:quedamos/app_colors.dart';
 import 'package:quedamos/screens/add_friend_screen.dart';
 import 'package:quedamos/screens/main_screen.dart';
 import 'package:quedamos/services/friends_service.dart';
-import 'package:quedamos/text_styles.dart';
 import '../widgets/friend_list.dart';
 import '../widgets/friend_request_list.dart';
 
@@ -29,7 +27,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     } catch (e) {
       debugPrint("Error al eliminar amigo: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al eliminar amigo')),
+        const SnackBar(content: Text('Error al eliminar amigo.')),
       );
     }
   }
@@ -44,7 +42,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: Text(
-          "Mis Amigos",
+          "Mis amigos",
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Theme.of(context).colorScheme.onPrimary,
                 fontWeight: FontWeight.w600,
@@ -126,11 +124,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    selectedSegment == 'Amigos'
-                        ? "Todavía no tienes amigos 😢"
-                        : "No tienes solicitudes pendientes 😊",
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
+                  Center(
+                    child: Text(
+                      selectedSegment == 'Amigos'
+                        ? "Todavía no tienes amigos."
+                        : "No tienes solicitudes pendientes.",
+                    ),
                   ),
                 ],
               ),
@@ -199,7 +198,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text(
-                                        'Error al aceptar la solicitud')),
+                                        'Error al aceptar la solicitud.')),
                               );
                             }
                           },
@@ -212,7 +211,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text(
-                                        'Error al rechazar la solicitud')),
+                                        'Error al rechazar la solicitud.')),
                               );
                             }
                           },

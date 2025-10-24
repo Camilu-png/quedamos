@@ -98,7 +98,7 @@ class FriendList extends StatelessWidget {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      'Se le ha enviado una solicitud a ${friend["name"]}'),
+                                      'Se le ha enviado una solicitud a ${friend["name"]}.'),
                                 ),
                               );
                             }
@@ -131,7 +131,7 @@ class FriendList extends StatelessWidget {
               }
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('${friend["name"]} fue eliminado'),
+                  content: Text('${friend["name"]} fue eliminado.'),
                 ),
               );
             },

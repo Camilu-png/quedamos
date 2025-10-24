@@ -3,9 +3,8 @@ import "package:cloud_firestore/cloud_firestore.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
 import 'package:geolocator/geolocator.dart';
-import "package:quedamos/widgets/planes_list.dart";
+import "package:quedamos/screens/planes/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
-import "package:quedamos/screens/planes/planes_components.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -21,11 +20,10 @@ class MisPlanesScreen extends StatefulWidget {
 //MIS PLANES SCREEN STATE
 class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
   
-  String visibilidadSelected = "Amigos";
+  String actividadSelected = "Activos";
   String busqueda = "";
 
-  //Quizás acá hay que quitar la paginación...
-  static const int _pageSize = 100; //Planes por página
+  static const int _pageSize = 25;
 
   //INIT STATE
   @override
@@ -74,8 +72,8 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
     print("[🐧 planes] Recuperando planes de la base de datos, página: $pageKey");
     try {
       Query query = db.collection("planes")
-          .orderBy("titulo")
-          .limit(_pageSize);
+        .where("anfitrionID", isEqualTo: widget.userID)
+        .limit(_pageSize);
       if (_lastDocument != null) {
         query = query.startAfterDocument(_lastDocument!);
       }
@@ -85,37 +83,46 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
         data["id"] = doc.id;
         return data;
       }).toList();
+      //FILTRO
+      final now = DateTime.now();
       final planesFiltrados = planes.where((plan) {
-        final titulo = (plan["titulo"] ?? "").toLowerCase();
-        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
-        final queryText = busqueda.toLowerCase();
-        final anfitrionID = plan["anfitrionID"] ?? "";
+        //FECHA
         final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
-        final fecha = !fechaEsEncuesta
-          ? plan["fecha"].toDate() ?? DateTime.now()
-          : DateTime.now();
-        final horaEsEncuesta = plan["horaEsEncuesta"] ?? false;
-        final hora = !horaEsEncuesta
-          ? stringToTimeOfDay(plan["hora"]) ?? TimeOfDay.fromDateTime(DateTime.now())
-          : TimeOfDay.fromDateTime(DateTime.now());
-        final fechaHora = !fechaEsEncuesta && !horaEsEncuesta
-          ? DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute)
-          : DateTime.now();
-        return anfitrionID == 
-          widget.userID &&
-          (fechaEsEncuesta || horaEsEncuesta || (!fechaEsEncuesta && !horaEsEncuesta && fechaHora.isAfter(DateTime.now()))) &&
-          (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
+        if (!fechaEsEncuesta) {
+          final fecha = plan["fecha"] is Timestamp
+            ? (plan["fecha"] as Timestamp).toDate()
+            : DateTime.tryParse(plan["fecha"]?.toString() ?? "") ?? now;
+          if (actividadSelected == "Activos") {
+            if (fecha.isBefore(now)) return false;
+          } else {
+            if (fecha.isAfter(now)) return false;
+          }
+        }
+        //BÚSQUEDA
+        final titulo = (plan["titulo"] ?? "").toString().toLowerCase();
+        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toString().toLowerCase();
+        final queryText = busqueda.toLowerCase();
+        return titulo.contains(queryText) || anfitrionNombre.contains(queryText);
       }).toList();
-      if (planesFiltrados.isNotEmpty) {
-        _lastDocument = snapshot.docs.last;
-      }
+      //ORDEN: FECHA
+      planesFiltrados.sort((a, b) {
+        final fechaA = a["fecha"] as Timestamp?;
+        final fechaB = b["fecha"] as Timestamp?;
+        if (fechaA == null && fechaB == null) return 0;
+        if (fechaA == null) return 1;
+        if (fechaB == null) return -1;
+        return fechaA.compareTo(fechaB);
+      });
+      //PAGINACIÓN
       final isLastPage = planesFiltrados.length < _pageSize;
       if (isLastPage) {
         _pagingController.appendLastPage(planesFiltrados);
       } else {
         _pagingController.appendPage(planesFiltrados, pageKey + _pageSize);
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
+      print("[🐧 planes] Error: $error");
+      print("[🐧 planes] Error: $stackTrace");
       _pagingController.error = error;
     }
   }
@@ -150,23 +157,54 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
           child: Column(
             children: [
 
+              //SEGMENTED BUTTON
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(value: "Activos", label: Text("Activos", style: Theme.of(context).textTheme.bodyMedium)),
+                    ButtonSegment(value: "Inactivos", label: Text("Inactivos", style: Theme.of(context).textTheme.bodyMedium)),
+                  ],
+                  selected: <String>{actividadSelected},
+                  onSelectionChanged: (actividadSelection) {
+                    setState(() {
+                      actividadSelected = actividadSelection.first;
+                      _refreshPaging();
+                    });
+                  },
+                  style: SegmentedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    selectedBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    selectedForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    side: BorderSide.none,
+                  ),
+                ),
+              ),
+
               //BUSCADOR
-              TextField(
-                onChanged: (busquedaValor) {
-                  setState(() {
-                    busqueda = busquedaValor;
-                    _refreshPaging();
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: "Buscar planes...",
-                  hintStyle: Theme.of(context).textTheme.bodyMedium,
-                  prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: TextField(
+                  onChanged: (busquedaValor) {
+                    setState(() {
+                      busqueda = busquedaValor;
+                      _refreshPaging();
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: "Buscar planes...",
+                    hintStyle: Theme.of(context).textTheme.bodyMedium,
+                    prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
               ),

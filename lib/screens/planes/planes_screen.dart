@@ -1,11 +1,10 @@
 import "package:flutter/material.dart";
-import "package:cloud_firestore/cloud_firestore.dart";
 import 'package:geolocator/geolocator.dart';
+import "package:cloud_firestore/cloud_firestore.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
-import "package:quedamos/widgets/planes_list.dart";
+import "package:quedamos/screens/planes/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
-import "package:quedamos/screens/planes/planes_components.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -24,12 +23,13 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
   String visibilidadSelected = "Amigos";
   String busqueda = "";
 
-  static const int _pageSize = 100;
+  static const int _pageSize = 25;
 
   //INIT STATE
   @override
   void initState() {
     super.initState();
+    currentPosition = widget.currentLocation;
     _pagingController.addPageRequestListener((pageKey) {
       _fetchPage(pageKey);
     });
@@ -69,71 +69,137 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
 
   //OBTENER PLANES
   DocumentSnapshot? _lastDocument;
+  Position? currentPosition;
   Future<void> _fetchPage(int pageKey) async {
     print("[🐧 planes] Recuperando planes de la base de datos, página: $pageKey");
     try {
+      // AMIGOS
       List<String> amigosIDs = [];
       if (visibilidadSelected == "Amigos") {
+        print("[🐧 planes] Recuperando amigos de la base de datos...");
         final amigosSnapshot = await db
-            .collection("users")
-            .doc(widget.userID)
-            .collection("friends")
-            .get();
+          .collection("users")
+          .doc(widget.userID)
+          .collection("friends")
+          .get();
         amigosIDs = amigosSnapshot.docs.map((doc) => doc.id).toList();
       }
-      Query query = db.collection("planes")
-          .where("visibilidad", isEqualTo: visibilidadSelected)
-          .orderBy("titulo")
-          .limit(_pageSize);
-      if (_lastDocument != null) {
-        query = query.startAfterDocument(_lastDocument!);
-      }
-      final snapshot = await query.get();
-      final planes = snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        data["id"] = doc.id;
-        return data;
-      }).toList();
-      final planesFiltrados = planes.where((plan) {
-        final titulo = (plan["titulo"] ?? "").toLowerCase();
-        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toLowerCase();
-        final queryText = busqueda.toLowerCase();
-        final anfitrionID = plan["anfitrionID"] ?? "";
-        final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
-        final fecha = !fechaEsEncuesta
-          ? plan["fecha"].toDate() ?? DateTime.now()
-          : DateTime.now();
-        final horaEsEncuesta = plan["horaEsEncuesta"] ?? false;
-        final hora = !horaEsEncuesta
-          ? stringToTimeOfDay(plan["hora"]) ?? TimeOfDay.fromDateTime(DateTime.now())
-          : TimeOfDay.fromDateTime(DateTime.now());
-        final fechaHora = !fechaEsEncuesta && !horaEsEncuesta
-          ? DateTime(fecha.year, fecha.month, fecha.day, hora.hour, hora.minute)
-          : DateTime.now();
-        if (visibilidadSelected == "Amigos") {
-          return plan["visibilidad"] == "Amigos" &&
-                amigosIDs.contains(anfitrionID) &&
-                anfitrionID != widget.userID &&
-                (fechaEsEncuesta || horaEsEncuesta || (!fechaEsEncuesta && !horaEsEncuesta && fechaHora.isAfter(DateTime.now()))) &&
-                (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
-        } else if (visibilidadSelected == "Público") {
-          return plan["visibilidad"] == "Público" &&
-                anfitrionID != widget.userID &&
-                (fechaEsEncuesta || horaEsEncuesta || (!fechaEsEncuesta && !horaEsEncuesta && fechaHora.isAfter(DateTime.now()))) &&
-                (titulo.contains(queryText) || anfitrionNombre.contains(queryText));
+      // PLANES
+      List<Map<String, dynamic>> planes = [];
+      //PLANES: AMIGOS
+      if (visibilidadSelected == "Amigos" && amigosIDs.isNotEmpty) {
+        for (var i = 0; i < amigosIDs.length; i += 10) {
+          final batch = amigosIDs.sublist(i, (i + 10 > amigosIDs.length) ? amigosIDs.length : i + 10);
+          if (batch.isEmpty) continue;
+          Query query = db.collection("planes")
+            .where("visibilidad", isEqualTo: "Amigos")
+            .where("anfitrionID", whereIn: batch)
+            .limit(_pageSize);
+          if (_lastDocument != null) query = query.startAfterDocument(_lastDocument!);
+          final snapshot = await query.get();
+          planes.addAll(snapshot.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            data["id"] = doc.id;
+            return data;
+          }).toList());
+          if (snapshot.docs.isNotEmpty) _lastDocument = snapshot.docs.last;
         }
-        return false;
-      }).toList();
-      if (planesFiltrados.isNotEmpty) {
-        _lastDocument = snapshot.docs.last;
       }
+      //PLANES: PÚBLICO
+      if (visibilidadSelected == "Público") {
+        Query query = db.collection("planes")
+          .where("visibilidad", isEqualTo: "Público")
+          .where("anfitrionID", isNotEqualTo: widget.userID)
+          .limit(_pageSize);
+        if (_lastDocument != null) query = query.startAfterDocument(_lastDocument!);
+        final snapshot = await query.get();
+        planes.addAll(snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          data["id"] = doc.id;
+          return data;
+        }).toList());
+        if (snapshot.docs.isNotEmpty) _lastDocument = snapshot.docs.last;
+      }
+      //FILTRO
+      final now = DateTime.now();
+      final planesFiltrados = planes.where((plan) {
+        //FECHA
+        final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
+        if (!fechaEsEncuesta) {
+          final fecha = plan["fecha"] is Timestamp
+            ? (plan["fecha"] as Timestamp).toDate()
+            : DateTime.tryParse(plan["fecha"]?.toString() ?? "") ?? now;
+          if (fecha.isBefore(now)) return false;
+        }
+        //BÚSQUEDA
+        final titulo = (plan["titulo"] ?? "").toString().toLowerCase();
+        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toString().toLowerCase();
+        final queryText = busqueda.toLowerCase();
+        return titulo.contains(queryText) || anfitrionNombre.contains(queryText);
+      }).toList();
+      //ORDENAR POR DISTANCIA
+      if (currentPosition != null) {
+        planesFiltrados.sort((a, b) {
+          double distanciaA = double.infinity;
+          double distanciaB = double.infinity;
+          //DISTANCIA A
+          final ubicacionA = a["ubicacion"];
+          if (a["ubicacionEsEncuesta"] != true &&
+              ubicacionA != null &&
+              ubicacionA is Map<String, dynamic>) {
+            final lat = ubicacionA["latitud"];
+            final lng = ubicacionA["longitud"];
+            final latDouble = (lat is int)
+                ? lat.toDouble()
+                : double.tryParse(lat.toString());
+            final lngDouble = (lng is int)
+                ? lng.toDouble()
+                : double.tryParse(lng.toString());
+
+            if (latDouble != null && lngDouble != null) {
+              distanciaA = Geolocator.distanceBetween(
+                currentPosition!.latitude,
+                currentPosition!.longitude,
+                latDouble,
+                lngDouble,
+              );
+            }
+          }
+          //DISTANCIA B
+          final ubicacionB = b["ubicacion"];
+          if (b["ubicacionEsEncuesta"] != true &&
+              ubicacionB != null &&
+              ubicacionB is Map<String, dynamic>) {
+            final lat = ubicacionB["latitud"];
+            final lng = ubicacionB["longitud"];
+            final latDouble = (lat is int)
+                ? lat.toDouble()
+                : double.tryParse(lat.toString());
+            final lngDouble = (lng is int)
+                ? lng.toDouble()
+                : double.tryParse(lng.toString());
+            if (latDouble != null && lngDouble != null) {
+              distanciaB = Geolocator.distanceBetween(
+                currentPosition!.latitude,
+                currentPosition!.longitude,
+                latDouble,
+                lngDouble,
+              );
+            }
+          }
+          return distanciaA.compareTo(distanciaB);
+        });
+      }
+      // PAGINACIÓN
       final isLastPage = planesFiltrados.length < _pageSize;
       if (isLastPage) {
         _pagingController.appendLastPage(planesFiltrados);
       } else {
         _pagingController.appendPage(planesFiltrados, pageKey + _pageSize);
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
+      print("[🐧 planes] Error: $error");
+      print("[🐧 planes] Error: $stackTrace");
       _pagingController.error = error;
     }
   }
@@ -196,7 +262,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
 
               //BUSCADOR
               Padding(
-                padding: const EdgeInsets.only(top: 16),
+                padding: const EdgeInsets.only(top: 12),
                 child: TextField(
                   onChanged: (busquedaValor) {
                     setState(() {

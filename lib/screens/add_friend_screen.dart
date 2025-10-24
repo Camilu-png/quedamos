@@ -28,7 +28,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: Text(
-          "Nuevo Amigo",
+          "Nuevo amigo",
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Theme.of(context).colorScheme.onPrimary,
                 fontWeight: FontWeight.w600,

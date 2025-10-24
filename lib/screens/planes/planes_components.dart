@@ -2,26 +2,12 @@ import "package:flutter/material.dart";
 import "package:url_launcher/url_launcher.dart";
 import "package:quedamos/app_colors.dart";
 import "dart:async";
+import "dart:convert";
+import "package:http/http.dart" as http;
 import "package:geolocator/geolocator.dart";
+import "package:flutter_dotenv/flutter_dotenv.dart";
 import "package:google_maps_flutter/google_maps_flutter.dart" as gmaps;
 import "package:flutter_google_places_sdk/flutter_google_places_sdk.dart";
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-Future<String?> getPlaceNameFromLatLng(double lat, double lng) async {
-  final apiKey = dotenv.env['API_KEY'] ?? ''; //API KEY
-  final url = Uri.parse(
-      "https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey");
-  final response = await http.get(url);
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    if (data["results"] != null && data["results"].isNotEmpty) {
-      return data["results"][0]["formatted_address"];
-    }
-  }
-  return null;
-}
 
 //GEOLOCATOR: identifica la ubicación del usuario.
 //GOOGLE_MAPS_FLUTTER: muestra Google Maps en la aplicación.
@@ -121,7 +107,7 @@ Future<void> showMap(
   } catch (e) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se pudo abrir el mapa")),
+        const SnackBar(content: Text("No se pudo abrir el mapa.")),
       );
     }
   }
@@ -161,6 +147,19 @@ TimeOfDay? stringToTimeOfDay(String? s) {
           orElse: () => const MapEntry("secondary", secondary))
       .key;
   }
+
+Future<String?> getPlaceNameFromLatLng(double lat, double lng) async {
+  final apiKey = dotenv.env["API_KEY"] ?? ""; //API KEY
+  final url = Uri.parse("https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey");
+  final response = await http.get(url);
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    if (data["results"] != null && data["results"].isNotEmpty) {
+      return data["results"][0]["formatted_address"];
+    }
+  }
+  return null;
+}
 
 //SELECTOR DE UBICACIÓN (PLAN ADD SCREEN)
 Future<void> showUbicacionSelector(
@@ -204,7 +203,7 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
   @override
   void initState() {
     super.initState();
-    final apiKey = dotenv.env['API_KEY'] ?? '';
+    final apiKey = dotenv.env["API_KEY"] ?? "";
     places = FlutterGooglePlacesSdk(apiKey); //API KEY
     // If the caller provided an initial position, use it and skip active geolocation
     print("[planes] $widget.initialPosition");

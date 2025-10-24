@@ -23,7 +23,7 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
         appBar: AppBar(
           title: Text(
-            "Mi Perfil",
+            "Mi perfil",
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: Theme.of(context).colorScheme.onPrimary,
               fontWeight: FontWeight.w600,

@@ -932,7 +932,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                             } catch (e) {
                               print("[🐧 planes] Error: $e");
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("No se pudo guardar el plan: $e")),
+                                SnackBar(content: Text("No se pudo guardar el plan: $e.")),
                               );
                             }      
                           },
