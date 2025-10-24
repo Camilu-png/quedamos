@@ -2,6 +2,11 @@
 
 Aplicación móvil que permite crear, compartir y gestionar planes fácilmente.
 
+## Instrucciones
+
+- Se debe poner la API KEY en /lib/screens/planes/planes_components.dart (buscar líneas que dicen API KEY).
+- Se debe poner la API KEY en /android/app/src/main/AndroidManifest.xml (buscar línea que dice android:value).
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

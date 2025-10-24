@@ -2,6 +2,7 @@ import "package:intl/intl.dart";
 import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/app_colors.dart";
+import "package:geolocator/geolocator.dart";
 import "package:quedamos/screens/planes/planes_components.dart";
 import "package:quedamos/screens/planes/plan_add_screen.dart";
 
@@ -10,7 +11,8 @@ final db = FirebaseFirestore.instance;
 class PlanScreen extends StatefulWidget {
   final String userID;
   final Map<String, dynamic> plan;
-  const PlanScreen({super.key, required this.plan, required this.userID});
+  final Position? currentLocation;
+  const PlanScreen({super.key, required this.plan, required this.userID, this.currentLocation});
   @override
   State<PlanScreen> createState() => _PlanScreenState();
 }
@@ -221,9 +223,18 @@ class _PlanScreenState extends State<PlanScreen> {
     }
     //UBICACIÓN
     bool ubicacionEsEncuesta = plan["ubicacionEsEncuesta"] ?? false;
-    String ubicacion = plan["ubicacion"] ?? "";
+    Map<String, dynamic> ubicacion = {
+      "nombre": "Casa Central, UTFSM",
+      "latitud": -33.0458,
+      "longitud": -71.6197,
+    };
+    if (plan["ubicacion"] is Map<String, dynamic>) {
+      ubicacion = plan["ubicacion"];
+    }
     if (plan["ubicacionEsEncuesta"] == true) {
-      ubicacion = "Por determinar";
+      ubicacion = {
+        "nombre": "Por determinar",
+      };
     }
     //PARTICIPANTE
     final bool participantesAceptadosUsuario = participantesAceptados.contains(widget.userID);
@@ -274,7 +285,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             final updatedPlanID = await Navigator.push<String?>(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AddPlanScreen(plan: plan, userID: widget.userID),
+                                builder: (context) => AddPlanScreen(plan: plan, userID: widget.userID, currentLocation: widget.currentLocation),
                               ),
                             );
                             if (updatedPlanID != null) {
@@ -518,7 +529,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          ubicacion,
+                          ubicacion["nombre"],
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
                         ),
                       )
