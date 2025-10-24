@@ -47,7 +47,7 @@ dependencies:
   location: ^8.0.1
   geolocator: ^14.0.2
   flutter_google_places_sdk: ^0.4.2
-  flutter_dotenv: ^5.1.0
+  flutter_dotenv: ^6.0.0
   http: ^1.1.0
 
 
@@ -72,6 +72,7 @@ flutter:
   assets:
     - assets/logo.png # TODO: Eliminar fondo
     - assets/google_logo.png
+    - .env
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

@@ -5,11 +5,12 @@ import "dart:async";
 import "package:geolocator/geolocator.dart";
 import "package:google_maps_flutter/google_maps_flutter.dart" as gmaps;
 import "package:flutter_google_places_sdk/flutter_google_places_sdk.dart";
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 Future<String?> getPlaceNameFromLatLng(double lat, double lng) async {
-  final apiKey = ""; //API KEY
+  final apiKey = dotenv.env['API_KEY'] ?? ''; //API KEY
   final url = Uri.parse(
       "https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey");
   final response = await http.get(url);
@@ -203,7 +204,8 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
   @override
   void initState() {
     super.initState();
-    places = FlutterGooglePlacesSdk(""); //API KEY
+    final apiKey = dotenv.env['API_KEY'] ?? '';
+    places = FlutterGooglePlacesSdk(apiKey); //API KEY
     // If the caller provided an initial position, use it and skip active geolocation
     print("[planes] $widget.initialPosition");
     if (widget.initialPosition != null) {
