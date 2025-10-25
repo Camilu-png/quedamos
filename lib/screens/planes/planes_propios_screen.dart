@@ -2,7 +2,7 @@ import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
-import 'package:geolocator/geolocator.dart';
+import "package:geolocator/geolocator.dart";
 import "package:quedamos/screens/planes/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
 
@@ -131,7 +131,27 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
   Widget build(BuildContext context) {
 
     final userID = widget.userID;
-    print("[🐧 planes] UID del usuario: ${userID}");
+    
+    if (widget.userID.isEmpty || widget.currentLocation == null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                "Obteniendo ubicación...",
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    else {
+      print("[🐧 planes] UID del usuario: ${widget.userID}");
+    }
     
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -222,7 +242,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
                         currentLocation: widget.currentLocation,
                         onTapOverride: (ctx, planData) async {
                           final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: userID, currentLocation: widget.currentLocation)));
-                          if (result == 'deleted') {
+                          if (result == "deleted") {
                             if (mounted) _refreshPaging();
                           }
                         },

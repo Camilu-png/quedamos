@@ -403,14 +403,50 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
             //ICONO
             GestureDetector(
               onTap: () => _showIconoSelectorModal(context),
-              child: Container(
-                width: double.infinity,
-                height: 120,
-                color: iconoColor,
-                alignment: Alignment.center,
-                child: Icon(iconoNombre, color: Colors.white, size: 60),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 120,
+                    color: iconoColor,
+                    alignment: Alignment.center,
+                    child: Icon(iconoNombre, color: Colors.white, size: 60),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(24),
+                        onTap: () {
+                          _showIconoSelectorModal(context);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8), //Área tactil
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.edit, size: 16, color: Theme.of(context).colorScheme.onSurface),
+                              const SizedBox(width: 4),
+                              Text(
+                                "Cambiar icono",
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
 
             Padding(
               padding: const EdgeInsets.all(16),
@@ -420,51 +456,19 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-                    //VISIBILIDAD
-                    Text(
-                      "Visibilidad",
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: double.infinity,
-                      child: SegmentedButton<String>(
-                        segments: [
-                          ButtonSegment(value: "Amigos", label: Text("Amigos", style: Theme.of(context).textTheme.bodyMedium)),
-                          ButtonSegment(value: "Público", label: Text("Público", style: Theme.of(context).textTheme.bodyMedium)),
-                        ],
-                        selected: <String>{visibilidad},
-                        onSelectionChanged: (newSelection) {
-                          setState(() {
-                            visibilidad = newSelection.first;
-                          });
-                        },
-                        style: SegmentedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-                          selectedBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                          foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                          selectedForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          side: BorderSide.none,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
                     //TÍTULO
-                    Text(
-                      "Título",
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
                     const SizedBox(height: 4),
                     TextFormField(
                       controller: titulo,
                       maxLength: 250,
                       decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.title),
+                        labelText: "Título",
                         hintText: "Ingresa un título",
+                        floatingLabelStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w400,
+                        ),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                         border: OutlineInputBorder(
@@ -484,10 +488,6 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     const SizedBox(height: 12),
 
                     //DESCRIPCIÓN
-                    Text(
-                      "Descripción",
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
                     const SizedBox(height: 4),
                     TextFormField(
                       controller: descripcion,
@@ -495,7 +495,13 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                       minLines: 4,
                       maxLines: 8,
                       decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.description),
+                        labelText: "Descripción",
                         hintText: "Ingresa una descripción",
+                        floatingLabelStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w400,
+                        ),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                         border: OutlineInputBorder(
@@ -517,7 +523,10 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     //FECHA
                     Text(
                       "Fecha",
-                      style: Theme.of(context).textTheme.labelLarge,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -535,16 +544,25 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             ),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                fechaEsEncuesta
-                                    ? "Agregar opción de encuesta"
-                                    : (fecha != null
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    fechaEsEncuesta
+                                      ? "Elegir opción de encuesta"
+                                      : (fecha != null
                                         ? DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fecha!)
-                                        : "Toca para elegir fecha"),
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
+                                        : "Elegir fecha"),
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                ),
+                              ]
                             ),
                           ),
                         ),
@@ -553,7 +571,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
-                              ButtonSegment(value: "fecha", label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: "fecha", label: Icon(Icons.assignment)),
                               ButtonSegment(value: "encuesta", label: Icon(Icons.poll)),
                             ],
                             selected: {fechaEsEncuesta ? "encuesta" : "fecha"},
@@ -627,7 +645,10 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     //HORA
                     Text(
                       "Hora",
-                      style: Theme.of(context).textTheme.labelLarge,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -645,16 +666,25 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             ),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                horaEsEncuesta
-                                    ? "Agregar opción de encuesta"
-                                    : (hora != null
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    horaEsEncuesta
+                                      ? "Elegir opción de encuesta"
+                                      : (hora != null
                                         ? hora!.format(context)
-                                        : "Toca para elegir hora"),
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
+                                        : "Elegir hora"),
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                ),
+                              ]
                             ),
                           ),
                         ),
@@ -663,7 +693,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
-                              ButtonSegment(value: "hora", label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: "hora", label: Icon(Icons.assignment)),
                               ButtonSegment(value: "encuesta", label: Icon(Icons.poll)),
                             ],
                             selected: {horaEsEncuesta ? "encuesta" : "hora"},
@@ -706,9 +736,9 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                       child: Text(
                                         "Opción ${i + 1}: ${horasEncuesta[i].format(context)}",
                                         style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(fontWeight: FontWeight.w500),
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(fontWeight: FontWeight.w500),
                                       ),
                                     ),
                                     IconButton(
@@ -737,7 +767,10 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     //UBICACIÓN
                     Text(
                       "Ubicación",
-                      style: Theme.of(context).textTheme.labelLarge,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -755,25 +788,35 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             ),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                ubicacionEsEncuesta
-                                    ? "Agregar opción de encuesta"
-                                    : (ubicacion?.isNotEmpty == true
-                                      ? ubicacion!["nombre"] ?? "Ubicación desconocida"
-                                      : "Toca para elegir ubicación"),
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    ubicacionEsEncuesta
+                                      ? "Elegir opción de encuesta"
+                                      : (ubicacion?.isNotEmpty == true
+                                        ? ubicacion!["nombre"] ?? "Ubicación desconocida"
+                                        : "Elegir ubicación"),
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
+
                         const SizedBox(width: 12),
                         //SEGMENTED BUTTON (HORA/ENCUESTA)
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
-                              ButtonSegment(value: "ubicación", label: Icon(Icons.calendar_today)),
+                              ButtonSegment(value: "ubicación", label: Icon(Icons.assignment)),
                               ButtonSegment(value: "encuesta", label: Icon(Icons.poll)),
                             ],
                             selected: {ubicacionEsEncuesta ? "encuesta" : "ubicación"},
@@ -841,6 +884,43 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                             ),
                         ],
                       ),
+
+                    const SizedBox(height: 12),
+
+                    //VISIBILIDAD
+                    Text(
+                      "Visibilidad",
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<String>(
+                        segments: [
+                          ButtonSegment(value: "Amigos", label: Text("Amigos", style: Theme.of(context).textTheme.bodyMedium)),
+                          ButtonSegment(value: "Público", label: Text("Público", style: Theme.of(context).textTheme.bodyMedium)),
+                        ],
+                        selected: <String>{visibilidad},
+                        onSelectionChanged: (newSelection) {
+                          setState(() {
+                            visibilidad = newSelection.first;
+                          });
+                        },
+                        style: SegmentedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                          selectedBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                          selectedForegroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          side: BorderSide.none,
+                        ),
+                      ),
+                    ),
 
                     const SizedBox(height: 12),
 

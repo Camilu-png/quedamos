@@ -73,7 +73,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
   Future<void> _fetchPage(int pageKey) async {
     print("[🐧 planes] Recuperando planes de la base de datos, página: $pageKey");
     try {
-      // AMIGOS
+      //AMIGOS
       List<String> amigosIDs = [];
       if (visibilidadSelected == "Amigos") {
         print("[🐧 planes] Recuperando amigos de la base de datos...");
@@ -84,7 +84,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
           .get();
         amigosIDs = amigosSnapshot.docs.map((doc) => doc.id).toList();
       }
-      // PLANES
+      //PLANES
       List<Map<String, dynamic>> planes = [];
       //PLANES: AMIGOS
       if (visibilidadSelected == "Amigos" && amigosIDs.isNotEmpty) {
@@ -144,18 +144,15 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
           double distanciaB = double.infinity;
           //DISTANCIA A
           final ubicacionA = a["ubicacion"];
-          if (a["ubicacionEsEncuesta"] != true &&
-              ubicacionA != null &&
-              ubicacionA is Map<String, dynamic>) {
+          if (a["ubicacionEsEncuesta"] != true && ubicacionA != null && ubicacionA is Map<String, dynamic>) {
             final lat = ubicacionA["latitud"];
             final lng = ubicacionA["longitud"];
             final latDouble = (lat is int)
-                ? lat.toDouble()
-                : double.tryParse(lat.toString());
+              ? lat.toDouble()
+              : double.tryParse(lat.toString());
             final lngDouble = (lng is int)
-                ? lng.toDouble()
-                : double.tryParse(lng.toString());
-
+              ? lng.toDouble()
+              : double.tryParse(lng.toString());
             if (latDouble != null && lngDouble != null) {
               distanciaA = Geolocator.distanceBetween(
                 currentPosition!.latitude,
@@ -167,17 +164,15 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
           }
           //DISTANCIA B
           final ubicacionB = b["ubicacion"];
-          if (b["ubicacionEsEncuesta"] != true &&
-              ubicacionB != null &&
-              ubicacionB is Map<String, dynamic>) {
+          if (b["ubicacionEsEncuesta"] != true && ubicacionB != null && ubicacionB is Map<String, dynamic>) {
             final lat = ubicacionB["latitud"];
             final lng = ubicacionB["longitud"];
             final latDouble = (lat is int)
-                ? lat.toDouble()
-                : double.tryParse(lat.toString());
+              ? lat.toDouble()
+              : double.tryParse(lat.toString());
             final lngDouble = (lng is int)
-                ? lng.toDouble()
-                : double.tryParse(lng.toString());
+              ? lng.toDouble()
+              : double.tryParse(lng.toString());
             if (latDouble != null && lngDouble != null) {
               distanciaB = Geolocator.distanceBetween(
                 currentPosition!.latitude,
@@ -207,7 +202,26 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
 
-    print("[🐧 planes] UID del usuario: ${widget.userID}");
+    if (widget.userID.isEmpty || widget.currentLocation == null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                "Obteniendo ubicación...",
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    else {
+      print("[🐧 planes] UID del usuario: ${widget.userID}");
+    }
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),

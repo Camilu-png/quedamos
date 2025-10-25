@@ -39,7 +39,7 @@ class PlanesList extends StatelessWidget {
       fechaBonita = "Por determinar";
     } else if (plan["fecha"] is Timestamp) {
       fechaBonita = DateFormat("d 'de' MMMM 'de' y", "es_ES")
-          .format((plan["fecha"] as Timestamp).toDate());
+        .format((plan["fecha"] as Timestamp).toDate());
     } else {
       fechaBonita = "Desconocida";
     }
@@ -88,7 +88,7 @@ class PlanesList extends StatelessWidget {
       }),
       highlightColor: Colors.transparent,
 
-      // ACCIÓN
+      //ACCIÓN
       onTap: () async {
         print("[🐧 planes] Plan clickeado: ${plan["planID"]}");
         if (onTapOverride != null) {
