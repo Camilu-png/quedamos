@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:quedamos/text_styles.dart';
 import 'package:quedamos/app_colors.dart';
 
 class FriendList extends StatelessWidget {
@@ -81,7 +80,11 @@ class FriendList extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(friend["name"] ?? '', style: subtitleText),
+                          Text(friend["name"] ?? '', 
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.bold
+                              )),
                         ],
                       ),
                     ),

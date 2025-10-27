@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:quedamos/text_styles.dart';
 import 'package:quedamos/app_colors.dart';
 
 class _TextButtonAction extends StatefulWidget {
@@ -116,7 +115,10 @@ class FriendRequestList extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(friend["name"] ?? '', style: subtitleText),
+                        Text(friend["name"] ?? '', style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.bold
+                              )),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -222,7 +224,8 @@ class _ActionButton extends StatefulWidget {
 
   const _ActionButton({
     required this.icon,
-    required this.color, this.onTap,
+    required this.color, 
+    this.onTap,
   });
 
   @override

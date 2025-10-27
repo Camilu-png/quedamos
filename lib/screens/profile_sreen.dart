@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:quedamos/app_colors.dart';
-import 'package:quedamos/text_styles.dart';
 import 'package:quedamos/screens/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -73,9 +72,14 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Nombre y correo
-                Text(name, style: subtitleText),
+                Text(name, style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
-                Text(email, style: bodyPrimaryText.copyWith(color: Colors.grey[700])),
+                Text(email, 
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant
+                              )
+                              ),
 
                 const SizedBox(height: 32),
                 const Divider(thickness: 1.2),
@@ -98,34 +102,35 @@ class ProfileScreen extends StatelessWidget {
                 // ),
 
                 const Spacer(),
-
-                // Botón para cerrar sesión
                 SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Cerrar sesión'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: secondary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      width: double.infinity,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        onPressed: () async {
+                          await FirebaseAuth.instance.signOut();
+                          if (context.mounted) {
+                            print("👾 Cerrando Sesión");
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            );
+                          }
+                        },
+                        child: Text(
+                          "Cerrar Sesión",
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSecondary,
+                            fontWeight: FontWeight.w600,
+                          )
+                        ),
                       ),
                     ),
-                    onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
-                      if (context.mounted) {
-                        print("👾 Cerrando Sesión");
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        );
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
               ],
             ),
           );
