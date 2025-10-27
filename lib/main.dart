@@ -38,6 +38,17 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Quedamos?',
       theme: ThemeData(
+        fontFamily: 'Roboto',
+        textTheme: TextTheme(
+          headlineLarge: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.bold),
+          headlineMedium: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.bold),
+          headlineSmall: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.bold),
+          titleLarge: TextStyle(fontFamily: 'Montserrat'),
+          
+          bodyLarge: TextStyle(fontFamily: 'Roboto'),
+          bodyMedium: TextStyle(fontFamily: 'Roboto'),
+          bodySmall: TextStyle(fontFamily: 'Roboto'),
+        ),
         useMaterial3: true,
         colorScheme: ColorScheme(
           brightness: Brightness.light,
