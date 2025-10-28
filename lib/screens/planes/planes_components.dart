@@ -9,10 +9,7 @@ import "package:flutter_dotenv/flutter_dotenv.dart";
 import "package:google_maps_flutter/google_maps_flutter.dart" as gmaps;
 import "package:flutter_google_places_sdk/flutter_google_places_sdk.dart";
 
-//GEOLOCATOR: identifica la ubicación del usuario.
-//GOOGLE_MAPS_FLUTTER: muestra Google Maps en la aplicación.
-//FLUTTER_GOOGLE_MAPS_SDK: convierte coordenadas en texto.
-
+//ICONOS MAP
 final Map<String, IconData> iconosMap = {
   "event": Icons.event,
   "star": Icons.star,
@@ -56,6 +53,7 @@ final Map<String, IconData> iconosMap = {
   "ski": Icons.downhill_skiing,
 };
 
+//COLORES MAP
 final Map<String, Color> coloresMap = {
   "red": Colors.red,
   "pink": Colors.pink,
@@ -79,26 +77,55 @@ final Map<String, Color> coloresMap = {
   "secondary": secondary,
 };
 
+//STRING -> TIME OF DAY
+TimeOfDay? stringToTimeOfDay(String? s) {
+  if (s == null || s.isEmpty) return null;
+  final parts = s.split(":");
+  if (parts.length != 2) return null;
+  final hour = int.tryParse(parts[0]);
+  final minute = int.tryParse(parts[1]);
+  if (hour == null || minute == null) return null;
+  return TimeOfDay(hour: hour, minute: minute);
+}
+
+//TIME OF DAY -> STRING
+String timeOfDayToString(TimeOfDay t) {
+  final hour = t.hour.toString().padLeft(2, "0");
+  final minute = t.minute.toString().padLeft(2, "0");
+  return "$hour:$minute";
+}
+
+//ICON DATA -> STRING
+String getIconName(IconData icon) {
+  return iconosMap.entries
+    .firstWhere((entry) => entry.value == icon,
+      orElse: () => const MapEntry("event", Icons.event))
+    .key;
+}
+
+//COLOR -> STRING
+String getColorName(Color color) {
+  return coloresMap.entries
+    .firstWhere((entry) => entry.value == color,
+      orElse: () => const MapEntry("secondary", secondary))
+    .key;
+}
+
+//SHOW MAP
 Future<void> showMap(
   BuildContext context,
   bool mounted,
   Map<String, dynamic> ubicacion,
 ) async {
-  print("[🐧 Planes: componentes] Abriendo mapa...");
-
-  // Validar que existan lat y lng
+  print("[🐧 planes] Abriendo mapa...");
   if (!ubicacion.containsKey("latitud") || !ubicacion.containsKey("longitud")) return;
-
   final lat = ubicacion["latitud"];
   final lng = ubicacion["longitud"];
   final nombre = ubicacion["nombre"] ?? "$lat,$lng";
-
-  // Codificar el nombre para la URL
+  //Codificar nombre
   final query = Uri.encodeComponent(nombre);
-
-  // Abrir Google Maps centrado en las coordenadas, mostrando el nombre
+  //Abrir Google Maps en las coordenadas + nombre
   final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng($query)");
-
   try {
     await launchUrl(
       url,
@@ -113,41 +140,7 @@ Future<void> showMap(
   }
 }
 
-
-//STRING -> TIME OF DAY
-TimeOfDay? stringToTimeOfDay(String? s) {
-  if (s == null || s.isEmpty) return null;
-  final parts = s.split(":");
-  if (parts.length != 2) return null;
-  final hour = int.tryParse(parts[0]);
-  final minute = int.tryParse(parts[1]);
-  if (hour == null || minute == null) return null;
-  return TimeOfDay(hour: hour, minute: minute);
-}
-
-//TIME OF DAY -> STRING
-  String timeOfDayToString(TimeOfDay t) {
-    final hour = t.hour.toString().padLeft(2, "0");
-    final minute = t.minute.toString().padLeft(2, "0");
-    return "$hour:$minute";
-  }
-
-  //ICON DATA -> STRING
-  String getIconName(IconData icon) {
-    return iconosMap.entries
-      .firstWhere((entry) => entry.value == icon,
-          orElse: () => const MapEntry("event", Icons.event))
-      .key;
-  }
-
-  //COLOR -> STRING
-  String getColorName(Color color) {
-    return coloresMap.entries
-      .firstWhere((entry) => entry.value == color,
-          orElse: () => const MapEntry("secondary", secondary))
-      .key;
-  }
-
+//GET PLACE NAME FROM LATITUD & LONGITUDE
 Future<String?> getPlaceNameFromLatLng(double lat, double lng) async {
   final apiKey = dotenv.env["API_KEY"] ?? ""; //API KEY
   final url = Uri.parse("https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey");
@@ -161,7 +154,7 @@ Future<String?> getPlaceNameFromLatLng(double lat, double lng) async {
   return null;
 }
 
-//SELECTOR DE UBICACIÓN (PLAN ADD SCREEN)
+//SELECTOR DE UBICACIÓN
 Future<void> showUbicacionSelector(
   BuildContext context,
   Function(gmaps.LatLng, String) onLocationSelected, {
@@ -183,6 +176,8 @@ Future<void> showUbicacionSelector(
   );
   return Future.value();
 }
+
+//UBICACIÓN SELECTOR: MAPA
 class UbicacionSelectorMapa extends StatefulWidget {
   final Function(gmaps.LatLng, String) onLocationSelected;
   final Position? initialPosition;
@@ -199,40 +194,36 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
   Timer? _debounce;
   bool _hasSetInitialLocation = false; 
   bool _isLoadingLocation = true;
-
   @override
   void initState() {
     super.initState();
     final apiKey = dotenv.env["API_KEY"] ?? "";
     places = FlutterGooglePlacesSdk(apiKey); //API KEY
-    // If the caller provided an initial position, use it and skip active geolocation
-    print("[planes] $widget.initialPosition");
+    //Si existe locación inicial... 
+    print("[🐧 planes] $widget.initialPosition");
     if (widget.initialPosition != null) {
-      print("[planes] SIIIIIIIIIIIIIIII");
+      print("[🐧 planes] SIIIIIIIIIIIIIIII");
       selectedLocation = gmaps.LatLng(widget.initialPosition!.latitude, widget.initialPosition!.longitude);
       _hasSetInitialLocation = true;
       _isLoadingLocation = false;
     } else {
-      print("[planes] NOOOOOOOOOOOOO");
+      print("[🐧 planes] NOOOOOOOOOOOOO");
       _setCurrentLocation();
     }
   }
-
   @override
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
-
   //CENTRAR MAPA EN UBICACIÓN ACTUAL
   Future<void> _setCurrentLocation() async {
     if (_hasSetInitialLocation) return; 
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
     LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
@@ -250,7 +241,6 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
       });
     }
   }
-
   Future<void> _buscarLugares(String query) async {
     if (query.isEmpty) {
       setState(() => _predictions = []);
@@ -264,7 +254,6 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
       });
     });
   }
-
   Future<void> _moverAlLugar(String placeId) async {
     final details = await places.fetchPlace(
       placeId,
@@ -281,7 +270,6 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -295,7 +283,6 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
           ),
           child: Column(
             children: [
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -328,7 +315,6 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
                   )  
                 ]
               ),
-              
               //BÚSQUEDA
               Padding(
                 padding: const EdgeInsets.only(right: 16, left: 16, bottom: 16),
@@ -355,7 +341,6 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
                   
                 ),
               ),
-
               //CUERPO
               if (_isLoadingLocation)
                 Expanded(
