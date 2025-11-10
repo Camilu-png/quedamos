@@ -1,0 +1,134 @@
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+
+class DatabaseHelper {
+  static final DatabaseHelper instance = DatabaseHelper._init();
+  static Database? _database;
+
+  DatabaseHelper._init();
+
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDB('quedamos.db');
+    return _database!;
+  }
+
+  Future<Database> _initDB(String filePath) async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, filePath);
+
+    return await openDatabase(
+      path,
+      version: 4,
+      onCreate: _createDB,
+      onUpgrade: _onUpgrade,
+    );
+  }
+
+  Future<void> _createDB(Database db, int version) async {
+    const idType = 'TEXT PRIMARY KEY';
+    const textType = 'TEXT NOT NULL';
+    const intType = 'INTEGER NOT NULL';
+    const textTypeNullable = 'TEXT';
+
+    await db.execute('''
+      CREATE TABLE friends (
+        id $idType,
+        name $textType,
+        email $textType,
+        photoUrl $textTypeNullable,
+        localPhotoPath $textTypeNullable,
+        addedAt $intType,
+        isSynced $intType
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE friend_requests (
+        id $idType,
+        from_user $textType,
+        to_user $textType,
+        name $textType,
+        email $textType,
+        photoUrl $textTypeNullable,
+        localPhotoPath $textTypeNullable,
+        status $textType,
+        createdAt $intType,
+        isSynced $intType
+      )
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_friend_requests_status ON friend_requests(status)
+    ''');
+
+    await db.execute('''
+      CREATE TABLE pending_deletions (
+        id $idType,
+        currentUserId $textType,
+        friendId $textType,
+        createdAt $intType
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE pending_acceptances (
+        id $idType,
+        currentUserId $textType,
+        requestData $textType,
+        createdAt $intType
+      )
+    ''');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add localPhotoPath column to friends table
+      await db.execute('''
+        ALTER TABLE friends ADD COLUMN localPhotoPath TEXT
+      ''');
+
+      // Add localPhotoPath column to friend_requests table
+      await db.execute('''
+        ALTER TABLE friend_requests ADD COLUMN localPhotoPath TEXT
+      ''');
+    }
+    
+    if (oldVersion < 3) {
+      // Create pending_deletions table
+      const idType = 'TEXT PRIMARY KEY';
+      const textType = 'TEXT NOT NULL';
+      const intType = 'INTEGER NOT NULL';
+      
+      await db.execute('''
+        CREATE TABLE pending_deletions (
+          id $idType,
+          currentUserId $textType,
+          friendId $textType,
+          createdAt $intType
+        )
+      ''');
+    }
+    
+    if (oldVersion < 4) {
+      // Create pending_acceptances table
+      const idType = 'TEXT PRIMARY KEY';
+      const textType = 'TEXT NOT NULL';
+      const intType = 'INTEGER NOT NULL';
+      
+      await db.execute('''
+        CREATE TABLE pending_acceptances (
+          id $idType,
+          currentUserId $textType,
+          requestData $textType,
+          createdAt $intType
+        )
+      ''');
+    }
+  }
+
+  Future<void> close() async {
+    final db = await instance.database;
+    db.close();
+  }
+}
