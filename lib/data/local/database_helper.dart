@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 6,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -79,6 +79,43 @@ class DatabaseHelper {
         createdAt $intType
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE plans (
+        id $idType,
+        anfitrionID $textType,
+        anfitrionNombre $textType,
+        titulo $textType,
+        descripcion $textTypeNullable,
+        iconoNombre $textType,
+        iconoColor $textType,
+        visibilidad $textType,
+        fecha $intType,
+        fechaEsEncuesta $intType,
+        hora $textTypeNullable,
+        horaEsEncuesta $intType,
+        ubicacion $textTypeNullable,
+        ubicacionEsEncuesta $intType,
+        participantesAceptados $textType,
+        participantesRechazados $textType,
+        createdAt $intType,
+        updatedAt INTEGER,
+        cachedAt $intType,
+        isSynced $intType
+      )
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_plans_visibilidad ON plans(visibilidad)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_plans_anfitrion ON plans(anfitrionID)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_plans_cached_at ON plans(cachedAt)
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -123,6 +160,99 @@ class DatabaseHelper {
           requestData $textType,
           createdAt $intType
         )
+      ''');
+    }
+    
+    if (oldVersion < 5) {
+      // Create plans table
+      const idType = 'TEXT PRIMARY KEY';
+      const textType = 'TEXT NOT NULL';
+      const intType = 'INTEGER NOT NULL';
+      const textTypeNullable = 'TEXT';
+      
+      await db.execute('''
+        CREATE TABLE plans (
+          id $idType,
+          anfitrionID $textType,
+          anfitrionNombre $textType,
+          titulo $textType,
+          descripcion $textTypeNullable,
+          iconoNombre $textType,
+          iconoColor $textType,
+          visibilidad $textType,
+          fecha $intType,
+          fechaEsEncuesta $intType,
+          hora $textTypeNullable,
+          horaEsEncuesta $intType,
+          ubicacion $textTypeNullable,
+          ubicacionEsEncuesta $intType,
+          participantesAceptados $textType,
+          participantesRechazados $textType,
+          createdAt $intType,
+          updatedAt INTEGER,
+          cachedAt $intType,
+          isSynced $intType
+        )
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_plans_visibilidad ON plans(visibilidad)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_plans_anfitrion ON plans(anfitrionID)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_plans_cached_at ON plans(cachedAt)
+      ''');
+    }
+    
+    if (oldVersion < 6) {
+      // Fix plans table - make updatedAt nullable
+      // SQLite doesn't support ALTER COLUMN, so we need to recreate the table
+      await db.execute('DROP TABLE IF EXISTS plans');
+      
+      const idType = 'TEXT PRIMARY KEY';
+      const textType = 'TEXT NOT NULL';
+      const intType = 'INTEGER NOT NULL';
+      const textTypeNullable = 'TEXT';
+      
+      await db.execute('''
+        CREATE TABLE plans (
+          id $idType,
+          anfitrionID $textType,
+          anfitrionNombre $textType,
+          titulo $textType,
+          descripcion $textTypeNullable,
+          iconoNombre $textType,
+          iconoColor $textType,
+          visibilidad $textType,
+          fecha $intType,
+          fechaEsEncuesta $intType,
+          hora $textTypeNullable,
+          horaEsEncuesta $intType,
+          ubicacion $textTypeNullable,
+          ubicacionEsEncuesta $intType,
+          participantesAceptados $textType,
+          participantesRechazados $textType,
+          createdAt $intType,
+          updatedAt INTEGER,
+          cachedAt $intType,
+          isSynced $intType
+        )
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_plans_visibilidad ON plans(visibilidad)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_plans_anfitrion ON plans(anfitrionID)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_plans_cached_at ON plans(cachedAt)
       ''');
     }
   }
