@@ -196,6 +196,14 @@ class PlansLocalDataSource {
       }).toList();
     }
     
+    // Convert ubicacionesEncuesta - just pass through as is (already maps)
+    if (serializedData['ubicacionesEncuesta'] is List) {
+      serializedData['ubicacionesEncuesta'] = (serializedData['ubicacionesEncuesta'] as List).map((item) {
+        if (item is! Map) return item;
+        return Map<String, dynamic>.from(item);
+      }).toList();
+    }
+    
     await db.insert(
       'pending_plan_creations',
       {

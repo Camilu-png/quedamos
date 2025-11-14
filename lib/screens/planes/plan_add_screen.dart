@@ -113,6 +113,30 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
         fechasEncuesta = [];
       }
 
+      // If it's not a fecha-encuesta, try to load the single fecha value
+      if (!fechaEsEncuesta) {
+        final fechaRawSingle = widget.plan!["fecha"];
+        if (fechaRawSingle != null) {
+          if (fechaRawSingle is Timestamp) {
+            fecha = fechaRawSingle.toDate();
+          } else if (fechaRawSingle is int) {
+            fecha = DateTime.fromMillisecondsSinceEpoch(fechaRawSingle);
+          } else if (fechaRawSingle is String) {
+            try {
+              fecha = DateTime.parse(fechaRawSingle);
+            } catch (e) {
+              fecha = null;
+            }
+          } else if (fechaRawSingle is DateTime) {
+            fecha = fechaRawSingle;
+          } else {
+            fecha = null;
+          }
+        } else {
+          fecha = null;
+        }
+      }
+
 
 
       //HORA
@@ -378,7 +402,10 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
         if (!ubicacionEsEncuesta) {
           ubicacion = nuevaUbicacion;
         } else {
-          ubicacionesEncuesta.add(nuevaUbicacion);
+          ubicacionesEncuesta.add({
+            "ubicacion": nuevaUbicacion,
+            "votos": []
+          });
         }
         print("[🐧 planes] Ubicación seleccionada: $nuevaUbicacion");
       });
@@ -875,7 +902,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                   children: [
                                     Flexible(
                                       child: Text(
-                                        "Opción ${i + 1}: ${ubicacionesEncuesta[i]["nombre"]}",
+                                        "Opción ${i + 1}: ${ubicacionesEncuesta[i]["ubicacion"]["nombre"]}",
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium
@@ -1007,7 +1034,10 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               }).toList(),
                               "ubicacionEsEncuesta": ubicacionEsEncuesta,
                               "ubicacion": ubicacion,
-                              "ubicacionesEncuesta": ubicacionesEncuesta,
+                              "ubicacionesEncuesta": ubicacionesEncuesta.map((u) => {
+                                "ubicacion": u["ubicacion"],
+                                "votos": u["votos"],
+                              }).toList(),
                               "participantesAceptados": participantesAceptados,
                               "participantesRechazados": participantesRechazados,
                             };

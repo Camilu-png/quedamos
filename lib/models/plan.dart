@@ -24,6 +24,7 @@ class Plan {
   // Ubicación
   final Map<String, dynamic>? ubicacion;
   final bool ubicacionEsEncuesta;
+  final List<Map<String, dynamic>>? ubicacionesEncuesta;
   
   // Participantes
   final List<String> participantesAceptados;
@@ -52,6 +53,7 @@ class Plan {
     this.horasEncuesta,
     this.ubicacion,
     required this.ubicacionEsEncuesta,
+    this.ubicacionesEncuesta,
     required this.participantesAceptados,
     required this.participantesRechazados,
     required this.createdAt,
@@ -91,6 +93,13 @@ class Plan {
       ) : null,
       'ubicacion': ubicacion != null ? _serializeUbicacion(ubicacion!) : null,
       'ubicacionEsEncuesta': ubicacionEsEncuesta ? 1 : 0,
+      // Store survey location options in local DB under a different column
+      'ubicacionesOpciones': ubicacionesEncuesta != null ? jsonEncode(
+        ubicacionesEncuesta!.map((item) => {
+          'ubicacion': item['ubicacion'] ?? {},
+          'votos': item['votos'] ?? [],
+        }).toList()
+      ) : null,
       'participantesAceptados': participantesAceptados.join(','),
       'participantesRechazados': participantesRechazados.join(','),
       'createdAt': createdAt.millisecondsSinceEpoch,
@@ -138,6 +147,12 @@ class Plan {
           ? _deserializeUbicacion(map['ubicacion'] as String)
           : null,
       ubicacionEsEncuesta: (map['ubicacionEsEncuesta'] as int) == 1,
+      // Read local DB column 'ubicacionesOpciones' and present as ubicacionesEncuesta
+      ubicacionesEncuesta: map['ubicacionesOpciones'] != null
+        ? List<Map<String, dynamic>>.from(
+            jsonDecode(map['ubicacionesOpciones'] as String)
+                .map((e) => Map<String, dynamic>.from(e)))
+        : [],
       participantesAceptados: (map['participantesAceptados'] as String?)
               ?.split(',')
               .where((s) => s.isNotEmpty)
@@ -184,6 +199,16 @@ class Plan {
       }).toList();
     }
 
+    // Parse ubicacionesEncuesta if present
+    List<Map<String, dynamic>>? ubicacionesEncuestaList;
+    if (data['ubicacionesEncuesta'] is List) {
+      final rawList = data['ubicacionesEncuesta'] as List<dynamic>;
+      ubicacionesEncuestaList = rawList.map<Map<String, dynamic>>((item) {
+        if (item is! Map) return {};
+        return Map<String, dynamic>.from(item);
+      }).toList();
+    }
+
     return Plan(
       id: docId,
       anfitrionID: data['anfitrionID'] as String? ?? '',
@@ -203,6 +228,7 @@ class Plan {
       horasEncuesta: horasEncuestaList,
       ubicacion: _parseUbicacion(data['ubicacion']),
       ubicacionEsEncuesta: data['ubicacionEsEncuesta'] as bool? ?? false,
+      ubicacionesEncuesta: ubicacionesEncuestaList,
       participantesAceptados: (data['participantesAceptados'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ?? [],
@@ -242,6 +268,7 @@ class Plan {
       'horasEncuesta': horasEncuesta,
       'ubicacion': ubicacion,
       'ubicacionEsEncuesta': ubicacionEsEncuesta,
+      'ubicacionesEncuesta': ubicacionesEncuesta,
       'participantesAceptados': participantesAceptados,
       'participantesRechazados': participantesRechazados,
     };
@@ -264,6 +291,7 @@ class Plan {
     List<Map<String, dynamic>>? horasEncuesta,
     Map<String, dynamic>? ubicacion,
     bool? ubicacionEsEncuesta,
+    List<Map<String, dynamic>>? ubicacionesEncuesta,
     List<String>? participantesAceptados,
     List<String>? participantesRechazados,
     DateTime? createdAt,
@@ -288,6 +316,7 @@ class Plan {
       horasEncuesta: horasEncuesta ?? this.horasEncuesta,
       ubicacion: ubicacion ?? this.ubicacion,
       ubicacionEsEncuesta: ubicacionEsEncuesta ?? this.ubicacionEsEncuesta,
+      ubicacionesEncuesta: ubicacionesEncuesta ?? this.ubicacionesEncuesta,
       participantesAceptados: participantesAceptados ?? this.participantesAceptados,
       participantesRechazados: participantesRechazados ?? this.participantesRechazados,
       createdAt: createdAt ?? this.createdAt,
