@@ -179,6 +179,86 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
+  void _showEncuesta(String tipo) {
+    List items = [];
+    String tituloModal = "";
+    switch(tipo) {
+      case "fecha":
+        items = plan["fechasEncuesta"] ?? [];
+        tituloModal = "Vota por tu fecha favorita";
+        break;
+      case "hora":
+        items = plan["horasEncuesta"] ?? [];
+        tituloModal = "Vota por tu hora favorita";
+        break;
+      case "ubicacion":
+        items = plan["ubicacionesEncuesta"] ?? [];
+        tituloModal = "Vota por tu ubicación favorita";
+        break;
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(tituloModal, style: Theme.of(context).textTheme.headlineSmall),
+              ),
+              Divider(),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  DateTime fechaVotada;
+                  if (item['fecha'] is Timestamp) {
+                    fechaVotada = (item['fecha'] as Timestamp).toDate();
+                  } else if (item['fecha'] is DateTime) {
+                    fechaVotada = item['fecha'];
+                  } else {
+                    fechaVotada = DateTime.now(); // fallback seguro
+                  }
+                  TimeOfDay horaVotada;
+                  if (item['hora'] is String) {
+                    final partes = item['hora'].trim().split(':'); // limpiar espacios
+                    final hora = int.tryParse(partes[0]) ?? 0;
+                    final minuto = int.tryParse(partes[1]) ?? 0;
+                    horaVotada = TimeOfDay(hour: hora, minute: minuto);
+                  } else if (item['hora'] is int && item['minuto'] is int) {
+                    horaVotada = TimeOfDay(hour: item['hora'], minute: item['minuto']);
+                  } else {
+                    horaVotada = TimeOfDay(hour: 0, minute: 0); // fallback seguro
+                  }
+                  return ListTile(
+                    title: Text(tipo == "fecha"
+                        ? DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fechaVotada)
+                        : tipo == "hora"
+                          ? horaVotada.format(context)
+                          : item['nombre']),
+                    trailing: Text('${item['votos']?.length ?? 0} votos'),
+                    onTap: () {
+                      // lógica para votar
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -538,8 +618,8 @@ class _PlanScreenState extends State<PlanScreen> {
 
                   const SizedBox(height: 12),
 
-                  if (fechaEsEncuesta || horaEsEncuesta || ubicacionEsEncuesta)
-                    //ENCUESTA
+                  if (fechaEsEncuesta)
+                    //ENCUESTA: FECHA
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
@@ -551,7 +631,7 @@ class _PlanScreenState extends State<PlanScreen> {
                           ),
                         ),
                         onPressed: () {
-                          //ACCIÓN
+                          _showEncuesta("fecha");
                         },
                         child: Padding(
                           padding: const EdgeInsets.only(left: 16),
@@ -561,7 +641,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               Icon(Icons.poll, color: Theme.of(context).colorScheme.onSecondary, size: 24),
                               const SizedBox(width: 8),
                               Text(
-                                "Ver y participar en encuesta",
+                                "Votar por tu fecha favorita",
                                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                   color: Theme.of(context).colorScheme.onSecondary,
                                   fontWeight: FontWeight.bold,
@@ -580,7 +660,53 @@ class _PlanScreenState extends State<PlanScreen> {
                       ),
                     ),
 
-                  const SizedBox(height: 12),
+                  if (fechaEsEncuesta)
+                    const SizedBox(height: 12),
+
+                  if (horaEsEncuesta)
+                    //ENCUESTA: HORA
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        onPressed: () {
+                          _showEncuesta("hora");
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Icon(Icons.poll, color: Theme.of(context).colorScheme.onSecondary, size: 24),
+                              const SizedBox(width: 8),
+                              Text(
+                                "Votar por tu hora favorita",
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Spacer(),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Center(
+                                  child: Icon(Icons.arrow_forward_ios, color: Theme.of(context).colorScheme.onSecondary, size: 15),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  if (horaEsEncuesta)
+                    const SizedBox(height: 12),
 
                   //VER UBICACIÓN EN MAPA
                   if (!ubicacionEsEncuesta)
@@ -672,7 +798,6 @@ class _PlanScreenState extends State<PlanScreen> {
                   if (!esPropio)
                     Row(
                       children: [
-
                         //BOTÓN: RECHAZAR
                         Expanded(
                           child: FilledButton(
