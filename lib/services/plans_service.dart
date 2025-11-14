@@ -308,6 +308,16 @@ class PlansService {
               .toList();
         }
         
+        // Convert horasEncuesta - pass through as is (already strings)
+        if (planData['horasEncuesta'] is List) {
+          planData['horasEncuesta'] = (planData['horasEncuesta'] as List)
+              .map((item) {
+                if (item is! Map) return item;
+                return Map<String, dynamic>.from(item);
+              })
+              .toList();
+        }
+        
         // Upload to Firestore
         await _firestore.collection('planes').doc(planId).set(planData);
         print('[🐧 plans service] Successfully synced plan $planId');

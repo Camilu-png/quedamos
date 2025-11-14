@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -100,8 +100,10 @@ class DatabaseHelper {
         visibilidad $textType,
         fecha $intType,
         fechaEsEncuesta $intType,
+        fechasEncuesta $textTypeNullable,
         hora $textTypeNullable,
         horaEsEncuesta $intType,
+        horasEncuesta $textTypeNullable,
         ubicacion $textTypeNullable,
         ubicacionEsEncuesta $intType,
         participantesAceptados $textType,
@@ -190,8 +192,10 @@ class DatabaseHelper {
           visibilidad $textType,
           fecha $intType,
           fechaEsEncuesta $intType,
+          fechasEncuesta $textTypeNullable,
           hora $textTypeNullable,
           horaEsEncuesta $intType,
+          horasEncuesta $textTypeNullable,
           ubicacion $textTypeNullable,
           ubicacionEsEncuesta $intType,
           participantesAceptados $textType,
@@ -238,8 +242,10 @@ class DatabaseHelper {
           visibilidad $textType,
           fecha $intType,
           fechaEsEncuesta $intType,
+          fechasEncuesta $textTypeNullable,
           hora $textTypeNullable,
           horaEsEncuesta $intType,
+          horasEncuesta $textTypeNullable,
           ubicacion $textTypeNullable,
           ubicacionEsEncuesta $intType,
           participantesAceptados $textType,
@@ -281,6 +287,10 @@ class DatabaseHelper {
 
     if (oldVersion < 8) {
       await db.execute('ALTER TABLE plans ADD COLUMN fechasEncuesta TEXT');
+    }
+
+    if (oldVersion < 9) {
+      await db.execute('ALTER TABLE plans ADD COLUMN horasEncuesta TEXT');
     }
   }
 

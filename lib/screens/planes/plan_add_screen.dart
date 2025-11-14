@@ -49,7 +49,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   //HORA
   bool horaEsEncuesta = false;
   TimeOfDay? hora;
-  List<TimeOfDay> horasEncuesta = [];
+  List<Map<String, dynamic>> horasEncuesta = [];
   //UBICACIÓN
   bool ubicacionEsEncuesta = false;
   Map<String, dynamic>? ubicacion;
@@ -119,19 +119,17 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
       if (horaEsEncuesta) {
         final horasRaw = widget.plan!["horasEncuesta"];
-        if (horasRaw != null && horasRaw is List) {
-          horasEncuesta = horasRaw
-              .where((h) => h != null)
-              .map<TimeOfDay>((h) {
-                if (h is TimeOfDay) return h;
-                if (h is String) {
-                  final hParsed = stringToTimeOfDay(h);
-                  return hParsed ?? TimeOfDay.now();
-                }
-                final hParsed = stringToTimeOfDay(h.toString());
-                return hParsed ?? TimeOfDay.now();
-              })
-              .toList();
+        if (horasRaw is List && horasRaw.isNotEmpty) {
+          horasEncuesta = horasRaw.map<Map<String, dynamic>>((item) {
+            if (item is! Map) {
+              print("[🐧 planes] Advertencia: item de horasEncuesta no es Map: $item");
+              return {"hora": "", "votos": []};
+            }
+            return {
+              "hora": item["hora"] ?? "",
+              "votos": item["votos"] ?? [],
+            };
+          }).toList();
         } else {
           horasEncuesta = [];
         }
@@ -357,7 +355,10 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
         if (!horaEsEncuesta) {
           hora = horaSelected;
         } else {
-          horasEncuesta.add(horaSelected);
+          horasEncuesta.add({
+            "hora": timeOfDayToString(horaSelected),
+            "votos": [],
+          });
         }
       });
     }
@@ -751,7 +752,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                   children: [
                                     Flexible(
                                       child: Text(
-                                        "Opción ${i + 1}: ${horasEncuesta[i].format(context)}",
+                                        "Opción ${i + 1}: ${horasEncuesta[i]['hora']}",
                                         style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium
@@ -1000,7 +1001,10 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               }).toList(),
                               "horaEsEncuesta": horaEsEncuesta,
                               "hora": hora != null ? timeOfDayToString(hora!) : null,
-                              "horasEncuesta": horasEncuesta.map((h) => timeOfDayToString(h)).toList(),
+                              "horasEncuesta": horasEncuesta.map((h) => {
+                                "hora": h["hora"],
+                                "votos": h["votos"],
+                              }).toList(),
                               "ubicacionEsEncuesta": ubicacionEsEncuesta,
                               "ubicacion": ubicacion,
                               "ubicacionesEncuesta": ubicacionesEncuesta,

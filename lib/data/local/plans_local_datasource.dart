@@ -188,6 +188,14 @@ class PlansLocalDataSource {
       }).toList();
     }
     
+    // Convert horasEncuesta - just pass through as is (already strings)
+    if (serializedData['horasEncuesta'] is List) {
+      serializedData['horasEncuesta'] = (serializedData['horasEncuesta'] as List).map((item) {
+        if (item is! Map) return item;
+        return Map<String, dynamic>.from(item);
+      }).toList();
+    }
+    
     await db.insert(
       'pending_plan_creations',
       {
