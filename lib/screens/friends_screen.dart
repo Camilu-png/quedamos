@@ -35,6 +35,18 @@ class _FriendsScreenState extends State<FriendsScreen> {
   void _refreshPaging() {
     _pagingController.refresh();
   }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   FriendsService.syncPendingChanges(widget.userID);
+  // }
+  
+  @override
+  void dispose() {
+    _pagingController.dispose();
+    _friendsService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

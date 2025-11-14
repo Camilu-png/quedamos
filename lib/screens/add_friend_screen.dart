@@ -7,7 +7,6 @@ import '../widgets/friend_list.dart';
 class AddFriendsScreen extends StatefulWidget {
   final String userID;
   const AddFriendsScreen({super.key, required this.userID});
-
   @override
   State<AddFriendsScreen> createState() => _AddFriendsScreenState();
 }
@@ -15,10 +14,12 @@ class AddFriendsScreen extends StatefulWidget {
 class _AddFriendsScreenState extends State<AddFriendsScreen> {
   final FriendsService _friendsService = FriendsService();
   final ValueNotifier<String> searchQuery = ValueNotifier("");
-
+  
   @override
   void dispose() {
     searchQuery.dispose();
+    _friendsService.dispose();
+
     super.dispose();
   }
 

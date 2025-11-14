@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:quedamos/app_colors.dart';
 
@@ -49,27 +50,7 @@ class FriendList extends StatelessWidget {
                         topLeft: Radius.circular(12),
                         bottomLeft: Radius.circular(12),
                       ),
-                      child: friend["photoUrl"] != null
-                          ? Image.network(
-                              friend["photoUrl"],
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(
-                                color: (friend["color"] as Color?)?.withOpacity(0.7) ??
-                                    primaryDark.withOpacity(0.7),
-                                child: const Center(
-                                  child: Icon(Icons.perm_identity,
-                                      color: Colors.white, size: 36),
-                                ),
-                              ),
-                            )
-                          : Container(
-                              color: primaryDark.withOpacity(0.7),
-                              child: const Center(
-                                child: Icon(Icons.perm_identity,
-                                    color: Colors.white, size: 36),
-                              ),
-                            ),
+                      child: _buildFriendImage(friend),
                     ),
                   ),
 
@@ -144,6 +125,43 @@ class FriendList extends StatelessWidget {
 
         return friendCard;
       },
+    );
+  }
+
+  Widget _buildFriendImage(Map<String, dynamic> friend) {
+    final localPhotoPath = friend["localPhotoPath"] as String?;
+    final photoUrl = friend["photoUrl"] as String?;
+    
+    // Si existe localPhotoPath, usar imagen local
+    if (localPhotoPath != null && localPhotoPath.isNotEmpty) {
+      final file = File(localPhotoPath);
+      return Image.file(
+        file,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(friend),
+      );
+    }
+    
+    // Si no hay imagen local pero hay photoUrl, intentar cargar de red
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      return Image.network(
+        photoUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(friend),
+      );
+    }
+    
+    // Si no hay ninguna imagen, mostrar placeholder
+    return _buildPlaceholder(friend);
+  }
+
+  Widget _buildPlaceholder(Map<String, dynamic> friend) {
+    return Container(
+      color: (friend["color"] as Color?)?.withOpacity(0.7) ??
+          primaryDark.withOpacity(0.7),
+      child: const Center(
+        child: Icon(Icons.person, color: Colors.white, size: 36),
+      ),
     );
   }
 }

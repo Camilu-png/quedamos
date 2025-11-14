@@ -1,207 +1,150 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../repositories/friends_repository.dart';
 
+/// Servicio de amigos que usa el repositorio híbrido con cache local
+/// Mantiene compatibilidad con la interfaz original
 class FriendsService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FriendsRepository _repository;
+
+  FriendsService({FriendsRepository? repository})
+      : _repository = repository ?? FriendsRepository();
 
   // Obtener todos los usuarios
   Stream<List<Map<String, dynamic>>> getAllUsers() {
-    return _firestore.collection('users').snapshots().map((snapshot) =>
-        snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList());
+    return _repository.getAllUsersStream();
   }
 
-  // Obtener amigos
+  // Obtener amigos (con cache local)
   Stream<List<Map<String, dynamic>>> getFriends(String userId) {
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('friends')
-        .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList());
+    return _repository.getFriendsStream(userId).map(
+          (friends) => friends
+              .map((friend) => {
+                    'id': friend.id,
+                    'name': friend.name,
+                    'email': friend.email,
+                    'photoUrl': friend.photoUrl,
+                    'localPhotoPath': friend.localPhotoPath,
+                    'addedAt': friend.addedAt,
+                  })
+              .toList(),
+        );
   }
 
-  // Agregar amigo bidireccionalmente
-  Future<void> addFriend(String currentUserId, Map<String, dynamic> friendData) async {
-    final friendId = friendData["id"];
-    final batch = _firestore.batch();
+  // Agregar amigo bidireccionalmente (con cache local)
+  Future<void> addFriend(
+    String currentUserId,
+    Map<String, dynamic> friendData,
+  ) async {
+    // Necesitamos los datos del usuario actual
+    final currentUserData = await _repository
+        .remoteDataSource
+        .getUserData(currentUserId);
+    
+    if (currentUserData == null) {
+      throw Exception('[👾 friends services] Current user data not found');
+    }
 
-    // Referencias
-    final currentUserRef = _firestore
-        .collection('users')
-        .doc(currentUserId)
-        .collection('friends')
-        .doc(friendId);
-
-    final friendUserRef = _firestore
-        .collection('users')
-        .doc(friendId)
-        .collection('friends')
-        .doc(currentUserId);
-
-    // Obtener datos del usuario actual
-    final currentUserDoc =
-        await _firestore.collection('users').doc(currentUserId).get();
-    final currentUserData = {
-      'id': currentUserDoc.id,
-      ...currentUserDoc.data() ?? {}
-    };
-
-    // Agregar ambos documentos
-    batch.set(currentUserRef, {
-      'id': friendId,
-      'name': friendData['name'],
-      'email': friendData['email'],
-      'photoUrl': friendData['photoUrl'],
-      'addedAt': FieldValue.serverTimestamp(),
-    });
-
-    batch.set(friendUserRef, {
-      'id': currentUserData['id'],
-      'name': currentUserData['name'],
-      'email': currentUserData['email'],
-      'photoUrl': currentUserData['photoUrl'],
-      'addedAt': FieldValue.serverTimestamp(),
-    });
-
-    await batch.commit();
+    await _repository.addFriend(currentUserId, friendData, currentUserData);
   }
 
-  // Eliminar amigo bidireccionalmente
+  // Eliminar amigo bidireccionalmente (con cache local)
   Future<void> deleteFriend(String currentUserId, String friendId) async {
-    final batch = _firestore.batch();
-
-    final userRef =
-        _firestore.collection('users').doc(currentUserId).collection('friends').doc(friendId);
-    final friendRef =
-        _firestore.collection('users').doc(friendId).collection('friends').doc(currentUserId);
-
-    batch.delete(userRef);
-    batch.delete(friendRef);
-
-    await batch.commit();
+    await _repository.deleteFriend(currentUserId, friendId);
   }
 
-  // Enviar solicitud de amistad (se registra en ambos usuarios)
-Future<void> sendFriendRequest(String fromUserId, Map<String, dynamic> toUserData) async {
-  final batch = _firestore.batch();
+  // Enviar solicitud de amistad (con cache local)
+  Future<void> sendFriendRequest(
+    String fromUserId,
+    Map<String, dynamic> toUserData,
+  ) async {
+    final fromUserData = await _repository
+        .remoteDataSource
+        .getUserData(fromUserId);
+    
+    if (fromUserData == null) {
+      throw Exception('[👾 friends services] From user data not found');
+    }
 
-  // Referencias de subcolecciones
-  final toRequestRef = _firestore
-      .collection('users')
-      .doc(toUserData['id'])
-      .collection('friendRequests')
-      .doc(fromUserId);
+    await _repository.sendFriendRequest(fromUserId, toUserData, fromUserData);
+  }
 
-  final fromRequestRef = _firestore
-      .collection('users')
-      .doc(fromUserId)
-      .collection('friendRequests')
-      .doc(toUserData['id']);
-
-  // Datos de los usuarios
-  final fromUserDoc = await _firestore.collection('users').doc(fromUserId).get();
-  final fromUserData = {'id': fromUserDoc.id, ...fromUserDoc.data() ?? {}};
-
-  // Documento en el receptor (solicitud recibida)
-  batch.set(toRequestRef, {
-    'from': fromUserData['id'],
-    'to': toUserData['id'],
-    'name': fromUserData['name'],
-    'email': fromUserData['email'],
-    'photoUrl': fromUserData['photoUrl'],
-    'status': 'pending', // pendiente de aceptar
-    'createdAt': FieldValue.serverTimestamp(),
-  });
-
-  // Documento en el emisor (solicitud enviada)
-  batch.set(fromRequestRef, {
-    'from': fromUserData['id'],
-    'to': toUserData['id'],
-    'name': toUserData['name'],
-    'email': toUserData['email'],
-    'photoUrl': toUserData['photoUrl'],
-    'status': 'sent', // enviada, esperando respuesta
-    'createdAt': FieldValue.serverTimestamp(),
-  });
-
-  print("👾 friendRequest ${fromUserData['name']} -> ${toUserData['name']}");
-
-  await batch.commit();
-}
-
-
-  // Obtener solicitudes recibidas
+  // Obtener solicitudes recibidas (con cache local)
   Stream<List<Map<String, dynamic>>> getFriendRequests(String userId) {
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('friendRequests')
-        .where('status', isEqualTo: 'pending')
-        .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList());
+    return _repository.getFriendRequestsStream(userId).map(
+          (requests) => requests
+              .where((r) => r.status.name == 'pending')
+              .map((request) => {
+                    'id': request.id,
+                    'from': request.from,
+                    'to': request.to,
+                    'name': request.name,
+                    'email': request.email,
+                    'photoUrl': request.photoUrl,
+                    'localPhotoPath': request.localPhotoPath,
+                    'status': request.status.name,
+                    'createdAt': request.createdAt,
+                  })
+              .toList(),
+        );
   }
 
-  // Obtener todas las solicitudes de amistad (enviadas y recibidas)
-Stream<List<Map<String, dynamic>>> getAllFriendRequests(String userId) {
-  return _firestore
-      .collection('users')
-      .doc(userId)
-      .collection('friendRequests')
-      .snapshots()
-      .map((snapshot) =>
-          snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList());
-}
+  // Obtener todas las solicitudes de amistad (con cache local)
+  Stream<List<Map<String, dynamic>>> getAllFriendRequests(String userId) {
+    return _repository.getFriendRequestsStream(userId).map(
+          (requests) => requests
+              .map((request) => {
+                    'id': request.id,
+                    'from': request.from,
+                    'to': request.to,
+                    'name': request.name,
+                    'email': request.email,
+                    'photoUrl': request.photoUrl,
+                    'localPhotoPath': request.localPhotoPath,
+                    'status': request.status.name,
+                    'createdAt': request.createdAt,
+                  })
+              .toList(),
+        );
+  }
 
+  // Aceptar solicitud (con cache local)
+  Future<void> acceptFriendRequest(
+    String currentUserId,
+    Map<String, dynamic> requestData,
+  ) async {
+    final currentUserData = await _repository
+        .remoteDataSource
+        .getUserData(currentUserId);
+    
+    if (currentUserData == null) {
+      throw Exception('[👾 friends services] Current user data not found');
+    }
 
-  // Aceptar solicitud
-Future<void> acceptFriendRequest(String currentUserId, Map<String, dynamic> requestData) async {
-  final fromUserId = requestData['from'];
-  final batch = _firestore.batch();
+    await _repository.acceptFriendRequest(
+      currentUserId,
+      requestData,
+      currentUserData,
+    );
+  }
 
-  // Agregar como amigos en ambos sentidos
-  await addFriend(currentUserId, requestData);
+  // Rechazar solicitud (con cache local)
+  Future<void> rejectFriendRequest(String currentUserId, String fromUserId) async {
+    await _repository.rejectFriendRequest(currentUserId, fromUserId);
+  }
 
-  // Eliminar la solicitud del receptor
-  final currentRequestRef = _firestore
-      .collection('users')
-      .doc(currentUserId)
-      .collection('friendRequests')
-      .doc(fromUserId);
+  // Sincronizar cambios pendientes
+  Future<void> syncPendingChanges(String userId) async {
+    final currentUserData = await _repository
+        .remoteDataSource
+        .getUserData(userId);
+    
+    if (currentUserData == null) {
+      throw Exception('[👾 friends services] Current user data not found');
+    }
 
-  // Eliminar la solicitud del emisor
-  final fromRequestRef = _firestore
-      .collection('users')
-      .doc(fromUserId)
-      .collection('friendRequests')
-      .doc(currentUserId);
+    await _repository.syncPendingChanges(userId, currentUserData);
+  }
 
-  batch.delete(currentRequestRef);
-  batch.delete(fromRequestRef);
-
-  await batch.commit();
-}
-
-// Eliminar la solicitud
-Future<void> rejectFriendRequest(String currentUserId, String fromUserId) async {
-  final batch = _firestore.batch();
-
-  final currentRequestRef = _firestore
-      .collection('users')
-      .doc(currentUserId)
-      .collection('friendRequests')
-      .doc(fromUserId);
-
-  final fromRequestRef = _firestore
-      .collection('users')
-      .doc(fromUserId)
-      .collection('friendRequests')
-      .doc(currentUserId);
-
-  batch.delete(currentRequestRef);
-  batch.delete(fromRequestRef);
-
-  await batch.commit();
-}
-
+  void dispose() {
+    _repository.dispose();
+  }
 }

@@ -47,6 +47,10 @@ dependencies:
   flutter_google_places_sdk: ^0.4.2
   flutter_dotenv: ^6.0.0
   http: ^1.1.0
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  path_provider: ^2.1.1
+  connectivity_plus: ^6.0.5
 
 
 

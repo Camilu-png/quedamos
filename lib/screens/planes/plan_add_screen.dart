@@ -3,9 +3,11 @@ import "package:uuid/uuid.dart";
 import "package:flutter/material.dart";
 import 'package:geolocator/geolocator.dart';
 import "package:cloud_firestore/cloud_firestore.dart";
+import "package:connectivity_plus/connectivity_plus.dart";
 import "package:quedamos/app_colors.dart";
 import "package:quedamos/screens/main_screen.dart";
 import "package:quedamos/screens/planes/planes_components.dart";
+import "package:quedamos/services/plans_service.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -994,19 +996,92 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                   return;
                                 }
                               } else {
-                                await db.collection("planes").doc(planID).set(planFinal);
-                                print("[🐧 planes] Plan creado correctamente...");
-                                if (mounted) {
-                                  if (Navigator.of(context).canPop()) {
-                                    print('[🐧 planes] Pop con plan creado, volviendo...');
-                                    Navigator.of(context).pop(planID);
+                                // Check connectivity
+                                final connectivityResult = await Connectivity().checkConnectivity();
+                                final isOnline = !connectivityResult.contains(ConnectivityResult.none);
+                                
+                                try {
+                                  if (isOnline) {
+                                    // Try to create online
+                                    await db.collection("planes").doc(planID).set(planFinal);
+                                    print("[🐧 planes] Plan creado correctamente online");
+                                  } else {
+                                    // Offline mode - save locally
+                                    print("[🐧 planes] Modo offline - guardando plan localmente");
+                                    final plansService = PlansService();
+                                    await plansService.createPlan(
+                                      planData: planFinal,
+                                      isOnline: false,
+                                    );
+                                    
+                                    // Show offline message
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: const Row(
+                                            children: [
+                                              Icon(Icons.cloud_off, color: Colors.white),
+                                              SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  'Plan guardado. Se sincronizará cuando tengas conexión.',
+                                                  style: TextStyle(color: Colors.white),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          backgroundColor: Colors.orange.shade700,
+                                          duration: const Duration(seconds: 4),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                  
+                                  if (mounted) {
+                                    if (Navigator.of(context).canPop()) {
+                                      print('[🐧 planes] Pop con plan creado, volviendo...');
+                                      Navigator.of(context).pop(planID);
+                                      return;
+                                    }
+                                    print('[🐧 planes] Reemplazando con MainScreen tras crear plan...');
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(builder: (_) => MainScreen(userID: widget.userID, initialIndex: 1)),
+                                    );
                                     return;
                                   }
-                                  print('[🐧 planes] Reemplazando con MainScreen) tras crear plan...');
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(builder: (_) => MainScreen(userID: widget.userID, initialIndex: 1)),
+                                } catch (e) {
+                                  print("[🐧 planes] Error al crear plan: $e");
+                                  // Try to save offline as fallback
+                                  final plansService = PlansService();
+                                  await plansService.createPlan(
+                                    planData: planFinal,
+                                    isOnline: false,
                                   );
-                                  return;
+                                  
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Row(
+                                          children: [
+                                            Icon(Icons.cloud_off, color: Colors.white),
+                                            SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                'Error de conexión. Plan guardado localmente.',
+                                                style: TextStyle(color: Colors.white),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        backgroundColor: Colors.orange.shade700,
+                                        duration: const Duration(seconds: 4),
+                                      ),
+                                    );
+                                    
+                                    if (Navigator.of(context).canPop()) {
+                                      Navigator.of(context).pop(planID);
+                                    }
+                                  }
                                 }
                               }
                             } catch (e) {

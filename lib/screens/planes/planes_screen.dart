@@ -1,10 +1,10 @@
 import "package:flutter/material.dart";
 import 'package:geolocator/geolocator.dart';
 import "package:cloud_firestore/cloud_firestore.dart";
-import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:quedamos/main.dart";
 import "package:quedamos/screens/planes/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
+import "package:quedamos/services/plans_service.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -22,21 +22,22 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
 
   String visibilidadSelected = "Amigos";
   String busqueda = "";
-
-  static const int _pageSize = 25;
+  
+  final PlansService _plansService = PlansService();
+  List<Map<String, dynamic>> _allPlans = [];
+  bool _isLoadingFromCache = true;
+  bool _hasConnectionError = false;
+  String? _errorMessage;
 
   //INIT STATE
   @override
   void initState() {
     super.initState();
     currentPosition = widget.currentLocation;
-    _pagingController.addPageRequestListener((pageKey) {
-      _fetchPage(pageKey);
-    });
+    _loadPlans(); // Use cache if available
   }
 
-  //PAGING CONTROLLER
-  final PagingController<int, Map<String, dynamic>> _pagingController = PagingController(firstPageKey: 0);
+
 
   //DID CHANGE DEPENDENCIES
   @override
@@ -49,31 +50,30 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
   @override
   void didPopNext() {
     super.didPopNext();
-    _refreshPaging();
+    // Only refresh if cache is stale, otherwise just rebuild with existing data
+    _loadPlans(forceRefresh: false);
   }
 
   //DISPOSE
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
-    _pagingController.dispose();
     super.dispose();
   }
 
-  //REFRESH PAGING
-  void _refreshPaging() {
-    print("[🐧 planes] Refrescando paginación...");
-    _lastDocument = null;
-    _pagingController.refresh();
-  }
-
-  //OBTENER PLANES
-  DocumentSnapshot? _lastDocument;
+  //LOAD PLANS (with caching)
   Position? currentPosition;
-  Future<void> _fetchPage(int pageKey) async {
-    print("[🐧 planes] Recuperando planes de la base de datos, página: $pageKey");
+  Future<void> _loadPlans({bool forceRefresh = false}) async {
+    print("[🐧 planes] Cargando planes (forceRefresh: $forceRefresh)...");
+    
+    setState(() {
+      _isLoadingFromCache = true;
+      _hasConnectionError = false;
+      _errorMessage = null;
+    });
+
     try {
-      //AMIGOS
+      //AMIGOS IDs
       List<String> amigosIDs = [];
       if (visibilidadSelected == "Amigos") {
         print("[🐧 planes] Recuperando amigos de la base de datos...");
@@ -84,125 +84,139 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
           .get();
         amigosIDs = amigosSnapshot.docs.map((doc) => doc.id).toList();
       }
-      //PLANES
-      List<Map<String, dynamic>> planes = [];
-      //PLANES: AMIGOS
-      if (visibilidadSelected == "Amigos" && amigosIDs.isNotEmpty) {
-        for (var i = 0; i < amigosIDs.length; i += 10) {
-          final batch = amigosIDs.sublist(i, (i + 10 > amigosIDs.length) ? amigosIDs.length : i + 10);
-          if (batch.isEmpty) continue;
-          Query query = db.collection("planes")
-            .where("visibilidad", isEqualTo: "Amigos")
-            .where("anfitrionID", whereIn: batch)
-            .limit(_pageSize);
-          if (_lastDocument != null) query = query.startAfterDocument(_lastDocument!);
-          final snapshot = await query.get();
-          planes.addAll(snapshot.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            data["id"] = doc.id;
-            return data;
-          }).toList());
-          if (snapshot.docs.isNotEmpty) _lastDocument = snapshot.docs.last;
-        }
-      }
-      //PLANES: PÚBLICO
-      if (visibilidadSelected == "Público") {
-        Query query = db.collection("planes")
-          .where("visibilidad", isEqualTo: "Público")
-          .where("anfitrionID", isNotEqualTo: widget.userID)
-          .limit(_pageSize);
-        if (_lastDocument != null) query = query.startAfterDocument(_lastDocument!);
-        final snapshot = await query.get();
-        planes.addAll(snapshot.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          data["id"] = doc.id;
-          return data;
-        }).toList());
-        if (snapshot.docs.isNotEmpty) _lastDocument = snapshot.docs.last;
-      }
-      //FILTRO
-      final now = DateTime.now();
-      final planesFiltrados = planes.where((plan) {
-        //FECHA
-        final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
-        if (!fechaEsEncuesta) {
-          final fecha = plan["fecha"] is Timestamp
-            ? (plan["fecha"] as Timestamp).toDate()
-            : DateTime.tryParse(plan["fecha"]?.toString() ?? "") ?? now;
-          if (fecha.isBefore(now)) return false;
-        }
-        //BÚSQUEDA
-        final titulo = (plan["titulo"] ?? "").toString().toLowerCase();
-        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toString().toLowerCase();
-        final queryText = busqueda.toLowerCase();
-        return titulo.contains(queryText) || anfitrionNombre.contains(queryText);
-      }).toList();
-      //ORDENAR POR DISTANCIA
-      if (currentPosition != null) {
-        planesFiltrados.sort((a, b) {
-          double distanciaA = double.infinity;
-          double distanciaB = double.infinity;
-          //DISTANCIA A
-          final ubicacionA = a["ubicacion"];
-          if (a["ubicacionEsEncuesta"] != true && ubicacionA != null && ubicacionA is Map<String, dynamic>) {
-            final lat = ubicacionA["latitud"];
-            final lng = ubicacionA["longitud"];
-            final latDouble = (lat is int)
-              ? lat.toDouble()
-              : double.tryParse(lat.toString());
-            final lngDouble = (lng is int)
-              ? lng.toDouble()
-              : double.tryParse(lng.toString());
-            if (latDouble != null && lngDouble != null) {
-              distanciaA = Geolocator.distanceBetween(
-                currentPosition!.latitude,
-                currentPosition!.longitude,
-                latDouble,
-                lngDouble,
-              );
-            }
-          }
-          //DISTANCIA B
-          final ubicacionB = b["ubicacion"];
-          if (b["ubicacionEsEncuesta"] != true && ubicacionB != null && ubicacionB is Map<String, dynamic>) {
-            final lat = ubicacionB["latitud"];
-            final lng = ubicacionB["longitud"];
-            final latDouble = (lat is int)
-              ? lat.toDouble()
-              : double.tryParse(lat.toString());
-            final lngDouble = (lng is int)
-              ? lng.toDouble()
-              : double.tryParse(lng.toString());
-            if (latDouble != null && lngDouble != null) {
-              distanciaB = Geolocator.distanceBetween(
-                currentPosition!.latitude,
-                currentPosition!.longitude,
-                latDouble,
-                lngDouble,
-              );
-            }
-          }
-          return distanciaA.compareTo(distanciaB);
-        });
-      }
-      // PAGINACIÓN
-      final isLastPage = planesFiltrados.length < _pageSize;
-      if (isLastPage) {
-        _pagingController.appendLastPage(planesFiltrados);
-      } else {
-        _pagingController.appendPage(planesFiltrados, pageKey + _pageSize);
-      }
+
+      // Get plans from service (with caching)
+      final planes = await _plansService.getPlans(
+        userId: widget.userID,
+        visibilidad: visibilidadSelected,
+        friendIds: amigosIDs,
+        forceRefresh: forceRefresh,
+      );
+
+      setState(() {
+        _allPlans = planes;
+        _isLoadingFromCache = false;
+        _hasConnectionError = false;
+      });
+
+      print("[🐧 planes] Planes cargados: ${planes.length}");
     } catch (error, stackTrace) {
       print("[🐧 planes] Error: $error");
       print("[🐧 planes] Error: $stackTrace");
-      _pagingController.error = error;
+      
+      // Check if it's a network error
+      final isNetworkError = error.toString().contains('network') ||
+                            error.toString().contains('connection') ||
+                            error.toString().contains('Failed host lookup');
+      
+      setState(() {
+        _isLoadingFromCache = false;
+        _hasConnectionError = isNetworkError;
+        _errorMessage = isNetworkError 
+            ? 'Sin conexión. Mostrando datos guardados.'
+            : 'Error al cargar planes.';
+      });
+      
+      // If we have cached data, don't show error to user
+      if (_allPlans.isNotEmpty) {
+        print("[🐧 planes] Usando caché a pesar del error");
+      }
     }
+  }
+
+  //REFRESH PLANS
+  void _refreshPlans() {
+    print("[🐧 planes] Refrescando planes...");
+    _loadPlans(forceRefresh: true);
+  }
+
+  //GET FILTERED AND SORTED PLANS
+  List<Map<String, dynamic>> _getFilteredPlans() {
+    final now = DateTime.now();
+    
+    // Filter plans
+    final planesFiltrados = _allPlans.where((plan) {
+      //FECHA - filter out past events
+      final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
+      if (!fechaEsEncuesta) {
+        final fecha = plan["fecha"] is Timestamp
+          ? (plan["fecha"] as Timestamp).toDate()
+          : DateTime.tryParse(plan["fecha"]?.toString() ?? "") ?? now;
+        if (fecha.isBefore(now)) return false;
+      }
+      
+      //BÚSQUEDA
+      if (busqueda.isNotEmpty) {
+        final titulo = (plan["titulo"] ?? "").toString().toLowerCase();
+        final anfitrionNombre = (plan["anfitrionNombre"] ?? "").toString().toLowerCase();
+        final queryText = busqueda.toLowerCase();
+        if (!titulo.contains(queryText) && !anfitrionNombre.contains(queryText)) {
+          return false;
+        }
+      }
+      
+      return true;
+    }).toList();
+
+    //ORDENAR POR DISTANCIA
+    if (currentPosition != null) {
+      planesFiltrados.sort((a, b) {
+        double distanciaA = double.infinity;
+        double distanciaB = double.infinity;
+        
+        //DISTANCIA A
+        final ubicacionA = a["ubicacion"];
+        if (a["ubicacionEsEncuesta"] != true && ubicacionA != null && ubicacionA is Map<String, dynamic>) {
+          final lat = ubicacionA["latitud"];
+          final lng = ubicacionA["longitud"];
+          final latDouble = (lat is int)
+            ? lat.toDouble()
+            : double.tryParse(lat.toString());
+          final lngDouble = (lng is int)
+            ? lng.toDouble()
+            : double.tryParse(lng.toString());
+          if (latDouble != null && lngDouble != null) {
+            distanciaA = Geolocator.distanceBetween(
+              currentPosition!.latitude,
+              currentPosition!.longitude,
+              latDouble,
+              lngDouble,
+            );
+          }
+        }
+        
+        //DISTANCIA B
+        final ubicacionB = b["ubicacion"];
+        if (b["ubicacionEsEncuesta"] != true && ubicacionB != null && ubicacionB is Map<String, dynamic>) {
+          final lat = ubicacionB["latitud"];
+          final lng = ubicacionB["longitud"];
+          final latDouble = (lat is int)
+            ? lat.toDouble()
+            : double.tryParse(lat.toString());
+          final lngDouble = (lng is int)
+            ? lng.toDouble()
+            : double.tryParse(lng.toString());
+          if (latDouble != null && lngDouble != null) {
+            distanciaB = Geolocator.distanceBetween(
+              currentPosition!.latitude,
+              currentPosition!.longitude,
+              latDouble,
+              lngDouble,
+            );
+          }
+        }
+        
+        return distanciaA.compareTo(distanciaB);
+      });
+    }
+
+    return planesFiltrados;
   }
 
   @override
   Widget build(BuildContext context) {
 
-    if (widget.userID.isEmpty || widget.currentLocation == null) {
+    if (widget.userID.isEmpty) {
       return Scaffold(
         body: Center(
           child: Column(
@@ -211,16 +225,13 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
               CircularProgressIndicator(),
               SizedBox(height: 16),
               Text(
-                "Obteniendo ubicación...",
+                "Cargando...",
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
           ),
         ),
       );
-    }
-    else {
-      print("[🐧 planes] UID del usuario: ${widget.userID}");
     }
 
     return GestureDetector(
@@ -246,6 +257,36 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
           child: Column(
             children: [
 
+              //OFFLINE BANNER
+              if (_hasConnectionError && _allPlans.isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.cloud_off,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage ?? 'Sin conexión',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               //SEGMENTED BUTTON
               SizedBox(
                 width: double.infinity,
@@ -258,8 +299,8 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                   onSelectionChanged: (visibilidadSelection) {
                     setState(() {
                       visibilidadSelected = visibilidadSelection.first;
-                      _refreshPaging();
                     });
+                    _loadPlans();
                   },
                   style: SegmentedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -281,7 +322,6 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                   onChanged: (busquedaValor) {
                     setState(() {
                       busqueda = busquedaValor;
-                      _refreshPaging();
                     });
                   },
                   decoration: InputDecoration(
@@ -302,34 +342,85 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
 
               //LISTA DE PLANES
               Expanded(
-                child: PagedListView<int, Map<String, dynamic>>(
-                  pagingController: _pagingController,
-                  builderDelegate: PagedChildBuilderDelegate<Map<String, dynamic>>(
-                    itemBuilder: (context, plan, index) => PlanesList(
-                      plan: plan,
-                      userID: widget.userID,
-                      currentLocation: widget.currentLocation,
-                      onTapOverride: (ctx, planData) async {
-                        final result = await Navigator.push(ctx, MaterialPageRoute(builder: (_) => PlanScreen(plan: planData, userID: widget.userID, currentLocation: widget.currentLocation)));
-                        if (result == "deleted") {
-                          if (mounted) _refreshPaging();
-                        }
+                child: _isLoadingFromCache
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        await _loadPlans(forceRefresh: true);
                       },
-                    ),
-                    noItemsFoundIndicatorBuilder: (_) => const Center(
-                      child: Text("No se encontraron planes."),
-                    ),
-                    firstPageProgressIndicatorBuilder: (_) => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                    newPageProgressIndicatorBuilder: (_) => const Padding(
-                      padding: EdgeInsets.only(top: 16),
-                      child: Center(
-                        child: CircularProgressIndicator(),
+                      child: Builder(
+                        builder: (context) {
+                          final filteredPlans = _getFilteredPlans();
+                          
+                          // No plans and has error (no cache, no connection)
+                          if (filteredPlans.isEmpty && _hasConnectionError) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_off,
+                                    size: 64,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    "Sin conexión a internet",
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "No se pueden cargar los planes",
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  FilledButton.icon(
+                                    onPressed: () => _loadPlans(forceRefresh: true),
+                                    icon: const Icon(Icons.refresh),
+                                    label: const Text("Reintentar"),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          
+                          if (filteredPlans.isEmpty) {
+                            return const Center(
+                              child: Text("No se encontraron planes."),
+                            );
+                          }
+                          
+                          return ListView.builder(
+                            itemCount: filteredPlans.length,
+                            itemBuilder: (context, index) {
+                              final plan = filteredPlans[index];
+                              return PlanesList(
+                                plan: plan,
+                                userID: widget.userID,
+                                currentLocation: widget.currentLocation,
+                                onTapOverride: (ctx, planData) async {
+                                  final result = await Navigator.push(
+                                    ctx,
+                                    MaterialPageRoute(
+                                      builder: (_) => PlanScreen(
+                                        plan: planData,
+                                        userID: widget.userID,
+                                        currentLocation: widget.currentLocation,
+                                      ),
+                                    ),
+                                  );
+                                  if (result == "deleted") {
+                                    if (mounted) _refreshPlans();
+                                  }
+                                },
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
-                  ),
-                ),
               ),
             ],
           ),
