@@ -147,7 +147,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
 
     final userID = widget.userID;
     
-    if (widget.userID.isEmpty || widget.currentLocation == null) {
+    if (widget.userID.isEmpty) {
       return Scaffold(
         body: Center(
           child: Column(
@@ -156,16 +156,13 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
               CircularProgressIndicator(),
               SizedBox(height: 16),
               Text(
-                "Obteniendo ubicación...",
+                "Cargando...",
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
           ),
         ),
       );
-    }
-    else {
-      print("[🐧 planes] UID del usuario: ${widget.userID}");
     }
     
     return GestureDetector(

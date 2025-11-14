@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -76,6 +76,14 @@ class DatabaseHelper {
         id $idType,
         currentUserId $textType,
         requestData $textType,
+        createdAt $intType
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE pending_plan_creations (
+        id $idType,
+        planData $textType,
         createdAt $intType
       )
     ''');
@@ -253,6 +261,21 @@ class DatabaseHelper {
 
       await db.execute('''
         CREATE INDEX idx_plans_cached_at ON plans(cachedAt)
+      ''');
+    }
+    
+    if (oldVersion < 7) {
+      // Create pending_plan_creations table for offline plan creation
+      const idType = 'TEXT PRIMARY KEY';
+      const textType = 'TEXT NOT NULL';
+      const intType = 'INTEGER NOT NULL';
+      
+      await db.execute('''
+        CREATE TABLE pending_plan_creations (
+          id $idType,
+          planData $textType,
+          createdAt $intType
+        )
       ''');
     }
   }

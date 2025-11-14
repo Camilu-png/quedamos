@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/plan.dart';
 import '../data/local/plans_local_datasource.dart';
@@ -45,6 +46,13 @@ class PlansService {
 
     // Cache is stale or force refresh - try to fetch from Firestore
     try {
+      // Sync pending plans before fetching
+      try {
+        await syncPendingPlanCreations();
+      } catch (e) {
+        print('[🐧 plans service] Failed to sync pending plans: $e');
+      }
+      
       print('[🐧 plans service] Fetching plans from Firestore for $visibilidad');
       final plans = await _fetchPlansFromFirestore(
         userId: userId,
@@ -232,11 +240,114 @@ class PlansService {
     print('[🐧 plans service] Plan $planId deleted from cache');
   }
 
+  /// Create a plan (works offline)
+  Future<String> createPlan({
+    required Map<String, dynamic> planData,
+    required bool isOnline,
+  }) async {
+    final planId = planData['planID'] as String;
+
+    // Convert planData to Plan model and save to cache immediately
+    try {
+      final plan = Plan.fromFirestore(planId, planData);
+      await _localDataSource.insertPlan(plan);
+      print('[🐧 plans service] Plan saved to local cache: $planId');
+    } catch (e) {
+      print('[🐧 plans service] Error saving to cache: $e');
+    }
+
+    if (isOnline) {
+      // Try to create online
+      try {
+        await _firestore.collection('planes').doc(planId).set(planData);
+        print('[🐧 plans service] Plan created online: $planId');
+        return planId;
+      } catch (e) {
+        print('[🐧 plans service] Failed to create online, saving for later: $e');
+        // Save for later sync
+        await _localDataSource.insertPendingPlanCreation(planId, planData);
+        return planId;
+      }
+    } else {
+      // Offline mode - save for later sync
+      print('[🐧 plans service] Offline mode - saving plan for later sync');
+      await _localDataSource.insertPendingPlanCreation(planId, planData);
+      return planId;
+    }
+  }
+
+  /// Sync pending plan creations
+  Future<void> syncPendingPlanCreations() async {
+    final pendingPlans = await _localDataSource.getPendingPlanCreations();
+    
+    print('[🐧 plans service] Syncing ${pendingPlans.length} pending plans');
+    
+    for (var pending in pendingPlans) {
+      final planId = pending['id'] as String;
+      
+      try {
+        final planDataStr = pending['planData'] as String;
+        
+        // Check if it's valid JSON (starts with '{')
+        if (!planDataStr.trim().startsWith('{')) {
+          print('[🐧 plans service] Skipping plan $planId - old format (toString)');
+          // Delete old format plans that can't be synced
+          await _localDataSource.deletePendingPlanCreation(planId);
+          continue;
+        }
+        
+        // Deserialize the plan data
+        final planData = jsonDecode(planDataStr) as Map<String, dynamic>;
+        
+        // Convert milliseconds back to Timestamp
+        if (planData['fecha'] is int) {
+          planData['fecha'] = Timestamp.fromMillisecondsSinceEpoch(planData['fecha'] as int);
+        }
+        if (planData['fecha_creacion'] is int) {
+          planData['fecha_creacion'] = Timestamp.fromMillisecondsSinceEpoch(planData['fecha_creacion'] as int);
+        }
+        
+        // Convert lists if they're stored as strings
+        if (planData['fechasEncuesta'] is List) {
+          planData['fechasEncuesta'] = (planData['fechasEncuesta'] as List)
+              .map((e) => e is int ? Timestamp.fromMillisecondsSinceEpoch(e) : e)
+              .toList();
+        }
+        
+        // Upload to Firestore
+        await _firestore.collection('planes').doc(planId).set(planData);
+        print('[🐧 plans service] Successfully synced plan $planId');
+        
+        // Remove from pending
+        await _localDataSource.deletePendingPlanCreation(planId);
+      } catch (e) {
+        print('[🐧 plans service] Failed to sync plan $planId: $e');
+        // Delete problematic pending plans to avoid blocking future syncs
+        try {
+          await _localDataSource.deletePendingPlanCreation(planId);
+          print('[🐧 plans service] Deleted problematic pending plan $planId');
+        } catch (deleteError) {
+          print('[🐧 plans service] Failed to delete pending plan: $deleteError');
+        }
+      }
+    }
+  }
+
+  /// Check if there are pending plan creations
+  Future<bool> hasPendingPlanCreations() async {
+    final pending = await _localDataSource.getPendingPlanCreations();
+    return pending.isNotEmpty;
+  }
+
   /// Get user's own plans with caching
   Future<List<Map<String, dynamic>>> getMyPlans({
     required String userId,
     bool forceRefresh = false,
   }) async {
+    // Get cached plans first (always check local DB)
+    final cachedPlans = await _localDataSource.getPlansByAnfitrion(userId);
+    print('[🐧 plans service] Found ${cachedPlans.length} cached plans for user $userId');
+
     // For "my plans", we use a special visibility key
     final cacheKey = "MisPlanes_$userId";
     
@@ -246,17 +357,24 @@ class PlansService {
       cacheMaxAge,
     );
 
-    // Get cached plans
-    final cachedPlans = await _localDataSource.getPlansByAnfitrion(userId);
-
     // If cache is fresh and not forcing refresh, return cached data
-    if (isCacheFresh && !forceRefresh) {
+    if (isCacheFresh && !forceRefresh && cachedPlans.isNotEmpty) {
       print('[🐧 plans service] Using cached my plans');
+      return cachedPlans.map((plan) => plan.toDisplayMap()).toList();
+    }
+    
+    // If we have cached plans but cache is stale, return them while fetching
+    if (cachedPlans.isNotEmpty && !forceRefresh) {
+      print('[🐧 plans service] Returning cached plans while checking for updates');
+      // Return cached data immediately, will update in background next time
       return cachedPlans.map((plan) => plan.toDisplayMap()).toList();
     }
 
     // Fetch from Firestore
     try {
+      // Sync pending plans before fetching
+      await syncPendingPlanCreations();
+      
       print('[🐧 plans service] Fetching my plans from Firestore');
       final snapshot = await _firestore
           .collection("planes")

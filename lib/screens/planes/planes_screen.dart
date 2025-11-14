@@ -216,7 +216,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
 
-    if (widget.userID.isEmpty || widget.currentLocation == null) {
+    if (widget.userID.isEmpty) {
       return Scaffold(
         body: Center(
           child: Column(
@@ -225,16 +225,13 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
               CircularProgressIndicator(),
               SizedBox(height: 16),
               Text(
-                "Obteniendo ubicación...",
+                "Cargando...",
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
           ),
         ),
       );
-    }
-    else {
-      print("[🐧 planes] UID del usuario: ${widget.userID}");
     }
 
     return GestureDetector(

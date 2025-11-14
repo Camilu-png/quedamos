@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/plan.dart';
 import 'database_helper.dart';
 
@@ -154,5 +156,43 @@ class PlansLocalDataSource {
     final now = DateTime.now();
     final difference = now.difference(cacheAge);
     return difference < maxAge;
+  }
+
+  // Pending plan creations CRUD
+  Future<void> insertPendingPlanCreation(String planId, Map<String, dynamic> planData) async {
+    final db = await _dbHelper.database;
+    
+    // Convert Timestamp objects to milliseconds for JSON serialization
+    final serializedData = Map<String, dynamic>.from(planData);
+    if (serializedData['fecha'] is Timestamp) {
+      serializedData['fecha'] = (serializedData['fecha'] as Timestamp).millisecondsSinceEpoch;
+    }
+    if (serializedData['fecha_creacion'] is Timestamp) {
+      serializedData['fecha_creacion'] = (serializedData['fecha_creacion'] as Timestamp).millisecondsSinceEpoch;
+    }
+    
+    await db.insert(
+      'pending_plan_creations',
+      {
+        'id': planId,
+        'planData': jsonEncode(serializedData),
+        'createdAt': DateTime.now().millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getPendingPlanCreations() async {
+    final db = await _dbHelper.database;
+    return await db.query('pending_plan_creations', orderBy: 'createdAt ASC');
+  }
+
+  Future<void> deletePendingPlanCreation(String id) async {
+    final db = await _dbHelper.database;
+    await db.delete(
+      'pending_plan_creations',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }
