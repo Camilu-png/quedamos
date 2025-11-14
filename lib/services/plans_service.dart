@@ -291,10 +291,20 @@ class PlansService {
           planData['fecha_creacion'] = Timestamp.fromMillisecondsSinceEpoch(planData['fecha_creacion'] as int);
         }
         
-        // Convert lists if they're stored as strings
+        // Convert fechasEncuesta - handle milliseconds to Timestamp conversion for cada fecha
         if (planData['fechasEncuesta'] is List) {
           planData['fechasEncuesta'] = (planData['fechasEncuesta'] as List)
-              .map((e) => e is int ? Timestamp.fromMillisecondsSinceEpoch(e) : e)
+              .map((item) {
+                if (item is! Map) return item;
+                final itemMap = Map<String, dynamic>.from(item);
+                
+                // Convert fecha milliseconds to Timestamp
+                if (itemMap['fecha'] is int) {
+                  itemMap['fecha'] = Timestamp.fromMillisecondsSinceEpoch(itemMap['fecha'] as int);
+                }
+                
+                return itemMap;
+              })
               .toList();
         }
         

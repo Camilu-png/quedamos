@@ -1,3 +1,4 @@
+import "dart:convert";
 import "package:intl/intl.dart";
 import "package:uuid/uuid.dart";
 import "package:flutter/material.dart";
@@ -44,7 +45,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   //FECHA
   bool fechaEsEncuesta = false;
   DateTime? fecha;
-  List<DateTime> fechasEncuesta = [];
+  List<Map<String, dynamic>> fechasEncuesta = [];
   //HORA
   bool horaEsEncuesta = false;
   TimeOfDay? hora;
@@ -78,31 +79,42 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       descripcion.text = widget.plan!["descripcion"] ?? "";
       //FECHA
       fechaEsEncuesta = widget.plan!["fechaEsEncuesta"] ?? false;
-      if (fechaEsEncuesta) {
-        final fechasRaw = widget.plan!["fechasEncuesta"];
-        if (fechasRaw != null && fechasRaw is List) {
-          fechasEncuesta = fechasRaw
-              .where((f) => f != null)
-              .map<DateTime>((f) {
-                if (f is Timestamp) return f.toDate();
-                if (f is DateTime) return f;
-                try {
-                  return DateTime.parse(f.toString());
-                } catch (_) {
-                  return DateTime.now();
-                }
-              })
-              .toList();
-        } else {
-          fechasEncuesta = [];
-        }
+      final listaFechas = widget.plan!["fechasEncuesta"];
+      
+      if (listaFechas is List && listaFechas.isNotEmpty) {
+        fechasEncuesta = listaFechas.map<Map<String, dynamic>>((item) {
+          if (item is! Map) {
+            print("[🐧 planes] Advertencia: item de fechasEncuesta no es Map: $item");
+            return {"fecha": DateTime.now(), "votos": []};
+          }
+          
+          final fechaRaw = item["fecha"];
+          DateTime fechaParsed;
+
+          if (fechaRaw is String) {
+            fechaParsed = DateTime.parse(fechaRaw);
+          } else if (fechaRaw is int) {
+            fechaParsed = DateTime.fromMillisecondsSinceEpoch(fechaRaw);
+          } else if (fechaRaw is DateTime) {
+            fechaParsed = fechaRaw;
+          } else if (fechaRaw is Timestamp) {
+            fechaParsed = fechaRaw.toDate();
+          } else {
+            print("[🐧 planes] Advertencia: tipo de fecha desconocido: ${fechaRaw.runtimeType}");
+            fechaParsed = DateTime.now();
+          }
+
+          return {
+            "fecha": fechaParsed,
+            "votos": item["votos"] ?? [],
+          };
+        }).toList();
       } else {
-        if (widget.plan!["fecha"] is Timestamp) {
-          fecha = (widget.plan!["fecha"] as Timestamp).toDate();
-        } else {
-          fecha = widget.plan!["fecha"];
-        }
+        fechasEncuesta = [];
       }
+
+
+
       //HORA
       horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
       if (horaEsEncuesta) {
@@ -324,7 +336,10 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
         if (!fechaEsEncuesta) {
           fecha = fechaSelected;
         } else {
-          fechasEncuesta.add(fechaSelected);
+          fechasEncuesta.add({
+            "fecha": fechaSelected,
+            "votos": [],
+          });
         }
       });
     }
@@ -533,7 +548,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        //BOTÓN: INPUT FECHA
+                        //BOTÓN: FECHA
                         Expanded(
                           flex: 2,
                           child: FilledButton(
@@ -557,19 +572,19 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                 Expanded(
                                   child: Text(
                                     fechaEsEncuesta
-                                      ? "Elegir opción de encuesta"
-                                      : (fecha != null
-                                        ? DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fecha!)
-                                        : "Elegir fecha"),
+                                        ? "Elegir opción de encuesta"
+                                        : (fecha != null
+                                            ? DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fecha!)
+                                            : "Elegir fecha"),
                                     style: Theme.of(context).textTheme.bodyMedium,
                                   ),
                                 ),
-                              ]
+                              ],
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
-                        //SEGMENTED BUTTON (FECHA/ENCUESTA)
+                        //SEGMENTED BUTTON: FECHA
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
@@ -596,7 +611,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    //FECHA: OPCIONES DE ENCUESTA
+                    //OPCIONES DE ENCUESTA: FECHA
                     if (fechaEsEncuesta && fechasEncuesta.isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -614,7 +629,7 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                                   children: [
                                     Flexible(
                                       child: Text(
-                                        "Opción ${i + 1}: ${DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fechasEncuesta[i])}",
+                                        "Opción ${i + 1}: ${DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fechasEncuesta[i]['fecha'])}",
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium
@@ -964,6 +979,9 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                             }
                             //GUARDAR PLAN
                             print("[🐧 planes] Guardando plan...");
+                            DateTime fechaReal = fechaEsEncuesta
+                              ? DateTime.now() // valor "dummy" para SQLite
+                              : (fecha ?? DateTime.now()); // si hay fecha seleccionada, la usamos, si no también ponemos now
                             final planFinal = {
                               "planID": planID,
                               "fecha_creacion": Timestamp.fromDate(DateTime.now()),
@@ -975,8 +993,11 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
                               "titulo": titulo.text,
                               "descripcion": descripcion.text,
                               "fechaEsEncuesta": fechaEsEncuesta,
-                              "fecha": fecha != null ? Timestamp.fromDate(fecha!) : null,
-                              "fechasEncuesta": fechasEncuesta.map((h) => Timestamp.fromDate(h)).toList(),
+                              "fecha": fecha != null ? Timestamp.fromDate(fecha!) : Timestamp.fromDate(fechaReal),
+                              "fechasEncuesta": fechasEncuesta.map((opcion) => {
+                                "fecha": Timestamp.fromDate(opcion["fecha"]),
+                                "votos": opcion["votos"],
+                              }).toList(),
                               "horaEsEncuesta": horaEsEncuesta,
                               "hora": hora != null ? timeOfDayToString(hora!) : null,
                               "horasEncuesta": horasEncuesta.map((h) => timeOfDayToString(h)).toList(),

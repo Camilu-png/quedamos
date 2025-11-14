@@ -162,13 +162,30 @@ class PlansLocalDataSource {
   Future<void> insertPendingPlanCreation(String planId, Map<String, dynamic> planData) async {
     final db = await _dbHelper.database;
     
-    // Convert Timestamp objects to milliseconds for JSON serialization
+    // Convert Timestamp and DateTime objects to milliseconds for JSON serialization
     final serializedData = Map<String, dynamic>.from(planData);
+    
     if (serializedData['fecha'] is Timestamp) {
       serializedData['fecha'] = (serializedData['fecha'] as Timestamp).millisecondsSinceEpoch;
     }
     if (serializedData['fecha_creacion'] is Timestamp) {
       serializedData['fecha_creacion'] = (serializedData['fecha_creacion'] as Timestamp).millisecondsSinceEpoch;
+    }
+    
+    // Convert fechasEncuesta - handle DateTime and Timestamp in the list
+    if (serializedData['fechasEncuesta'] is List) {
+      serializedData['fechasEncuesta'] = (serializedData['fechasEncuesta'] as List).map((item) {
+        if (item is! Map) return item;
+        final itemMap = Map<String, dynamic>.from(item);
+        
+        if (itemMap['fecha'] is Timestamp) {
+          itemMap['fecha'] = (itemMap['fecha'] as Timestamp).millisecondsSinceEpoch;
+        } else if (itemMap['fecha'] is DateTime) {
+          itemMap['fecha'] = (itemMap['fecha'] as DateTime).millisecondsSinceEpoch;
+        }
+        
+        return itemMap;
+      }).toList();
     }
     
     await db.insert(

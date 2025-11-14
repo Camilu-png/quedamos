@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -277,6 +277,10 @@ class DatabaseHelper {
           createdAt $intType
         )
       ''');
+    }
+
+    if (oldVersion < 8) {
+      await db.execute('ALTER TABLE plans ADD COLUMN fechasEncuesta TEXT');
     }
   }
 
