@@ -41,7 +41,9 @@ class PlansService {
     // If cache is fresh and not forcing refresh, return cached data immediately
     if (isCacheFresh && !forceRefresh) {
       print('[🐧 plans service] Using fresh cached plans for $visibilidad');
-      return cachedPlans.map((plan) => plan.toDisplayMap()).toList();
+      // Filter out user's own plans
+      final filteredPlans = cachedPlans.where((plan) => plan.anfitrionID != userId).toList();
+      return filteredPlans.map((plan) => plan.toDisplayMap()).toList();
     }
 
     // Cache is stale or force refresh - try to fetch from Firestore
@@ -63,14 +65,18 @@ class PlansService {
       // Update cache with fresh data
       await _updateCache(visibilidad, plans);
 
-      return plans.map((plan) => plan.toDisplayMap()).toList();
+      // Filter out user's own plans before returning
+      final filteredPlans = plans.where((plan) => plan.anfitrionID != userId).toList();
+      return filteredPlans.map((plan) => plan.toDisplayMap()).toList();
     } catch (e) {
       // Network error or Firestore error - use stale cache if available
       print('[🐧 plans service] Error fetching from Firestore: $e');
       
       if (cachedPlans.isNotEmpty) {
         print('[🐧 plans service] Using stale cache due to error (${cachedPlans.length} plans)');
-        return cachedPlans.map((plan) => plan.toDisplayMap()).toList();
+        // Filter out user's own plans
+        final filteredPlans = cachedPlans.where((plan) => plan.anfitrionID != userId).toList();
+        return filteredPlans.map((plan) => plan.toDisplayMap()).toList();
       }
       
       // No cache available and network failed
@@ -89,29 +95,7 @@ class PlansService {
     final Set<String> planIds = {}; // To avoid duplicates
 
     if (visibilidad == "Amigos") {
-      // First: Get plans created by user
-      try {
-        final ownPlansSnapshot = await _firestore
-            .collection("planes")
-            .where("visibilidad", isEqualTo: "Amigos")
-            .where("anfitrionID", isEqualTo: userId)
-            .get();
-        
-        for (var doc in ownPlansSnapshot.docs) {
-          try {
-            if (!planIds.contains(doc.id)) {
-              planIds.add(doc.id);
-              plans.add(Plan.fromFirestore(doc.id, doc.data()));
-            }
-          } catch (e) {
-            print('[🐧 plans service] Error parsing plan ${doc.id}: $e');
-          }
-        }
-      } catch (e) {
-        print('[🐧 plans service] Error fetching own plans: $e');
-      }
-
-      // Second: Get plans from friends in batches
+      // Get plans from friends in batches (excluding user's own plans)
       if (friendIds.isNotEmpty) {
         for (var i = 0; i < friendIds.length; i += 10) {
           final batch = friendIds.sublist(
