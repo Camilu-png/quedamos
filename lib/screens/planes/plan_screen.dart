@@ -246,9 +246,47 @@ class _PlanScreenState extends State<PlanScreen> {
                           ? horaVotada.format(context)
                           : item['nombre']),
                     trailing: Text('${item['votos']?.length ?? 0} votos'),
-                    onTap: () {
-                      // lógica para votar
+                    onTap: () async {
+                      final userID = widget.userID; // el usuario que vota
+
+                      List<dynamic> votosActuales = List.from(item['votos'] ?? []);
+
+                      // Si ya votó, remover su voto (toggle)
+                      if (votosActuales.contains(userID)) {
+                        votosActuales.remove(userID);
+                      } else {
+                        // Para encuestas donde solo se permite un voto a la vez:
+                        // 1. quitar su voto de todos los items
+                        for (var i = 0; i < items.length; i++) {
+                          final votosItem = List.from(items[i]['votos'] ?? []);
+                          votosItem.remove(userID);
+                          items[i]['votos'] = votosItem;
+                        }
+
+                        // 2. agregar su voto al item seleccionado
+                        votosActuales.add(userID);
+                      }
+
+                      // Actualizamos el item localmente
+                      item['votos'] = votosActuales;
+
+                      // Actualizamos Firestore
+                      final planID = _getPlanID();
+                      if (planID != null) {
+                        final fieldName = tipo == "fecha"
+                            ? "fechasEncuesta"
+                            : tipo == "hora"
+                                ? "horasEncuesta"
+                                : "ubicacionesEncuesta";
+
+                        // Escribe toda la lista de items en Firestore
+                        await db.collection("planes").doc(planID).update({fieldName: items});
+                      }
+
+                      // Refrescar la UI
+                      setState(() {});
                     },
+
                   );
                 },
               ),
