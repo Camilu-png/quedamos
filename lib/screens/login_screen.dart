@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:firebase_auth/firebase_auth.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:firebase_messaging/firebase_messaging.dart";
+import 'package:google_sign_in/google_sign_in.dart';
 import "main_screen.dart";
 import "register_screen.dart";
 
@@ -94,6 +95,91 @@ class _LoginScreenState extends State<LoginScreen> {
         SnackBar(content: Text(message)),
       );
       print("[🐶 login] Error: ${e.code}");
+    }
+  }
+
+  Future<void> _googleLogin() async {
+    try {
+      await GoogleSignIn().signOut();
+
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      // Si canceló el login
+      if (googleUser == null) {
+        print("❌ Login cancelado");
+        return;
+      }
+
+      // Obtener autenticación
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // Credenciales de Firebase
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Login Firebase
+      final userCred =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+
+      final user = userCred.user;
+      if (user == null) return;
+
+      final userID = user.uid;
+      final email = user.email ?? "";
+      final name = user.displayName ?? "";
+
+      // Token FCM
+      final String? token = await messaging.getToken();
+
+      try {
+        print("📌 Revisando Firestore...");
+
+        final userDoc =
+            FirebaseFirestore.instance.collection("users").doc(userID);
+
+        final doc = await userDoc.get();
+
+        print("📌 Existe doc?: ${doc.exists}");
+
+        if (!doc.exists) {
+          print("🆕 Intentando crear usuario...");
+
+          await userDoc.set({
+            "name": name,
+            "email": email,
+            "fcmToken": token,
+          });
+
+          print("✔ Usuario creado en Firestore");
+        } else {
+          print("🔁 Intentando actualizar token...");
+
+          await userDoc.update({
+            "fcmToken": token,
+          });
+
+          print("✔ Token actualizado");
+        }
+      }
+      catch (e, st) {
+        print("💥 ERROR FIRESTORE:");
+        print(e);
+        print(st);
+      }
+
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MainScreen(userID: userID),
+        ),
+      );
+    } catch (e) {
+      print("⚠ Error en Google Sign-In: $e");
     }
   }
 
@@ -318,6 +404,34 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 16),
 
+              // BOTÓN: INGRESAR CON GOOGLE
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: Image.asset(
+                    "assets/google_logo.png",
+                    height: 24,
+                  ),
+                  onPressed: _googleLogin,
+                  label: Text(
+                    "Ingresar con Google",
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                ),
+              ),
+                            
+              const SizedBox(height: 16),
+
               Text(
                 "¿No tienes una cuenta?",
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -354,7 +468,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
             ],
           ),
         ),
