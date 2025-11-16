@@ -180,22 +180,34 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   void _showEncuesta(String tipo) {
-    List items = [];
     String tituloModal = "";
-    switch(tipo) {
+    String fieldName = "";
+    switch (tipo) {
       case "fecha":
-        items = plan["fechasEncuesta"] ?? [];
+        fieldName = "fechasEncuesta";
         tituloModal = "Vota por tu fecha favorita";
         break;
       case "hora":
-        items = plan["horasEncuesta"] ?? [];
+        fieldName = "horasEncuesta";
         tituloModal = "Vota por tu hora favorita";
         break;
       case "ubicacion":
-        items = plan["ubicacionesEncuesta"] ?? [];
+        fieldName = "ubicacionesEncuesta";
         tituloModal = "Vota por tu ubicación favorita";
         break;
+      default:
+        return;
     }
+    final String? planID = _getPlanID();
+    if (planID == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No se pudo identificar el plan.")),
+      );
+      return;
+    }
+    final String userID = widget.userID;
+    final String anfitrionID = plan['anfitrionID']?.toString() ?? "";
+    final bool esAnfitrion = userID == anfitrionID;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -207,90 +219,273 @@ class _PlanScreenState extends State<PlanScreen> {
       ),
       builder: (_) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(tituloModal, style: Theme.of(context).textTheme.headlineSmall),
-              ),
-              Divider(),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  DateTime fechaVotada;
-                  if (item['fecha'] is Timestamp) {
-                    fechaVotada = (item['fecha'] as Timestamp).toDate();
-                  } else if (item['fecha'] is DateTime) {
-                    fechaVotada = item['fecha'];
-                  } else {
-                    fechaVotada = DateTime.now(); // fallback seguro
-                  }
-                  TimeOfDay horaVotada;
-                  if (item['hora'] is String) {
-                    final partes = item['hora'].trim().split(':'); // limpiar espacios
-                    final hora = int.tryParse(partes[0]) ?? 0;
-                    final minuto = int.tryParse(partes[1]) ?? 0;
-                    horaVotada = TimeOfDay(hour: hora, minute: minuto);
-                  } else if (item['hora'] is int && item['minuto'] is int) {
-                    horaVotada = TimeOfDay(hour: item['hora'], minute: item['minuto']);
-                  } else {
-                    horaVotada = TimeOfDay(hour: 0, minute: 0); // fallback seguro
-                  }
-                  return ListTile(
-                    title: Text(tipo == "fecha"
-                        ? DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fechaVotada)
-                        : tipo == "hora"
-                          ? horaVotada.format(context)
-                          : item['nombre']),
-                    trailing: Text('${item['votos']?.length ?? 0} votos'),
-                    onTap: () async {
-                      final userID = widget.userID; // el usuario que vota
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                //TÍTULO
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.poll),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          tituloModal,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
+                //CONTENIDO
+                Expanded(
+                  child: StreamBuilder<DocumentSnapshot>(
+                    stream: db.collection("planes").doc(planID).snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData || !snapshot.data!.exists) {
+                        return Center(
+                          child: Text(
+                            "No se encontró la encuesta.",
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        );
+                      }
 
-                      List<dynamic> votosActuales = List.from(item['votos'] ?? []);
+                      final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                      final List<dynamic> items = List.from(data[fieldName] ?? []);
 
-                      // Si ya votó, remover su voto (toggle)
-                      if (votosActuales.contains(userID)) {
-                        votosActuales.remove(userID);
-                      } else {
-                        // Para encuestas donde solo se permite un voto a la vez:
-                        // 1. quitar su voto de todos los items
-                        for (var i = 0; i < items.length; i++) {
-                          final votosItem = List.from(items[i]['votos'] ?? []);
-                          votosItem.remove(userID);
-                          items[i]['votos'] = votosItem;
+                      if (items.isEmpty) {
+                        return Center(
+                          child: Text(
+                            "No hay opciones disponibles aún.",
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        );
+                      }
+                      //VOTOS
+                      final int totalVotos = items.fold<int>(
+                        0,
+                        (sum, opt) {
+                          final List<dynamic> votosOpt = (opt['votos'] as List?) ?? [];
+                          return sum + votosOpt.length;
+                        },
+                      );
+                      int maxVotos = 0;
+                      for (final it in items) {
+                        final List<dynamic> votos = (it['votos'] as List?) ?? [];
+                        if (votos.length > maxVotos) {
+                          maxVotos = votos.length;
                         }
-
-                        // 2. agregar su voto al item seleccionado
-                        votosActuales.add(userID);
                       }
-
-                      // Actualizamos el item localmente
-                      item['votos'] = votosActuales;
-
-                      // Actualizamos Firestore
-                      final planID = _getPlanID();
-                      if (planID != null) {
-                        final fieldName = tipo == "fecha"
-                            ? "fechasEncuesta"
-                            : tipo == "hora"
-                                ? "horasEncuesta"
-                                : "ubicacionesEncuesta";
-
-                        // Escribe toda la lista de items en Firestore
-                        await db.collection("planes").doc(planID).update({fieldName: items});
-                      }
-
-                      // Refrescar la UI
-                      setState(() {});
+                      return ListView.builder(
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          //FECHA
+                          DateTime fechaVotada = DateTime.now();
+                          if (item['fecha'] is Timestamp) {
+                            fechaVotada = (item['fecha'] as Timestamp).toDate();
+                          } else if (item['fecha'] is DateTime) {
+                            fechaVotada = item['fecha'];
+                          }
+                          //HORA
+                          TimeOfDay horaVotada;
+                          if (item['hora'] is String) {
+                            final partes = item['hora'].toString().trim().split(':');
+                            final hora = int.tryParse(partes[0]) ?? 0;
+                            final minuto = partes.length > 1 ? int.tryParse(partes[1]) ?? 0 : 0;
+                            horaVotada = TimeOfDay(hour: hora, minute: minuto);
+                          } else if (item['hora'] is int && item['minuto'] is int) {
+                            horaVotada = TimeOfDay(
+                              hour: item['hora'] as int,
+                              minute: item['minuto'] as int,
+                            );
+                          } else {
+                            horaVotada = const TimeOfDay(hour: 0, minute: 0);
+                          }
+                          //VOTOS
+                          final List<dynamic> votos = (item['votos'] as List?) ?? [];
+                          final bool yaVoto = votos.contains(userID);
+                          final int cantidadVotos = votos.length;
+                          final bool esMasVotada = maxVotos > 0 && cantidadVotos == maxVotos;
+                          //PORCENTAJE
+                          double porcentaje = 0;
+                          if (totalVotos > 0) {
+                            porcentaje = (cantidadVotos / totalVotos) * 100;
+                          }
+                          final String porcentajeTexto = totalVotos > 0
+                              ? " • ${porcentaje.toStringAsFixed(0)}%"
+                              : "";
+                          //TEXTO PRINCIPAL
+                          String tituloOpcion;
+                          switch (tipo) {
+                            case "fecha":
+                              tituloOpcion = DateFormat("d 'de' MMMM 'de' y", "es_ES").format(fechaVotada);
+                              break;
+                            case "hora":
+                              tituloOpcion = horaVotada.format(context);
+                              break;
+                            case "ubicacion":
+                            default:
+                              tituloOpcion = item['nombre']?.toString() ?? "Opción";
+                          }
+                          return ListTile(
+                            leading: Checkbox(
+                              value: yaVoto,
+                              onChanged: (value) async {
+                                List<dynamic> votosActuales = List.from(item['votos'] ?? []);
+                                if (votosActuales.contains(userID)) {
+                                  votosActuales.remove(userID);
+                                } else {
+                                  votosActuales.add(userID);
+                                }
+                                items[index]['votos'] = votosActuales;
+                                await db.collection("planes").doc(planID).update({
+                                  fieldName: items,
+                                });
+                              },
+                            ),
+                            title: Text(tituloOpcion),
+                            subtitle: Row(
+                              children: [
+                                Text(
+                                  "$cantidadVotos voto${cantidadVotos == 1 ? "" : "s"}$porcentajeTexto",
+                                ),
+                                if (esMasVotada && maxVotos > 0) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.secondaryContainer,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(
+                                      "Más votada",
+                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                            color: Theme.of(context).colorScheme.onSecondaryContainer,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            trailing: esAnfitrion
+                                ? IconButton(
+                                    icon: const Icon(Icons.push_pin_outlined),
+                                    tooltip: "Fijar esta opción",
+                                    onPressed: () async {
+                                      final updates = <String, dynamic>{};
+                                      if (tipo == "fecha") {
+                                        updates['fechaEsEncuesta'] = false;
+                                        updates['fecha'] = item['fecha'];
+                                      } else if (tipo == "hora") {
+                                        updates['horaEsEncuesta'] = false;
+                                        updates['hora'] = item['hora'];
+                                      } else if (tipo == "ubicacion") {
+                                        updates['ubicacionEsEncuesta'] = false;
+                                        updates['ubicacion'] = item;
+                                      }
+                                      await db.collection("planes").doc(planID).update(updates);
+                                      setState(() {
+                                        plan.addAll(updates);
+                                      });
+                                      if (context.mounted) {
+                                        Navigator.of(context).pop();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text("Se fijó la opción seleccionada."),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  )
+                                : null,
+                            onTap: () async {
+                              List<dynamic> votosActuales = List.from(item['votos'] ?? []);
+                              if (votosActuales.contains(userID)) {
+                                votosActuales.remove(userID);
+                              } else {
+                                votosActuales.add(userID);
+                              }
+                              items[index]['votos'] = votosActuales;
+                              await db.collection("planes").doc(planID).update({
+                                fieldName: items,
+                              });
+                            },
+                          );
+                        },
+                      );
                     },
-
-                  );
-                },
-              ),
-            ],
+                  ),
+                ),
+                //BOTÓN: FIJAR OPCIÓN MÁS VOTADA
+                if (esAnfitrion)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        icon: const Icon(Icons.push_pin_outlined),
+                        label: const Text("Fijar opción más votada"),
+                        onPressed: () async {
+                          final doc = await db.collection("planes").doc(planID).get();
+                          if (!doc.exists) return;
+                          final data = doc.data() ?? {};
+                          final List<dynamic> items = List.from(data[fieldName] ?? []);
+                          if (items.isEmpty) return;
+                          int maxVotos = -1;
+                          int indexGanador = 0;
+                          for (int i = 0; i < items.length; i++) {
+                            final List<dynamic> votos = (items[i]['votos'] as List?) ?? [];
+                            if (votos.length > maxVotos) {
+                              maxVotos = votos.length;
+                              indexGanador = i;
+                            }
+                          }
+                          final ganador = items[indexGanador];
+                          final updates = <String, dynamic>{};
+                          if (tipo == "fecha") {
+                            updates['fechaEsEncuesta'] = false;
+                            updates['fecha'] = ganador['fecha'];
+                          } else if (tipo == "hora") {
+                            updates['horaEsEncuesta'] = false;
+                            updates['hora'] = ganador['hora'];
+                          } else if (tipo == "ubicacion") {
+                            updates['ubicacionEsEncuesta'] = false;
+                            updates['ubicacion'] = ganador;
+                          }
+                          await db.collection("planes").doc(planID).update(updates);
+                          setState(() {
+                            plan.addAll(updates);
+                          });
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Se fijó la opción más votada."),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },
