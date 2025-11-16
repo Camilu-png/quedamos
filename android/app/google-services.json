@@ -12,7 +12,20 @@
           "package_name": "com.example.quedamos"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "836992483551-c48gqaetiijcd6rsrco8bqr52cg34q08.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.quedamos",
+            "certificate_hash": "c7df64226debeff684414ed8b04c665f9ee23973"
+          }
+        },
+        {
+          "client_id": "836992483551-pk70vklho020mvs2ni091sc56frul0dn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC7zWOmJwHEXuutcunfE1E5-NC4CGBT80o"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "836992483551-pk70vklho020mvs2ni091sc56frul0dn.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "836992483551-85cu41ksgid83icuob3oihoe5ou0qlld.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.quedamos"
+              }
+            }
+          ]
         }
       }
     }
