@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 7,
+      version: 10,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -100,10 +100,13 @@ class DatabaseHelper {
         visibilidad $textType,
         fecha $intType,
         fechaEsEncuesta $intType,
+        fechasEncuesta $textTypeNullable,
         hora $textTypeNullable,
         horaEsEncuesta $intType,
+        horasEncuesta $textTypeNullable,
         ubicacion $textTypeNullable,
         ubicacionEsEncuesta $intType,
+        ubicacionesOpciones $textTypeNullable,
         participantesAceptados $textType,
         participantesRechazados $textType,
         createdAt $intType,
@@ -190,8 +193,10 @@ class DatabaseHelper {
           visibilidad $textType,
           fecha $intType,
           fechaEsEncuesta $intType,
+          fechasEncuesta $textTypeNullable,
           hora $textTypeNullable,
           horaEsEncuesta $intType,
+          horasEncuesta $textTypeNullable,
           ubicacion $textTypeNullable,
           ubicacionEsEncuesta $intType,
           participantesAceptados $textType,
@@ -238,8 +243,10 @@ class DatabaseHelper {
           visibilidad $textType,
           fecha $intType,
           fechaEsEncuesta $intType,
+          fechasEncuesta $textTypeNullable,
           hora $textTypeNullable,
           horaEsEncuesta $intType,
+          horasEncuesta $textTypeNullable,
           ubicacion $textTypeNullable,
           ubicacionEsEncuesta $intType,
           participantesAceptados $textType,
@@ -277,6 +284,24 @@ class DatabaseHelper {
           createdAt $intType
         )
       ''');
+    }
+
+    if (oldVersion < 8) {
+      await db.execute('ALTER TABLE plans ADD COLUMN fechasEncuesta TEXT');
+    }
+
+    if (oldVersion < 9) {
+      await db.execute('ALTER TABLE plans ADD COLUMN horasEncuesta TEXT');
+    }
+
+    if (oldVersion < 10) {
+      // Check if column already exists before adding
+      try {
+        await db.execute('ALTER TABLE plans ADD COLUMN ubicacionesOpciones TEXT');
+      } catch (e) {
+        // Column might already exist, which is fine
+        print('[🐧 database] ubicacionesOpciones column already exists or migration skipped: $e');
+      }
     }
   }
 

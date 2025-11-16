@@ -101,8 +101,15 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
 
   //GET FILTERED PLANS
   List<Map<String, dynamic>> _getFilteredPlans() {
+    for (final plan in _allPlans) {
+      print("Plan:");
+      print("  titulo: ${plan["titulo"]}");
+      print("  fechaEsEncuesta: ${plan["fechaEsEncuesta"]}");
+      print("  fecha: ${plan["fecha"]}");
+      print("  fechasEncuesta: ${plan["fechasEncuesta"]}");
+      print("----------------------------");
+    }
     final now = DateTime.now();
-    
     final planesFiltrados = _allPlans.where((plan) {
       //FECHA - filter by active/inactive
       final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;

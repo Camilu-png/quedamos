@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Plan {
@@ -13,14 +14,17 @@ class Plan {
   // Fecha
   final DateTime? fecha;
   final bool fechaEsEncuesta;
+  final List<Map<String, dynamic>>? fechasEncuesta;
   
   // Hora
   final String? hora;
   final bool horaEsEncuesta;
+  final List<Map<String, dynamic>>? horasEncuesta;
   
   // Ubicación
   final Map<String, dynamic>? ubicacion;
   final bool ubicacionEsEncuesta;
+  final List<Map<String, dynamic>>? ubicacionesEncuesta;
   
   // Participantes
   final List<String> participantesAceptados;
@@ -43,10 +47,13 @@ class Plan {
     required this.visibilidad,
     this.fecha,
     required this.fechaEsEncuesta,
+    this.fechasEncuesta,
     this.hora,
     required this.horaEsEncuesta,
+    this.horasEncuesta,
     this.ubicacion,
     required this.ubicacionEsEncuesta,
+    this.ubicacionesEncuesta,
     required this.participantesAceptados,
     required this.participantesRechazados,
     required this.createdAt,
@@ -68,10 +75,31 @@ class Plan {
       'visibilidad': visibilidad,
       'fecha': fecha?.millisecondsSinceEpoch,
       'fechaEsEncuesta': fechaEsEncuesta ? 1 : 0,
+      'fechasEncuesta': fechasEncuesta != null ? jsonEncode(
+        fechasEncuesta!.map((item) => {
+          'fecha': item['fecha'] is DateTime 
+            ? (item['fecha'] as DateTime).millisecondsSinceEpoch
+            : item['fecha'],
+          'votos': item['votos'] ?? [],
+        }).toList()
+      ) : null,
       'hora': hora,
       'horaEsEncuesta': horaEsEncuesta ? 1 : 0,
+      'horasEncuesta': horasEncuesta != null ? jsonEncode(
+        horasEncuesta!.map((item) => {
+          'hora': item['hora'] ?? '',
+          'votos': item['votos'] ?? [],
+        }).toList()
+      ) : null,
       'ubicacion': ubicacion != null ? _serializeUbicacion(ubicacion!) : null,
       'ubicacionEsEncuesta': ubicacionEsEncuesta ? 1 : 0,
+      // Store survey location options in local DB under a different column
+      'ubicacionesOpciones': ubicacionesEncuesta != null ? jsonEncode(
+        ubicacionesEncuesta!.map((item) => {
+          'ubicacion': item['ubicacion'] ?? {},
+          'votos': item['votos'] ?? [],
+        }).toList()
+      ) : null,
       'participantesAceptados': participantesAceptados.join(','),
       'participantesRechazados': participantesRechazados.join(','),
       'createdAt': createdAt.millisecondsSinceEpoch,
@@ -93,15 +121,38 @@ class Plan {
       iconoColor: map['iconoColor'] as String,
       visibilidad: map['visibilidad'] as String,
       fecha: map['fecha'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(map['fecha'] as int)
-          : null,
+        ? DateTime.fromMillisecondsSinceEpoch(map['fecha'] as int)
+        : null,
       fechaEsEncuesta: (map['fechaEsEncuesta'] as int) == 1,
+      fechasEncuesta: map['fechasEncuesta'] != null
+        ? List<Map<String, dynamic>>.from(
+            jsonDecode(map['fechasEncuesta'] as String)
+                .map((e) {
+                  final item = Map<String, dynamic>.from(e);
+                  // Convert fecha milliseconds back to DateTime
+                  if (item['fecha'] is int) {
+                    item['fecha'] = DateTime.fromMillisecondsSinceEpoch(item['fecha'] as int);
+                  }
+                  return item;
+                }))
+        : [],
       hora: map['hora'] as String?,
       horaEsEncuesta: (map['horaEsEncuesta'] as int) == 1,
+      horasEncuesta: map['horasEncuesta'] != null
+        ? List<Map<String, dynamic>>.from(
+            jsonDecode(map['horasEncuesta'] as String)
+                .map((e) => Map<String, dynamic>.from(e)))
+        : [],
       ubicacion: map['ubicacion'] != null 
           ? _deserializeUbicacion(map['ubicacion'] as String)
           : null,
       ubicacionEsEncuesta: (map['ubicacionEsEncuesta'] as int) == 1,
+      // Read local DB column 'ubicacionesOpciones' and present as ubicacionesEncuesta
+      ubicacionesEncuesta: map['ubicacionesOpciones'] != null
+        ? List<Map<String, dynamic>>.from(
+            jsonDecode(map['ubicacionesOpciones'] as String)
+                .map((e) => Map<String, dynamic>.from(e)))
+        : [],
       participantesAceptados: (map['participantesAceptados'] as String?)
               ?.split(',')
               .where((s) => s.isNotEmpty)
@@ -121,6 +172,43 @@ class Plan {
 
   // Create from Firestore document
   factory Plan.fromFirestore(String docId, Map<String, dynamic> data) {
+    // Parse fechasEncuesta if present
+    List<Map<String, dynamic>>? fechasEncuestaList;
+    if (data['fechasEncuesta'] is List) {
+      final rawList = data['fechasEncuesta'] as List<dynamic>;
+      fechasEncuestaList = rawList.map<Map<String, dynamic>>((item) {
+        if (item is! Map) return {};
+        final itemMap = Map<String, dynamic>.from(item);
+        
+        // Convert fecha if it's a Timestamp
+        if (itemMap['fecha'] is Timestamp) {
+          itemMap['fecha'] = (itemMap['fecha'] as Timestamp).toDate();
+        }
+        
+        return itemMap;
+      }).toList();
+    }
+
+    // Parse horasEncuesta if present
+    List<Map<String, dynamic>>? horasEncuestaList;
+    if (data['horasEncuesta'] is List) {
+      final rawList = data['horasEncuesta'] as List<dynamic>;
+      horasEncuestaList = rawList.map<Map<String, dynamic>>((item) {
+        if (item is! Map) return {};
+        return Map<String, dynamic>.from(item);
+      }).toList();
+    }
+
+    // Parse ubicacionesEncuesta if present
+    List<Map<String, dynamic>>? ubicacionesEncuestaList;
+    if (data['ubicacionesEncuesta'] is List) {
+      final rawList = data['ubicacionesEncuesta'] as List<dynamic>;
+      ubicacionesEncuestaList = rawList.map<Map<String, dynamic>>((item) {
+        if (item is! Map) return {};
+        return Map<String, dynamic>.from(item);
+      }).toList();
+    }
+
     return Plan(
       id: docId,
       anfitrionID: data['anfitrionID'] as String? ?? '',
@@ -134,10 +222,13 @@ class Plan {
           ? (data['fecha'] as Timestamp).toDate()
           : null,
       fechaEsEncuesta: data['fechaEsEncuesta'] as bool? ?? false,
+      fechasEncuesta: fechasEncuestaList,
       hora: data['hora'] as String?,
       horaEsEncuesta: data['horaEsEncuesta'] as bool? ?? false,
+      horasEncuesta: horasEncuestaList,
       ubicacion: _parseUbicacion(data['ubicacion']),
       ubicacionEsEncuesta: data['ubicacionEsEncuesta'] as bool? ?? false,
+      ubicacionesEncuesta: ubicacionesEncuestaList,
       participantesAceptados: (data['participantesAceptados'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ?? [],
@@ -171,10 +262,13 @@ class Plan {
       'visibilidad': visibilidad,
       'fecha': fecha != null ? Timestamp.fromDate(fecha!) : null,
       'fechaEsEncuesta': fechaEsEncuesta,
+      'fechasEncuesta': fechasEncuesta,
       'hora': hora,
       'horaEsEncuesta': horaEsEncuesta,
+      'horasEncuesta': horasEncuesta,
       'ubicacion': ubicacion,
       'ubicacionEsEncuesta': ubicacionEsEncuesta,
+      'ubicacionesEncuesta': ubicacionesEncuesta,
       'participantesAceptados': participantesAceptados,
       'participantesRechazados': participantesRechazados,
     };
@@ -191,10 +285,13 @@ class Plan {
     String? visibilidad,
     DateTime? fecha,
     bool? fechaEsEncuesta,
+    List<Map<String, dynamic>>? fechasEncuesta,
     String? hora,
     bool? horaEsEncuesta,
+    List<Map<String, dynamic>>? horasEncuesta,
     Map<String, dynamic>? ubicacion,
     bool? ubicacionEsEncuesta,
+    List<Map<String, dynamic>>? ubicacionesEncuesta,
     List<String>? participantesAceptados,
     List<String>? participantesRechazados,
     DateTime? createdAt,
@@ -213,10 +310,13 @@ class Plan {
       visibilidad: visibilidad ?? this.visibilidad,
       fecha: fecha ?? this.fecha,
       fechaEsEncuesta: fechaEsEncuesta ?? this.fechaEsEncuesta,
+      fechasEncuesta: fechasEncuesta ?? this.fechasEncuesta,
       hora: hora ?? this.hora,
       horaEsEncuesta: horaEsEncuesta ?? this.horaEsEncuesta,
+      horasEncuesta: horasEncuesta ?? this.horasEncuesta,
       ubicacion: ubicacion ?? this.ubicacion,
       ubicacionEsEncuesta: ubicacionEsEncuesta ?? this.ubicacionEsEncuesta,
+      ubicacionesEncuesta: ubicacionesEncuesta ?? this.ubicacionesEncuesta,
       participantesAceptados: participantesAceptados ?? this.participantesAceptados,
       participantesRechazados: participantesRechazados ?? this.participantesRechazados,
       createdAt: createdAt ?? this.createdAt,
