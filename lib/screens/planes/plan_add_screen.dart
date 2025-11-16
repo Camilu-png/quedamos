@@ -138,32 +138,62 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
 
 
-      //HORA
-      horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
-      if (horaEsEncuesta) {
-        final horasRaw = widget.plan!["horasEncuesta"];
-        if (horasRaw is List && horasRaw.isNotEmpty) {
-          horasEncuesta = horasRaw.map<Map<String, dynamic>>((item) {
-            if (item is! Map) {
-              print("[🐧 planes] Advertencia: item de horasEncuesta no es Map: $item");
-              return {"hora": "", "votos": []};
-            }
-            return {
-              "hora": item["hora"] ?? "",
-              "votos": item["votos"] ?? [],
-            };
-          }).toList();
-        } else {
-          horasEncuesta = [];
-        }
-      } else {
-        final horaRaw = widget.plan!["hora"];
-        if (horaRaw is String) {
-          hora = stringToTimeOfDay(horaRaw);
-        } else {
-          hora = null;
-        }
-      }
+      
+// HORA
+horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
+
+// Siempre intentamos leer horasEncuesta si existe
+final horasRaw = widget.plan!["horasEncuesta"];
+if (horasRaw is List && horasRaw.isNotEmpty) {
+  horasEncuesta = horasRaw.map<Map<String, dynamic>>((item) {
+    if (item is! Map) {
+      print("[🐧 planes] Advertencia: item de horasEncuesta no es Map: $item");
+      return {"hora": "", "votos": []};
+    }
+
+    final horaRaw = item["hora"];
+    String horaString;
+
+    if (horaRaw is String) {
+      horaString = horaRaw;
+    } else if (horaRaw is Map && horaRaw["hora"] != null && horaRaw["minuto"] != null) {
+      final h = horaRaw["hora"];
+      final m = horaRaw["minuto"];
+      horaString = "${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}";
+    } else {
+      horaString = "00:00";
+    }
+
+    return {
+      "hora": horaString,
+      "votos": item["votos"] ?? [],
+    };
+  }).toList();
+} else {
+  horasEncuesta = [];
+}
+
+// Si NO es encuesta, tratamos de leer hora fija
+if (!horaEsEncuesta) {
+  final horaRawSingle = widget.plan!["hora"];
+  if (horaRawSingle is String) {
+    hora = stringToTimeOfDay(horaRawSingle);
+  } else if (horaRawSingle is Map && 
+             horaRawSingle["hora"] is int && 
+             horaRawSingle["minuto"] is int) {
+    hora = TimeOfDay(
+      hour: horaRawSingle["hora"],
+      minute: horaRawSingle["minuto"],
+    );
+  } else {
+    hora = null;
+  }
+} else {
+  // si es encuesta, la hora fija no aplica
+  hora = null;
+}
+
+
       //UBICACIÓN
       ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
       if (ubicacionEsEncuesta == true) {
