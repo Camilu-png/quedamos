@@ -1,8 +1,6 @@
 import "package:flutter/material.dart";
 import "package:firebase_auth/firebase_auth.dart";
-import "package:cloud_firestore/cloud_firestore.dart";
-import "package:firebase_messaging/firebase_messaging.dart";
-import "main_screen.dart";
+import "verification_screen.dart";
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,14 +26,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  //FUNCIÓN: REGISTRO
   Future<void> _register() async {
-    
-    final FirebaseMessaging messaging = FirebaseMessaging.instance;
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
+
     if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       _showError("Por favor, completa todos los campos.");
       return;
@@ -44,36 +40,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showError("Las contraseñas no coinciden.");
       return;
     }
+
     try {
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      final userID = credential.user?.uid;
-      String? token = await messaging.getToken();
-        if (token != null) {
-        // Crear el documento del usuario en Firestore
-          await FirebaseFirestore.instance.collection("users").doc(userID).set({
-            "name": name,
-            "email": email,
-            "fcmToken": token,
-          });
-        }
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
       await credential.user?.sendEmailVerification();
 
-      if (userID != null && mounted) {
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => MainScreen(userID: userID),
+            builder: (context) => VerifyEmailScreen(
+              name: name,
+            ),
           ),
         );
       }
+
     } on FirebaseAuthException catch (e) {
       if (e.code == "weak-password") {
-        print("The password provided is too weak.");
+        _showError("La contraseña es muy débil.");
       } else if (e.code == "email-already-in-use") {
-        print("The account already exists for that email.");
+        _showError("El correo ya está registrado.");
       }
     } catch (e) {
       print(e);
