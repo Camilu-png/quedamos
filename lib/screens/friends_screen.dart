@@ -75,10 +75,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
         },
         icon: const Icon(Icons.add),
         label: const Text("Nuevo amigo"),
-        backgroundColor:
-            Theme.of(context).colorScheme.secondaryContainer,
-        foregroundColor:
-            Theme.of(context).colorScheme.onSecondaryContainer,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        foregroundColor: Theme.of(context).colorScheme.onSecondary,
       ),
 
       body: StreamBuilder<List<Map<String, dynamic>>>(
