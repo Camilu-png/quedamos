@@ -146,10 +146,7 @@ class PlanesList extends StatelessWidget {
                         children: [
 
                           //BADGE: DISTANCIA
-                          if (currentLocation != null &&
-                              plan["ubicacionEsEncuesta"] != true &&
-                              plan["ubicacion"] != null &&
-                              plan["ubicacion"] is Map<String, dynamic>)
+                          if (currentLocation != null && plan["ubicacionEsEncuesta"] != true && plan["ubicacion"] != null && plan["ubicacion"] is Map<String, dynamic>)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                               decoration: BoxDecoration(
@@ -200,6 +197,7 @@ class PlanesList extends StatelessWidget {
                               ),
                             ),
 
+                          //BADGE: ENCUESTA
                           if (plan["fechaEsEncuesta"] || plan["horaEsEncuesta"] || plan["ubicacionEsEncuesta"])
                             const SizedBox(width: 4),
                           if (plan["fechaEsEncuesta"] || plan["horaEsEncuesta"] || plan["ubicacionEsEncuesta"])
@@ -221,6 +219,7 @@ class PlanesList extends StatelessWidget {
                               ),
                             ),
 
+                          //BADGE: ACEPTADO/RECHAZADO
                           if (participantesAceptadosUsuario || participantesRechazadosUsuario)
                             const SizedBox(width: 4),
                           if (participantesAceptadosUsuario || participantesRechazadosUsuario)
@@ -247,6 +246,24 @@ class PlanesList extends StatelessWidget {
                                 ],
                               ),
                             ),
+
+                          //BADGE: CATEGORÍA
+                          if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                            const SizedBox(width: 4),
+                          if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.tertiaryContainer,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(categoriasMap[plan["categoria"]]?["icon"] ?? Icons.label, size: 15, color: categoriasMap[plan["categoria"]]?["color"] ?? Theme.of(context).colorScheme.onTertiaryContainer),
+                                ],
+                              ),
+                            )
                           
                         ]
                       ),
@@ -276,6 +293,7 @@ class PlanesList extends StatelessWidget {
                           fontWeight: FontWeight.w900
                         ),
                       ),
+
                       const SizedBox(height: 4),
 
                       Column(children: [
@@ -320,19 +338,25 @@ class PlanesList extends StatelessWidget {
                       ]),
                       //UBICACIÓN
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
                             Icons.location_on,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                             size: 15,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
-                              ubicacion["nombre"].split(",")[0],
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ubicacion["nombre"] ?? '',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
+                                  ),
+                                ),
+                              ],
                             ),
                           )
                         ],

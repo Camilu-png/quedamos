@@ -32,6 +32,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   String planID = uuid.v4();
   //VISIBILIDAD
   String visibilidad = "Amigos";
+  //CATEGORÍA
+  String categoria = "Social";
   //ANFITRIÓN
   String anfitrionNombre = "Usuario desconocido";
   //ICONO
@@ -67,6 +69,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       planID = widget.plan!["planID"] ?? uuid.v4();
       //VISIBILIDAD
       visibilidad = widget.plan!["visibilidad"] ?? "Amigos";
+      //CATEGORÍA
+      categoria = widget.plan!["categoria"] ?? "Social";
       //ANFITRIÓN
       anfitrionNombre = widget.plan!["anfitrionNombre"] ?? "";
       //ICONO
@@ -135,89 +139,93 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
           fecha = null;
         }
       }
-
-
-
       
-// HORA
-horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
+      // HORA
+      horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
 
-// Siempre intentamos leer horasEncuesta si existe
-final horasRaw = widget.plan!["horasEncuesta"];
-if (horasRaw is List && horasRaw.isNotEmpty) {
-  horasEncuesta = horasRaw.map<Map<String, dynamic>>((item) {
-    if (item is! Map) {
-      print("[🐧 planes] Advertencia: item de horasEncuesta no es Map: $item");
-      return {"hora": "", "votos": []};
-    }
+      // Siempre intentamos leer horasEncuesta si existe
+      final horasRaw = widget.plan!["horasEncuesta"];
+      if (horasRaw is List && horasRaw.isNotEmpty) {
+        horasEncuesta = horasRaw.map<Map<String, dynamic>>((item) {
+          if (item is! Map) {
+            print("[🐧 planes] Advertencia: item de horasEncuesta no es Map: $item");
+            return {"hora": "", "votos": []};
+          }
 
-    final horaRaw = item["hora"];
-    String horaString;
+          final horaRaw = item["hora"];
+          String horaString;
 
-    if (horaRaw is String) {
-      horaString = horaRaw;
-    } else if (horaRaw is Map && horaRaw["hora"] != null && horaRaw["minuto"] != null) {
-      final h = horaRaw["hora"];
-      final m = horaRaw["minuto"];
-      horaString = "${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}";
-    } else {
-      horaString = "00:00";
-    }
+          if (horaRaw is String) {
+            horaString = horaRaw;
+          } else if (horaRaw is Map && horaRaw["hora"] != null && horaRaw["minuto"] != null) {
+            final h = horaRaw["hora"];
+            final m = horaRaw["minuto"];
+            horaString = "${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}";
+          } else {
+            horaString = "00:00";
+          }
 
-    return {
-      "hora": horaString,
-      "votos": item["votos"] ?? [],
-    };
-  }).toList();
-} else {
-  horasEncuesta = [];
-}
+          return {
+            "hora": horaString,
+            "votos": item["votos"] ?? [],
+          };
+        }).toList();
+      } else {
+        horasEncuesta = [];
+      }
 
-// Si NO es encuesta, tratamos de leer hora fija
-if (!horaEsEncuesta) {
-  final horaRawSingle = widget.plan!["hora"];
-  if (horaRawSingle is String) {
-    hora = stringToTimeOfDay(horaRawSingle);
-  } else if (horaRawSingle is Map && 
-             horaRawSingle["hora"] is int && 
-             horaRawSingle["minuto"] is int) {
-    hora = TimeOfDay(
-      hour: horaRawSingle["hora"],
-      minute: horaRawSingle["minuto"],
-    );
-  } else {
-    hora = null;
-  }
-} else {
-  // si es encuesta, la hora fija no aplica
-  hora = null;
-}
+      // Si NO es encuesta, tratamos de leer hora fija
+      if (!horaEsEncuesta) {
+        final horaRawSingle = widget.plan!["hora"];
+        if (horaRawSingle is String) {
+          hora = stringToTimeOfDay(horaRawSingle);
+        } else if (horaRawSingle is Map && 
+                  horaRawSingle["hora"] is int && 
+                  horaRawSingle["minuto"] is int) {
+          hora = TimeOfDay(
+            hour: horaRawSingle["hora"],
+            minute: horaRawSingle["minuto"],
+          );
+        } else {
+          hora = null;
+        }
+      } else {
+        // si es encuesta, la hora fija no aplica
+        hora = null;
+      }
 
 
       //UBICACIÓN
-      ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
-      if (ubicacionEsEncuesta == true) {
-        final ubicacionesRaw = widget.plan!["ubicacionesEncuesta"];
-        if (ubicacionesRaw != null && ubicacionesRaw is List) {
-          ubicacionesEncuesta = ubicacionesRaw
-              .where((u) => u != null && u is Map)
-              .map<Map<String, dynamic>>((u) => Map<String, dynamic>.from(u))
-              .toList();
-        } else {
-          ubicacionesEncuesta = [];
-        }
-      } else {
-        if (widget.plan!["ubicacion"] != null && widget.plan!["ubicacion"] is Map) {
-          ubicacion = Map<String, dynamic>.from(widget.plan!["ubicacion"]);
-        } else {
-          ubicacion = {
-            "nombre": "Casa Central, UTFSM",
-            "latitud": -33.0458,
-            "longitud": -71.6197,
-          };
-        }
-        print("[🐧 planes] Ubicación cargada: $ubicacion");
-      }
+      //UBICACIÓN
+ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
+
+// Siempre intentamos cargar ubicacionesEncuesta si existe
+final ubicacionesRaw = widget.plan!["ubicacionesEncuesta"];
+if (ubicacionesRaw != null && ubicacionesRaw is List && ubicacionesRaw.isNotEmpty) {
+  ubicacionesEncuesta = ubicacionesRaw
+      .where((u) => u != null && u is Map)
+      .map<Map<String, dynamic>>((u) => Map<String, dynamic>.from(u))
+      .toList();
+} else {
+  ubicacionesEncuesta = [];
+}
+
+// Siempre leemos la ubicación fija si existe
+final ubicacionRaw = widget.plan!["ubicacion"];
+if (ubicacionRaw != null && ubicacionRaw is Map) {
+  ubicacion = Map<String, dynamic>.from(ubicacionRaw);
+} else {
+  // fallback por si no hay ninguna
+  ubicacion = {
+    "nombre": "Casa Central, UTFSM",
+    "latitud": -33.0458,
+    "longitud": -71.6197,
+  };
+}
+
+print("[🐧 planes] Ubicación cargada: $ubicacion");
+print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
+
 
       //PARTICIPANTES
       final participantesAceptadosRaw = widget.plan!["participantesAceptados"];
@@ -421,23 +429,26 @@ if (!horaEsEncuesta) {
   void _ubicacionSelector(BuildContext context) {
     showUbicacionSelector(
       context,
-      (latLng, nombre) {
-      setState(() {
-        final nuevaUbicacion = {
-          "nombre": nombre.split(",")[0],
-          "latitud": latLng.latitude,
-          "longitud": latLng.longitude
-        };
-        if (!ubicacionEsEncuesta) {
-          ubicacion = nuevaUbicacion;
-        } else {
-          ubicacionesEncuesta.add({
-            "ubicacion": nuevaUbicacion,
-            "votos": []
-          });
-        }
-        print("[🐧 planes] Ubicación seleccionada: $nuevaUbicacion");
-      });
+      (latLng, shortName, fullAddress) {
+        setState(() {
+          final fullDireccion = fullAddress;
+          final shortNombre = shortName.split(",").first.trim();
+          final nuevaUbicacion = {
+            "nombre": shortNombre,
+            "direccion": fullDireccion,
+            "latitud": latLng.latitude,
+            "longitud": latLng.longitude
+          };
+          if (!ubicacionEsEncuesta) {
+            ubicacion = nuevaUbicacion;
+          } else {
+            ubicacionesEncuesta.add({
+              "ubicacion": nuevaUbicacion,
+              "votos": []
+            });
+          }
+          print("[🐧 planes] Ubicación seleccionada: $nuevaUbicacion");
+        });
       },
       initialPosition: widget.currentLocation,
     );
@@ -871,22 +882,38 @@ if (!horaEsEncuesta) {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text(
-                                    ubicacionEsEncuesta
-                                      ? "Elegir opción de encuesta"
-                                      : (ubicacion?.isNotEmpty == true
-                                        ? ubicacion!["nombre"] ?? "Ubicación desconocida"
-                                        : "Elegir ubicación"),
-                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        ubicacionEsEncuesta
+                                          ? "Elegir opción de encuesta"
+                                          : (ubicacion?.isNotEmpty == true
+                                            ? ubicacion!["nombre"] ?? "Ubicación desconocida"
+                                            : "Elegir ubicación"),
+                                        style: Theme.of(context).textTheme.bodyMedium,
+                                      ),
+                                      if (!ubicacionEsEncuesta && ubicacion?.isNotEmpty == true)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 4.0),
+                                          child: Text(
+                                            (ubicacion!["direccion"] ?? '') as String,
+                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
                         ),
-
                         const SizedBox(width: 12),
-                        //SEGMENTED BUTTON (HORA/ENCUESTA)
+                        //SEGMENTED BUTTON (UBICACIÓN/ENCUESTA)
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
@@ -913,7 +940,7 @@ if (!horaEsEncuesta) {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    //HORA: OPCIONES DE ENCUESTA
+                    //UBICACIÓN: OPCIONES DE ENCUESTA
                     if (ubicacionEsEncuesta && ubicacionesEncuesta.isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -925,17 +952,31 @@ if (!horaEsEncuesta) {
                               ),
                               color: Theme.of(context).colorScheme.surfaceContainerHigh,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Flexible(
-                                      child: Text(
-                                        "Opción ${i + 1}: ${ubicacionesEncuesta[i]["ubicacion"]["nombre"]}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(fontWeight: FontWeight.w500),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Opción ${i + 1}: ${ubicacionesEncuesta[i]["ubicacion"]["nombre"]}",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(fontWeight: FontWeight.w500),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            (ubicacionesEncuesta[i]["ubicacion"]["direccion"] ?? '') as String,
+                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     IconButton(
@@ -958,6 +999,72 @@ if (!horaEsEncuesta) {
                             ),
                         ],
                       ),
+
+                    const SizedBox(height: 12),
+
+                    //CATEGORÍA
+                    Text(
+                      "Categoría",
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    DropdownButtonFormField<String>(
+                      value: categoria,
+                      items: [
+                        "Social",
+                        "Cultural",
+                        "Deportivo",
+                        "Trabajo",
+                        "Viaje",
+                        "Hobby",
+                        "Bienestar",
+                        "Comida",
+                        "Voluntariado",
+                        "Música",
+                        "Cine",
+                        "Lectura",
+                        "Naturaleza",
+                        "Tecnología",
+                        "Educación",
+                        "Fiesta",
+                        "Arte",
+                        "Juegos",
+                        "Salud",
+                        "Compras"
+                      ].map((c) => DropdownMenuItem(
+                        value: c,
+                        child: Row(
+                          children: [
+                            Icon(
+                              categoriasMap[c]?["icon"] as IconData? ?? Icons.label,
+                              color: categoriasMap[c]?["color"] as Color? ?? Colors.grey,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              c,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )).toList(),
+                      onChanged: (v) {
+                        if (v != null) setState(() => categoria = v);
+                      },
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
 
                     const SizedBox(height: 12),
 
@@ -1043,6 +1150,7 @@ if (!horaEsEncuesta) {
                               "planID": planID,
                               "fecha_creacion": Timestamp.fromDate(DateTime.now()),
                               "visibilidad": visibilidad,
+                              "categoria": categoria,
                               "iconoNombre": getIconName(iconoNombre),
                               "iconoColor": getColorName(iconoColor),
                               "anfitrionID": widget.userID,
