@@ -30,7 +30,9 @@ class FriendList extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            elevation: 3,
+            elevation: 1,
+            color: Theme.of(context).colorScheme.surface,
+            clipBehavior: Clip.antiAlias,
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -99,24 +101,75 @@ class FriendList extends StatelessWidget {
           friendCard = Dismissible(
             key: Key(friend["id"]),
             direction: DismissDirection.endToStart,
+            dismissThresholds: const {
+              DismissDirection.endToStart: 0.4,
+            },
+            confirmDismiss: (direction) async {
+              return await showDialog<bool>(
+                context: context,
+                builder: (BuildContext dialogContext) {
+                  return AlertDialog(
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    title: Text(
+                      'Eliminar amigo',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    content: Text(
+                      '¿Estás seguro de que deseas eliminar a ${friend["name"]} de tus amigos?',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(false),
+                        child: Text(
+                          'Cancelar',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                      FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                        onPressed: () => Navigator.of(dialogContext).pop(true),
+                        child: Text(
+                          'Eliminar',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onError,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
             background: Container(
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.symmetric(horizontal: 20),
+              margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.redAccent,
+                color: Theme.of(context).colorScheme.errorContainer,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.delete, color: Colors.white),
+              child: Icon(
+                Icons.delete,
+                color: Theme.of(context).colorScheme.onErrorContainer,
+                size: 28,
+              ),
             ),
             onDismissed: (_) async {
               if (onDelete != null && friend["id"] != null) {
                 onDelete!(friend["id"]);
               }
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${friend["name"]} fue eliminado.'),
-                ),
-              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${friend["name"]} fue eliminado.'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             child: friendCard,
           );

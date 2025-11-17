@@ -77,7 +77,8 @@ class FriendRequestList extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          elevation: 3,
+          elevation: 1,
+          color: Theme.of(context).colorScheme.surface,
           child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -117,10 +118,10 @@ class FriendRequestList extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
-                                  foregroundColor: Theme.of(context).colorScheme.onTertiaryContainer,
+                              child: FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
@@ -134,30 +135,30 @@ class FriendRequestList extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(Icons.check_circle, size: 20, color: Colors.white),
-                                    SizedBox(width: 5),
-                                    Text(
-                                      "Aceptar",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                icon: Icon(
+                                  Icons.check_circle,
+                                  size: 20,
+                                ),
+                                label: Text(
+                                  "Aceptar",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 8),
                             Expanded(
-                              child: FilledButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.error,
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Theme.of(context).colorScheme.error,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  side: BorderSide(
+                                    color: Theme.of(context).colorScheme.error,
+                                    width: 1,
                                   ),
                                 ),
                                 onPressed: () {
@@ -168,21 +169,15 @@ class FriendRequestList extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.cancel,
-                                        size: 20,
-                                        color: Theme.of(context).colorScheme.onError),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      "Rechazar",
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onError,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                icon: Icon(
+                                  Icons.cancel,
+                                  size: 20,
+                                ),
+                                label: Text(
+                                  "Rechazar",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),

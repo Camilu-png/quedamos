@@ -26,9 +26,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
       await _friendsService.deleteFriend(widget.userID, friendId);
     } catch (e) {
       debugPrint("Error al eliminar amigo: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al eliminar amigo.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al eliminar amigo.')),
+        );
+      }
     }
   }
 
@@ -146,7 +148,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             );
           }
 
-          return SingleChildScrollView(
+          return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
@@ -187,8 +189,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                SizedBox(
-                  height: 600,
+                Expanded(
                   child: selectedSegment == 'Amigos'
                       ? FriendList(
                           friends: items,
@@ -205,11 +206,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   widget.userID, request);
                             } catch (e) {
                               debugPrint("Error al aceptar solicitud: $e");
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Error al aceptar la solicitud.')),
-                              );
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Error al aceptar la solicitud.')),
+                                );
+                              }
                             }
                           },
                           onReject: (friendId) async {
@@ -218,11 +221,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   widget.userID, friendId);
                             } catch (e) {
                               debugPrint("Error al rechazar solicitud: $e");
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Error al rechazar la solicitud.')),
-                              );
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Error al rechazar la solicitud.')),
+                                );
+                              }
                             }
                           },
                         ),
