@@ -830,97 +830,101 @@ class _PlanScreenState extends State<PlanScreen> {
 
                   const SizedBox(height: 4),
 
-                  Row(
-                    children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
 
-                      //VISIBILIDAD
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              visibilidad == "Amigos" ? Icons.group : Icons.public,
-                              size: 24,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              visibilidad,
-                              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
-                        const SizedBox(width: 8),
-
-                      if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                        //VISIBILIDAD
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.tertiaryContainer,
+                            color: Theme.of(context).colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(24),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                categoriasMap[plan["categoria"]]?["icon"] as IconData? ?? Icons.label,
+                                visibilidad == "Amigos" ? Icons.group : Icons.public,
                                 size: 24,
-                                color: categoriasMap[plan["categoria"]]?["color"] as Color? ?? Theme.of(context).colorScheme.onTertiaryContainer,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                plan["categoria"] as String,
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.onTertiaryContainer,
-                                ),
+                                visibilidad,
+                                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer),
                               ),
                             ],
                           ),
                         ),
 
-                      if (participantesAceptadosUsuario || participantesRechazadosUsuario)
-                        const SizedBox(width: 8),
-
-                      //ACEPTADO/RECHAZADO
-                      if (participantesAceptadosUsuario || participantesRechazadosUsuario)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: participantesAceptadosUsuario ? Color(0xFFC8E6C9) : Theme.of(context).colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(24),
+                        if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                          const SizedBox(width: 8),
+                        
+                        //CATEGORÍA
+                        if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.tertiaryContainer,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  categoriasMap[plan["categoria"]]?["icon"] as IconData? ?? Icons.label,
+                                  size: 24,
+                                  color: categoriasMap[plan["categoria"]]?["color"] as Color? ?? Theme.of(context).colorScheme.onTertiaryContainer,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  plan["categoria"] as String,
+                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: Theme.of(context).colorScheme.onTertiaryContainer,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                participantesAceptadosUsuario ? Icons.check_circle : Icons.cancel,
-                                size: 24,
-                                color: participantesAceptadosUsuario 
-                                  ? Color(0xFF0D2610)
-                                  : Theme.of(context).colorScheme.onErrorContainer,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                participantesAceptadosUsuario ? "Aceptado" : "Rechazado",
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+
+                        if (participantesAceptadosUsuario || participantesRechazadosUsuario)
+                          const SizedBox(width: 8),
+
+                        //ACEPTADO/RECHAZADO
+                        if (participantesAceptadosUsuario || participantesRechazadosUsuario)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: participantesAceptadosUsuario ? Color(0xFFC8E6C9) : Theme.of(context).colorScheme.errorContainer,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  participantesAceptadosUsuario ? Icons.check_circle : Icons.cancel,
+                                  size: 24,
                                   color: participantesAceptadosUsuario 
                                     ? Color(0xFF0D2610)
                                     : Theme.of(context).colorScheme.onErrorContainer,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                Text(
+                                  participantesAceptadosUsuario ? "Aceptado" : "Rechazado",
+                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: participantesAceptadosUsuario 
+                                      ? Color(0xFF0D2610)
+                                      : Theme.of(context).colorScheme.onErrorContainer,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
 
-                    ],
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 12),
@@ -945,7 +949,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   Text(
                     titulo,
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w900,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
@@ -968,7 +972,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       child: FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: fechaEsEncuesta
-                            ? Theme.of(context).colorScheme.secondary
+                            ? Theme.of(context).colorScheme.secondaryContainer
                             : Theme.of(context).colorScheme.surfaceContainer,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -989,7 +993,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                 fechaEsEncuesta ? Icons.poll : Icons.calendar_today,
                                 size: 24,
                                 color: fechaEsEncuesta
-                                  ? Theme.of(context).colorScheme.onSecondary
+                                  ? Theme.of(context).colorScheme.onSecondaryContainer
                                   : Theme.of(context).colorScheme.onSurface,
                               ),
                               const SizedBox(width: 8),
@@ -998,7 +1002,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                   ? Text(
                                     "Vota por tu fecha favorita",
                                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSecondary,
+                                      color: Theme.of(context).colorScheme.onSecondaryContainer,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   )
@@ -1012,7 +1016,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               if (fechaEsEncuesta)
                                 Icon(
                                   Icons.arrow_forward_ios,
-                                  color: Theme.of(context).colorScheme.onSecondary,
+                                  color: Theme.of(context).colorScheme.onSecondaryContainer,
                                   size: 15,
                                 ),
                             ],
@@ -1032,7 +1036,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       child: FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: horaEsEncuesta
-                              ? Theme.of(context).colorScheme.secondary
+                              ? Theme.of(context).colorScheme.secondaryContainer
                               : Theme.of(context).colorScheme.surfaceContainer,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -1053,7 +1057,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                 horaEsEncuesta ? Icons.poll : Icons.access_time,
                                 size: 24,
                                 color: horaEsEncuesta
-                                    ? Theme.of(context).colorScheme.onSecondary
+                                    ? Theme.of(context).colorScheme.onSecondaryContainer
                                     : Theme.of(context).colorScheme.onSurface,
                               ),
                               const SizedBox(width: 8),
@@ -1062,7 +1066,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                     ? Text(
                                         "Vota por tu hora favorita",
                                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                              color: Theme.of(context).colorScheme.onSecondary,
+                                              color: Theme.of(context).colorScheme.onSecondaryContainer,
                                               fontWeight: FontWeight.bold,
                                             ),
                                       )
@@ -1076,7 +1080,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               if (horaEsEncuesta)
                                 Icon(
                                   Icons.arrow_forward_ios,
-                                  color: Theme.of(context).colorScheme.onSecondary,
+                                  color: Theme.of(context).colorScheme.onSecondaryContainer,
                                   size: 15,
                                 ),
                             ],
@@ -1094,7 +1098,7 @@ class _PlanScreenState extends State<PlanScreen> {
                     child: FilledButton(
                       style: FilledButton.styleFrom(
                         backgroundColor: ubicacionEsEncuesta
-                          ? Theme.of(context).colorScheme.secondary
+                          ? Theme.of(context).colorScheme.secondaryContainer
                           : Theme.of(context).colorScheme.surfaceContainer,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -1117,7 +1121,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               ubicacionEsEncuesta ? Icons.poll : Icons.location_on,
                               size: 24,
                               color: ubicacionEsEncuesta
-                                ? Theme.of(context).colorScheme.onSecondary
+                                ? Theme.of(context).colorScheme.onSecondaryContainer
                                 : Theme.of(context).colorScheme.onSurface,
                             ),
                             const SizedBox(width: 8),
@@ -1126,7 +1130,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                   ? Text(
                                     "Vota por tu ubicación favorita",
                                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSecondary,
+                                      color: Theme.of(context).colorScheme.onSecondaryContainer,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   )
@@ -1152,7 +1156,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             Icon(
                               Icons.arrow_forward_ios,
                               color: ubicacionEsEncuesta
-                                ? Theme.of(context).colorScheme.onSecondary
+                                ? Theme.of(context).colorScheme.onSecondaryContainer
                                 : Theme.of(context).colorScheme.onSurface,
                               size: 15,
                             ),
@@ -1214,7 +1218,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       child: participantesAceptadosUsuario
                         ? OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
@@ -1268,7 +1272,7 @@ class _PlanScreenState extends State<PlanScreen> {
                         : FilledButton.icon(
                             style: FilledButton.styleFrom(
                               backgroundColor: Theme.of(context).colorScheme.secondary,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
@@ -1304,6 +1308,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             },
                             icon: Icon(
                               Icons.check_circle,
+                              size: 24,
                               color: Theme.of(context).colorScheme.onSecondary,
                             ),
                             label: Text(

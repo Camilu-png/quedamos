@@ -196,6 +196,24 @@ class PlanesList extends StatelessWidget {
                                 ],
                               ),
                             ),
+                          
+                          //BADGE: CATEGORÍA
+                          if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                            const SizedBox(width: 4),
+                          if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.tertiaryContainer,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(categoriasMap[plan["categoria"]]?["icon"] ?? Icons.label, size: 15, color: categoriasMap[plan["categoria"]]?["color"] ?? Theme.of(context).colorScheme.onTertiaryContainer),
+                                ],
+                              ),
+                            ),
 
                           //BADGE: ENCUESTA
                           if (plan["fechaEsEncuesta"] || plan["horaEsEncuesta"] || plan["ubicacionEsEncuesta"])
@@ -246,24 +264,6 @@ class PlanesList extends StatelessWidget {
                                 ],
                               ),
                             ),
-
-                          //BADGE: CATEGORÍA
-                          if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
-                            const SizedBox(width: 4),
-                          if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.tertiaryContainer,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(categoriasMap[plan["categoria"]]?["icon"] ?? Icons.label, size: 15, color: categoriasMap[plan["categoria"]]?["color"] ?? Theme.of(context).colorScheme.onTertiaryContainer),
-                                ],
-                              ),
-                            )
                           
                         ]
                       ),

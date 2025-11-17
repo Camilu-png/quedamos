@@ -37,8 +37,6 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
     _loadPlans(); // Use cache if available
   }
 
-
-
   //DID CHANGE DEPENDENCIES
   @override
   void didChangeDependencies() {
