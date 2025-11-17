@@ -4,7 +4,6 @@ import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
-import 'app_colors.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -80,11 +79,13 @@ class MyApp extends StatelessWidget {
           onErrorContainer: Color(0xFF410001),
         ),
 
-        appBarTheme: const AppBarTheme(
-          backgroundColor: primaryDark, // tu color
-          foregroundColor: Colors.white,
+        appBarTheme: AppBarTheme(
+          backgroundColor: ColorScheme.fromSeed(seedColor: Color(0xFF3F51B5)).primary,
+          foregroundColor: ColorScheme.fromSeed(seedColor: Color(0xFF3F51B5)).onPrimary,
+          elevation: 0,
+          centerTitle: true,
           systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarColor: primaryDark,
+            statusBarColor: ColorScheme.fromSeed(seedColor: Color(0xFF3F51B5)).primary,
             statusBarIconBrightness: Brightness.light,
           ),
         ),

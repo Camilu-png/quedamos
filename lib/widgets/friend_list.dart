@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:quedamos/app_colors.dart';
 
 class FriendList extends StatelessWidget {
   final List<Map<String, dynamic>> friends;
@@ -50,7 +49,7 @@ class FriendList extends StatelessWidget {
                         topLeft: Radius.circular(12),
                         bottomLeft: Radius.circular(12),
                       ),
-                      child: _buildFriendImage(friend),
+                      child: _buildFriendImage(context, friend),
                     ),
                   ),
 
@@ -128,7 +127,7 @@ class FriendList extends StatelessWidget {
     );
   }
 
-  Widget _buildFriendImage(Map<String, dynamic> friend) {
+  Widget _buildFriendImage(BuildContext context, Map<String, dynamic> friend) {
     final localPhotoPath = friend["localPhotoPath"] as String?;
     final photoUrl = friend["photoUrl"] as String?;
     
@@ -138,7 +137,7 @@ class FriendList extends StatelessWidget {
       return Image.file(
         file,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(friend),
+        errorBuilder: (ctx, error, stackTrace) => _buildPlaceholder(ctx, friend),
       );
     }
     
@@ -147,20 +146,20 @@ class FriendList extends StatelessWidget {
       return Image.network(
         photoUrl,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(friend),
+        errorBuilder: (ctx, error, stackTrace) => _buildPlaceholder(ctx, friend),
       );
     }
     
     // Si no hay ninguna imagen, mostrar placeholder
-    return _buildPlaceholder(friend);
+    return _buildPlaceholder(context, friend);
   }
 
-  Widget _buildPlaceholder(Map<String, dynamic> friend) {
+  Widget _buildPlaceholder(BuildContext context, Map<String, dynamic> friend) {
     return Container(
-      color: (friend["color"] as Color?)?.withOpacity(0.7) ??
-          primaryDark.withOpacity(0.7),
-      child: const Center(
-        child: Icon(Icons.person, color: Colors.white, size: 36),
+      color: (friend["color"] as Color?)?.withValues(alpha: 0.7) ??
+          Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+      child: Center(
+        child: Icon(Icons.person, color: Theme.of(context).colorScheme.onPrimary, size: 36),
       ),
     );
   }
@@ -192,7 +191,9 @@ class _AddFriendButtonState extends State<_AddFriendButton> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: _pressed ? lightDark : primaryLight,
+          color: _pressed 
+            ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.7)
+            : Theme.of(context).colorScheme.primaryContainer,
           borderRadius: BorderRadius.circular(8),
         ),
         child: const Icon(

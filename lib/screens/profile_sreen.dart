@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:quedamos/app_colors.dart';
 import 'package:quedamos/screens/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -126,11 +125,11 @@ class ProfileScreen extends StatelessWidget {
 
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: primaryColor.withValues(alpha: 0.2),
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                   backgroundImage:
                       photoUrl != null ? NetworkImage(photoUrl) : null,
                   child: photoUrl == null
-                      ? Icon(Icons.person, size: 60, color: primaryColor)
+                      ? Icon(Icons.person, size: 60, color: Theme.of(context).colorScheme.primary)
                       : null,
                 ),
 

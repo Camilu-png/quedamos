@@ -228,7 +228,7 @@ class PlanesList extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                               decoration: BoxDecoration(
                                 color: participantesAceptadosUsuario
-                                    ? Color(0xFFC8E6C9)
+                                    ? Theme.of(context).colorScheme.tertiaryContainer
                                     : Theme.of(context).colorScheme.errorContainer,
                                 borderRadius: BorderRadius.circular(24),
                               ),
@@ -241,7 +241,7 @@ class PlanesList extends StatelessWidget {
                                       : Icons.cancel,
                                     size: 15,
                                     color: participantesAceptadosUsuario
-                                      ? Color(0xFF0D2610)
+                                      ? Theme.of(context).colorScheme.onTertiaryContainer
                                       : Theme.of(context).colorScheme.onErrorContainer,
                                   ),
                                 ],

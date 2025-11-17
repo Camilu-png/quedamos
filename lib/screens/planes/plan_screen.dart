@@ -741,7 +741,9 @@ class _PlanScreenState extends State<PlanScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: participantesAceptadosUsuario ? Color(0xFFC8E6C9) : Theme.of(context).colorScheme.errorContainer,
+                            color: participantesAceptadosUsuario 
+                              ? Theme.of(context).colorScheme.tertiaryContainer
+                              : Theme.of(context).colorScheme.errorContainer,
                             borderRadius: BorderRadius.circular(24),
                           ),
                           child: Row(
@@ -751,7 +753,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                 participantesAceptadosUsuario ? Icons.check_circle : Icons.cancel,
                                 size: 24,
                                 color: participantesAceptadosUsuario 
-                                  ? Color(0xFF0D2610)
+                                  ? Theme.of(context).colorScheme.onTertiaryContainer
                                   : Theme.of(context).colorScheme.onErrorContainer,
                               ),
                               const SizedBox(width: 8),
@@ -759,7 +761,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                 participantesAceptadosUsuario ? "Aceptado" : "Rechazado",
                                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                   color: participantesAceptadosUsuario 
-                                    ? Color(0xFF0D2610)
+                                    ? Theme.of(context).colorScheme.onTertiaryContainer
                                     : Theme.of(context).colorScheme.onErrorContainer,
                                 ),
                               ),

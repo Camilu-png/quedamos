@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:quedamos/app_colors.dart';
 
 class _TextButtonAction extends StatefulWidget {
   final String text;
@@ -98,7 +97,7 @@ class FriendRequestList extends StatelessWidget {
                       topLeft: Radius.circular(12),
                       bottomLeft: Radius.circular(12),
                     ),
-                    child: _buildFriendImage(friend),
+                    child: _buildFriendImage(context, friend),
                   ),
                 ),
 
@@ -120,7 +119,8 @@ class FriendRequestList extends StatelessWidget {
                             Expanded(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
+                                  backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                                  foregroundColor: Theme.of(context).colorScheme.onTertiaryContainer,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
@@ -200,7 +200,7 @@ class FriendRequestList extends StatelessWidget {
     );
   }
 
-  Widget _buildFriendImage(Map<String, dynamic> friend) {
+  Widget _buildFriendImage(BuildContext context, Map<String, dynamic> friend) {
     final localPhotoPath = friend["localPhotoPath"] as String?;
     final photoUrl = friend["photoUrl"] as String?;
     
@@ -210,7 +210,7 @@ class FriendRequestList extends StatelessWidget {
       return Image.file(
         file,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _defaultAvatar(friend),
+        errorBuilder: (ctx, error, stackTrace) => _defaultAvatar(ctx, friend),
       );
     }
     
@@ -219,20 +219,20 @@ class FriendRequestList extends StatelessWidget {
       return Image.network(
         photoUrl,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _defaultAvatar(friend),
+        errorBuilder: (ctx, error, stackTrace) => _defaultAvatar(ctx, friend),
       );
     }
     
     // Si no hay ninguna imagen, mostrar placeholder
-    return _defaultAvatar(friend);
+    return _defaultAvatar(context, friend);
   }
 
-  Widget _defaultAvatar(Map<String, dynamic> friend) {
+  Widget _defaultAvatar(BuildContext context, Map<String, dynamic> friend) {
     return Container(
-      color: (friend["color"] as Color?)?.withOpacity(0.7) ??
-          primaryDark.withOpacity(0.7),
-      child: const Center(
-        child: Icon(Icons.person, color: Colors.white, size: 36),
+      color: (friend["color"] as Color?)?.withValues(alpha: 0.7) ??
+          Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+      child: Center(
+        child: Icon(Icons.person, color: Theme.of(context).colorScheme.onPrimary, size: 36),
       ),
     );
   }
