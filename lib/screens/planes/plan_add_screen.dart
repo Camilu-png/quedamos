@@ -192,29 +192,36 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
 
 
       //UBICACIÓN
-      ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
-      if (ubicacionEsEncuesta == true) {
-        final ubicacionesRaw = widget.plan!["ubicacionesEncuesta"];
-        if (ubicacionesRaw != null && ubicacionesRaw is List) {
-          ubicacionesEncuesta = ubicacionesRaw
-              .where((u) => u != null && u is Map)
-              .map<Map<String, dynamic>>((u) => Map<String, dynamic>.from(u))
-              .toList();
-        } else {
-          ubicacionesEncuesta = [];
-        }
-      } else {
-        if (widget.plan!["ubicacion"] != null && widget.plan!["ubicacion"] is Map) {
-          ubicacion = Map<String, dynamic>.from(widget.plan!["ubicacion"]);
-        } else {
-          ubicacion = {
-            "nombre": "Casa Central, UTFSM",
-            "latitud": -33.0458,
-            "longitud": -71.6197,
-          };
-        }
-        print("[🐧 planes] Ubicación cargada: $ubicacion");
-      }
+      //UBICACIÓN
+ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
+
+// Siempre intentamos cargar ubicacionesEncuesta si existe
+final ubicacionesRaw = widget.plan!["ubicacionesEncuesta"];
+if (ubicacionesRaw != null && ubicacionesRaw is List && ubicacionesRaw.isNotEmpty) {
+  ubicacionesEncuesta = ubicacionesRaw
+      .where((u) => u != null && u is Map)
+      .map<Map<String, dynamic>>((u) => Map<String, dynamic>.from(u))
+      .toList();
+} else {
+  ubicacionesEncuesta = [];
+}
+
+// Siempre leemos la ubicación fija si existe
+final ubicacionRaw = widget.plan!["ubicacion"];
+if (ubicacionRaw != null && ubicacionRaw is Map) {
+  ubicacion = Map<String, dynamic>.from(ubicacionRaw);
+} else {
+  // fallback por si no hay ninguna
+  ubicacion = {
+    "nombre": "Casa Central, UTFSM",
+    "latitud": -33.0458,
+    "longitud": -71.6197,
+  };
+}
+
+print("[🐧 planes] Ubicación cargada: $ubicacion");
+print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
+
 
       //PARTICIPANTES
       final participantesAceptadosRaw = widget.plan!["participantesAceptados"];

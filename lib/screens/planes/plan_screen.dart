@@ -451,8 +451,57 @@ class _PlanScreenState extends State<PlanScreen> {
                               spacing: 8,
                               runSpacing: 4,
                               children: [
-                                Text(
-                                  "$cantidadVotos voto${cantidadVotos == 1 ? "" : "s"}$porcentajeTexto",
+                                GestureDetector(
+                                  onTap: votos.isNotEmpty
+                                      ? () async {
+                                          final nombres = await _getUsersNames(votos);
+                                          if (!mounted) return;
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            useSafeArea: true,
+                                            showDragHandle: true,
+                                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                            ),
+                                            builder: (_) {
+                                              return SizedBox(
+                                                height: MediaQuery.of(context).size.height * 0.5,
+                                                child: Column(
+                                                  children: [
+                                                    Padding(
+                                                      padding: const EdgeInsets.all(8),
+                                                      child: Text(
+                                                        "Personas que votaron",
+                                                        style: Theme.of(context).textTheme.titleMedium,
+                                                      ),
+                                                    ),
+                                                    const Divider(),
+                                                    Expanded(
+                                                      child: ListView.builder(
+                                                        itemCount: nombres.length,
+                                                        itemBuilder: (context, index) {
+                                                          return ListTile(
+                                                            title: Text(nombres[index]),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        }
+                                      : null,
+                                  child: Text(
+                                    "$cantidadVotos voto${cantidadVotos == 1 ? "" : "s"}$porcentajeTexto",
+                                    style: TextStyle(
+                                      decoration: votos.isNotEmpty ? TextDecoration.underline : null,
+                                      color: Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                  ),
                                 ),
                                 if (esMasVotada && maxVotos > 0)
                                   Container(
@@ -467,8 +516,8 @@ class _PlanScreenState extends State<PlanScreen> {
                                         Text(
                                           "Más votada",
                                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                            color: Theme.of(context).colorScheme.onSecondaryContainer,
-                                          ),
+                                                color: Theme.of(context).colorScheme.onSecondaryContainer,
+                                              ),
                                         ),
                                       ],
                                     ),
