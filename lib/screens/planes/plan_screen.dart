@@ -1207,120 +1207,113 @@ class _PlanScreenState extends State<PlanScreen> {
 
                   const SizedBox(height: 12),
 
-                  //ACEPTAR/RECHAZAR PLAN
+                  //UNIRSE/ABANDONAR PLAN
                   if (!esPropio)
-                    Row(
-                      children: [
-                        //BOTÓN: RECHAZAR
-                        Expanded(
-                          child: FilledButton(
+                    SizedBox(
+                      width: double.infinity,
+                      child: participantesAceptadosUsuario
+                        ? OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              side: BorderSide(
+                                color: Theme.of(context).colorScheme.outline,
+                                width: 1,
+                              ),
+                            ),
+                            onPressed: () async {
+                              setState(() {
+                                participantesAceptados.remove(widget.userID);
+                                if (!participantesRechazados.contains(widget.userID)) {
+                                  participantesRechazados.add(widget.userID);
+                                }
+                              });
+                              try {
+                                await db.collection("planes").doc(plan["planID"]).update({
+                                  "participantesAceptados": FieldValue.arrayRemove([widget.userID]),
+                                  "participantesRechazados": FieldValue.arrayUnion([widget.userID]),
+                                });
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Has abandonado el plan.")),
+                                  );
+                                }
+                              } catch (e) {
+                                setState(() {
+                                  participantesAceptados.add(widget.userID);
+                                  participantesRechazados.remove(widget.userID);
+                                });
+                                print("[🐧 planes] Error al abandonar plan: $e");
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Error al abandonar el plan.")),
+                                  );
+                                }
+                              }
+                            },
+                            icon: Icon(
+                              Icons.exit_to_app,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            label: Text(
+                              "Abandonar plan",
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
+                        : FilledButton.icon(
                             style: FilledButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
                             ),
-                            onPressed: participantesRechazadosUsuario
-                              ? null
-                              : () async {
+                            onPressed: () async {
+                              setState(() {
+                                participantesRechazados.remove(widget.userID);
+                                if (!participantesAceptados.contains(widget.userID)) {
+                                  participantesAceptados.add(widget.userID);
+                                }
+                              });
+                              try {
+                                await db.collection("planes").doc(plan["planID"]).update({
+                                  "participantesAceptados": FieldValue.arrayUnion([widget.userID]),
+                                  "participantesRechazados": FieldValue.arrayRemove([widget.userID]),
+                                });
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Te has unido al plan.")),
+                                  );
+                                }
+                              } catch (e) {
                                 setState(() {
                                   participantesAceptados.remove(widget.userID);
-                                  if (!participantesRechazados.contains(widget.userID)) {
-                                    participantesRechazados.add(widget.userID);
-                                  }
                                 });
-                                try {
-                                  await db.collection("planes").doc(plan["planID"]).update({
-                                    "participantesAceptados": FieldValue.arrayRemove([widget.userID]),
-                                    "participantesRechazados": FieldValue.arrayUnion([widget.userID]),
-                                  });
+                                print("[🐧 planes] Error al unirse al plan: $e");
+                                if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Plan rechazado.")),
-                                  );
-                                } catch (e) {
-                                  setState(() {
-                                    participantesRechazados.remove(widget.userID);
-                                  });
-                                  print("[🐧 planes] Error al actualizar rechazo: $e");
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Error al rechazar plan.")),
+                                    const SnackBar(content: Text("Error al unirse al plan.")),
                                   );
                                 }
+                              }
                             },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.cancel, size: 24, color: Theme.of(context).colorScheme.onError),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Rechazar",
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Theme.of(context).colorScheme.onError,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            icon: Icon(
+                              Icons.check_circle,
+                              color: Theme.of(context).colorScheme.onSecondary,
                             ),
-                          ),
-                        ),
-                        
-                        const SizedBox(width: 12),
-
-                        //BOTÓN: ACEPTAR
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(24),
+                            label: Text(
+                              "Unirse al plan",
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.onSecondary,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            onPressed: participantesAceptadosUsuario
-                              ? null
-                              : () async {
-                                setState(() {
-                                  participantesRechazados.remove(widget.userID);
-                                  if (!participantesAceptados.contains(widget.userID)) {
-                                    participantesAceptados.add(widget.userID);
-                                  }
-                                });
-                                try {
-                                  await db.collection("planes").doc(plan["planID"]).update({
-                                    "participantesAceptados": FieldValue.arrayUnion([widget.userID]),
-                                    "participantesRechazados": FieldValue.arrayRemove([widget.userID]),
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Plan aceptado.")),
-                                  );
-                                } catch (e) {
-                                  setState(() {
-                                    participantesAceptados.remove(widget.userID);
-                                  });
-                                  print("[🐧 planes] Error al actualizar aceptación: $e");
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Error al aceptar plan.")),
-                                  );
-                                }
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle, size: 24, color: Colors.white),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Aceptar",
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
-                      ],
                     ),
 
                 ],
