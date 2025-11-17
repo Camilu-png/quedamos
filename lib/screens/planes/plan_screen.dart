@@ -185,15 +185,15 @@ class _PlanScreenState extends State<PlanScreen> {
     switch (tipo) {
       case "fecha":
         fieldName = "fechasEncuesta";
-        tituloModal = "Elegir fecha";
+        tituloModal = "Vota por tu fecha favorita";
         break;
       case "hora":
         fieldName = "horasEncuesta";
-        tituloModal = "Elegir hora";
+        tituloModal = "Vota por tu hora favorita";
         break;
       case "ubicacion":
         fieldName = "ubicacionesEncuesta";
-        tituloModal = "Elegir ubicación";
+        tituloModal = "Vota por tu ubicación favorita";
         break;
       default:
         return;
@@ -235,7 +235,9 @@ class _PlanScreenState extends State<PlanScreen> {
                       const SizedBox(width: 8),
                       Text(
                         tituloModal,
-                        style: Theme.of(context).textTheme.headlineSmall,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -383,7 +385,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                     onPressed: () async {
                                       final updates = <String, dynamic>{};
                                       updates["ubicacionEsEncuesta"] = false;
-                                      updates["ubicacion"] = item;
+                                      updates["ubicacion"] = item["ubicacion"];
                                       await db.collection("planes").doc(planID).update(updates);
                                       setState(() {
                                         plan.addAll(updates);
@@ -538,7 +540,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             updates["hora"] = ganador["hora"];
                           } else if (tipo == "ubicacion") {
                             updates["ubicacionEsEncuesta"] = false;
-                            updates["ubicacion"] = ganador;
+                            updates["ubicacion"] = ganador["ubicacion"];
                           }
 
                           await db.collection("planes").doc(planID).update(updates);
@@ -883,57 +885,60 @@ class _PlanScreenState extends State<PlanScreen> {
                   //FECHA
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: fechaEsEncuesta
+                    child: IgnorePointer( 
+                      ignoring: !fechaEsEncuesta,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: fechaEsEncuesta
                             ? Theme.of(context).colorScheme.secondary
-                            : Theme.of(context).colorScheme.primaryContainer,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                            : Theme.of(context).colorScheme.surfaceContainer,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
                         ),
-                      ),
-                      onPressed: fechaEsEncuesta
-                        ? () {
-                          _showEncuesta("fecha");
+                        onPressed: fechaEsEncuesta
+                          ? () {
+                            _showEncuesta("fecha");
                           }
-                        : null,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 16, right: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Icon(
-                              fechaEsEncuesta ? Icons.poll : Icons.calendar_today,
-                              size: 24,
-                              color: fechaEsEncuesta
+                          : () {},
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16, right: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Icon(
+                                fechaEsEncuesta ? Icons.poll : Icons.calendar_today,
+                                size: 24,
+                                color: fechaEsEncuesta
                                   ? Theme.of(context).colorScheme.onSecondary
                                   : Theme.of(context).colorScheme.onSurface,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: fechaEsEncuesta
-                                ? Text(
-                                  "Elegir fecha",
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSecondary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )
-                                : Text(
-                                  fechaBonita,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                  ),
-                                ),
-                            ),
-                            if (fechaEsEncuesta)
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                color: Theme.of(context).colorScheme.onSecondary,
-                                size: 15,
                               ),
-                          ],
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: fechaEsEncuesta
+                                  ? Text(
+                                    "Vota por tu fecha favorita",
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSecondary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                  : Text(
+                                    fechaBonita,
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                  ),
+                              ),
+                              if (fechaEsEncuesta)
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: Theme.of(context).colorScheme.onSecondary,
+                                  size: 15,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -944,57 +949,60 @@ class _PlanScreenState extends State<PlanScreen> {
                   //HORA
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: horaEsEncuesta
-                            ? Theme.of(context).colorScheme.secondary
-                            : Theme.of(context).colorScheme.primaryContainer,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                    child: IgnorePointer(
+                      ignoring: !horaEsEncuesta, // si no es encuesta, no se puede presionar
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: horaEsEncuesta
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.surfaceContainer,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
                         ),
-                      ),
-                      onPressed: horaEsEncuesta
-                        ? () {
-                            _showEncuesta("hora");
-                          }
-                        : null,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 16, right: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Icon(
-                              horaEsEncuesta ? Icons.poll : Icons.access_time,
-                              size: 24,
-                              color: horaEsEncuesta
-                                  ? Theme.of(context).colorScheme.onSecondary
-                                  : Theme.of(context).colorScheme.onSurface,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: horaEsEncuesta
-                                  ? Text(
-                                      "Elegir hora",
-                                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSecondary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    )
-                                  : Text(
-                                      horaBonita,
-                                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSurface,
-                                      ),
-                                    ),
-                            ),
-                            if (horaEsEncuesta)
+                        onPressed: horaEsEncuesta
+                            ? () {
+                                _showEncuesta("hora");
+                              }
+                            : () {}, // vacío, no se ejecuta gracias a IgnorePointer
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16, right: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
                               Icon(
-                                Icons.arrow_forward_ios,
-                                color: Theme.of(context).colorScheme.onSecondary,
-                                size: 15,
+                                horaEsEncuesta ? Icons.poll : Icons.access_time,
+                                size: 24,
+                                color: horaEsEncuesta
+                                    ? Theme.of(context).colorScheme.onSecondary
+                                    : Theme.of(context).colorScheme.onSurface,
                               ),
-                          ],
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: horaEsEncuesta
+                                    ? Text(
+                                        "Vota por tu hora favorita",
+                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                              color: Theme.of(context).colorScheme.onSecondary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      )
+                                    : Text(
+                                        horaBonita,
+                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                              color: Theme.of(context).colorScheme.onSurface,
+                                            ),
+                                      ),
+                              ),
+                              if (horaEsEncuesta)
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: Theme.of(context).colorScheme.onSecondary,
+                                  size: 15,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -1009,7 +1017,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       style: FilledButton.styleFrom(
                         backgroundColor: ubicacionEsEncuesta
                           ? Theme.of(context).colorScheme.secondary
-                          : Theme.of(context).colorScheme.primaryContainer,
+                          : Theme.of(context).colorScheme.surfaceContainer,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -1038,7 +1046,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             Expanded(
                               child: ubicacionEsEncuesta
                                   ? Text(
-                                    "Elegir ubicación",
+                                    "Vota por tu ubicación favorita",
                                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                       color: Theme.of(context).colorScheme.onSecondary,
                                       fontWeight: FontWeight.bold,
@@ -1057,7 +1065,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                       Text(
                                         (ubicacion["direccion"] ?? "") as String,
                                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          color: Theme.of(context).colorScheme.onSurface,
                                         ),
                                       ),
                                     ],
@@ -1067,7 +1075,7 @@ class _PlanScreenState extends State<PlanScreen> {
                               Icons.arrow_forward_ios,
                               color: ubicacionEsEncuesta
                                 ? Theme.of(context).colorScheme.onSecondary
-                                : Theme.of(context).colorScheme.onPrimaryContainer,
+                                : Theme.of(context).colorScheme.onSurface,
                               size: 15,
                             ),
                           ],
@@ -1097,19 +1105,20 @@ class _PlanScreenState extends State<PlanScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            Icon(Icons.group, color: Theme.of(context).colorScheme.onSurface, size: 24),
+                            Icon(Icons.group, color: Theme.of(context).colorScheme.onPrimaryContainer, size: 24),
                             const SizedBox(width: 8),
                             Text(
                               "Ver participantes",
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             const Spacer(),
                             Padding(
                               padding: const EdgeInsets.only(right: 12),
                               child: Center(
-                                child: Icon(Icons.arrow_forward_ios, color: Theme.of(context).colorScheme.onSurface, size: 15),
+                                child: Icon(Icons.arrow_forward_ios, color: Theme.of(context).colorScheme.onPrimaryContainer, size: 15),
                               ),
                             ),
                           ],
