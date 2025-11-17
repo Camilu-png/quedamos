@@ -857,6 +857,35 @@ class _PlanScreenState extends State<PlanScreen> {
                         ),
                       ),
 
+                      if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                        const SizedBox(width: 8),
+
+                      if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.tertiaryContainer,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                categoriasMap[plan["categoria"]]?["icon"] as IconData? ?? Icons.label,
+                                size: 24,
+                                color: categoriasMap[plan["categoria"]]?["color"] as Color? ?? Theme.of(context).colorScheme.onTertiaryContainer,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                plan["categoria"] as String,
+                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onTertiaryContainer,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
                       if (participantesAceptadosUsuario || participantesRechazadosUsuario)
                         const SizedBox(width: 8),
 

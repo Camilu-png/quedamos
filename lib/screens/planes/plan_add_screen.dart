@@ -32,6 +32,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
   String planID = uuid.v4();
   //VISIBILIDAD
   String visibilidad = "Amigos";
+  //CATEGORÍA
+  String categoria = "Social";
   //ANFITRIÓN
   String anfitrionNombre = "Usuario desconocido";
   //ICONO
@@ -67,6 +69,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       planID = widget.plan!["planID"] ?? uuid.v4();
       //VISIBILIDAD
       visibilidad = widget.plan!["visibilidad"] ?? "Amigos";
+      //CATEGORÍA
+      categoria = widget.plan!["categoria"] ?? "Social";
       //ANFITRIÓN
       anfitrionNombre = widget.plan!["anfitrionNombre"] ?? "";
       //ICONO
@@ -908,7 +912,6 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                             ),
                           ),
                         ),
-
                         const SizedBox(width: 12),
                         //SEGMENTED BUTTON (UBICACIÓN/ENCUESTA)
                         Expanded(
@@ -999,6 +1002,72 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
 
                     const SizedBox(height: 12),
 
+                    //CATEGORÍA
+                    Text(
+                      "Categoría",
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    DropdownButtonFormField<String>(
+                      value: categoria,
+                      items: [
+                        "Social",
+                        "Cultural",
+                        "Deportivo",
+                        "Trabajo",
+                        "Viaje",
+                        "Hobby",
+                        "Bienestar",
+                        "Comida",
+                        "Voluntariado",
+                        "Música",
+                        "Cine",
+                        "Lectura",
+                        "Naturaleza",
+                        "Tecnología",
+                        "Educación",
+                        "Fiesta",
+                        "Arte",
+                        "Juegos",
+                        "Salud",
+                        "Compras"
+                      ].map((c) => DropdownMenuItem(
+                        value: c,
+                        child: Row(
+                          children: [
+                            Icon(
+                              categoriasMap[c]?["icon"] as IconData? ?? Icons.label,
+                              color: categoriasMap[c]?["color"] as Color? ?? Colors.grey,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              c,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )).toList(),
+                      onChanged: (v) {
+                        if (v != null) setState(() => categoria = v);
+                      },
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
                     //VISIBILIDAD
                     Text(
                       "Visibilidad",
@@ -1081,6 +1150,7 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                               "planID": planID,
                               "fecha_creacion": Timestamp.fromDate(DateTime.now()),
                               "visibilidad": visibilidad,
+                              "categoria": categoria,
                               "iconoNombre": getIconName(iconoNombre),
                               "iconoColor": getColorName(iconoColor),
                               "anfitrionID": widget.userID,

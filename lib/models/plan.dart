@@ -25,6 +25,8 @@ class Plan {
   final Map<String, dynamic>? ubicacion;
   final bool ubicacionEsEncuesta;
   final List<Map<String, dynamic>>? ubicacionesEncuesta;
+  // Categoria
+  final String? categoria;
   
   // Participantes
   final List<String> participantesAceptados;
@@ -54,6 +56,7 @@ class Plan {
     this.ubicacion,
     required this.ubicacionEsEncuesta,
     this.ubicacionesEncuesta,
+    this.categoria,
     required this.participantesAceptados,
     required this.participantesRechazados,
     required this.createdAt,
@@ -100,6 +103,7 @@ class Plan {
           'votos': item['votos'] ?? [],
         }).toList()
       ) : null,
+      'categoria': categoria,
       'participantesAceptados': participantesAceptados.join(','),
       'participantesRechazados': participantesRechazados.join(','),
       'createdAt': createdAt.millisecondsSinceEpoch,
@@ -153,6 +157,7 @@ class Plan {
             jsonDecode(map['ubicacionesOpciones'] as String)
                 .map((e) => Map<String, dynamic>.from(e)))
         : [],
+      categoria: map['categoria'] as String?,
       participantesAceptados: (map['participantesAceptados'] as String?)
               ?.split(',')
               .where((s) => s.isNotEmpty)
@@ -229,6 +234,7 @@ class Plan {
       ubicacion: _parseUbicacion(data['ubicacion']),
       ubicacionEsEncuesta: data['ubicacionEsEncuesta'] as bool? ?? false,
       ubicacionesEncuesta: ubicacionesEncuestaList,
+      categoria: data['categoria'] as String?,
       participantesAceptados: (data['participantesAceptados'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ?? [],
@@ -269,6 +275,7 @@ class Plan {
       'ubicacion': ubicacion,
       'ubicacionEsEncuesta': ubicacionEsEncuesta,
       'ubicacionesEncuesta': ubicacionesEncuesta,
+        'categoria': categoria,
       'participantesAceptados': participantesAceptados,
       'participantesRechazados': participantesRechazados,
     };
@@ -292,6 +299,7 @@ class Plan {
     Map<String, dynamic>? ubicacion,
     bool? ubicacionEsEncuesta,
     List<Map<String, dynamic>>? ubicacionesEncuesta,
+    String? categoria,
     List<String>? participantesAceptados,
     List<String>? participantesRechazados,
     DateTime? createdAt,
@@ -317,6 +325,7 @@ class Plan {
       ubicacion: ubicacion ?? this.ubicacion,
       ubicacionEsEncuesta: ubicacionEsEncuesta ?? this.ubicacionEsEncuesta,
       ubicacionesEncuesta: ubicacionesEncuesta ?? this.ubicacionesEncuesta,
+      categoria: categoria ?? this.categoria,
       participantesAceptados: participantesAceptados ?? this.participantesAceptados,
       participantesRechazados: participantesRechazados ?? this.participantesRechazados,
       createdAt: createdAt ?? this.createdAt,

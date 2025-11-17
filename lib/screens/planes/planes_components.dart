@@ -9,6 +9,90 @@ import "package:flutter_dotenv/flutter_dotenv.dart";
 import "package:google_maps_flutter/google_maps_flutter.dart" as gmaps;
 import "package:flutter_google_places_sdk/flutter_google_places_sdk.dart";
 
+//CATEGORÍAS MAP
+final Map<String, Map<String, dynamic>> categoriasMap = {
+  "Social": {
+    "icon": Icons.people,
+    "color": Colors.purple,
+  },
+  "Cultural": {
+    "icon": Icons.theater_comedy,
+    "color": Colors.orange,
+  },
+  "Deportivo": {
+    "icon": Icons.sports_soccer,
+    "color": Colors.green,
+  },
+  "Trabajo": {
+    "icon": Icons.work,
+    "color": Colors.blueGrey,
+  },
+  "Viaje": {
+    "icon": Icons.flight_takeoff,
+    "color": Colors.blue,
+  },
+  "Hobby": {
+    "icon": Icons.palette,
+    "color": Colors.teal,
+  },
+  "Bienestar": {
+    "icon": Icons.self_improvement,
+    "color": Colors.lightGreen,
+  },
+  "Comida": {
+    "icon": Icons.restaurant,
+    "color": Colors.redAccent,
+  },
+  "Voluntariado": {
+    "icon": Icons.volunteer_activism,
+    "color": Colors.deepOrange,
+  },
+  "Música": {
+    "icon": Icons.music_note,
+    "color": Colors.pinkAccent,
+  },
+  "Cine": {
+    "icon": Icons.movie,
+    "color": Colors.indigo,
+  },
+  "Lectura": {
+    "icon": Icons.book,
+    "color": Colors.brown,
+  },
+  "Naturaleza": {
+    "icon": Icons.park,
+    "color": Colors.greenAccent,
+  },
+  "Tecnología": {
+    "icon": Icons.computer,
+    "color": Colors.cyan,
+  },
+  "Educación": {
+    "icon": Icons.school,
+    "color": Colors.blueAccent,
+  },
+  "Fiesta": {
+    "icon": Icons.cake,
+    "color": Colors.purpleAccent,
+  },
+  "Arte": {
+    "icon": Icons.brush,
+    "color": Colors.amber,
+  },
+  "Juegos": {
+    "icon": Icons.videogame_asset,
+    "color": Colors.deepPurple,
+  },
+  "Salud": {
+    "icon": Icons.health_and_safety,
+    "color": Colors.red,
+  },
+  "Compras": {
+    "icon": Icons.shopping_cart,
+    "color": Colors.orangeAccent,
+  },
+};
+
 //ICONOS MAP
 final Map<String, IconData> iconosMap = {
   "event": Icons.event,
