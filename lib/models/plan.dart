@@ -329,21 +329,35 @@ class Plan {
   // Helper methods for serialization
   static String _serializeUbicacion(Map<String, dynamic> ubicacion) {
     final nombre = ubicacion['nombre'] ?? '';
+    final direccion = ubicacion['direccion'] ?? nombre;
     final latitud = ubicacion['latitud']?.toString() ?? '';
     final longitud = ubicacion['longitud']?.toString() ?? '';
-    return '$nombre|$latitud|$longitud';
+    return '$nombre|$direccion|$latitud|$longitud';
   }
 
   static Map<String, dynamic>? _deserializeUbicacion(String serialized) {
     if (serialized.isEmpty) return null;
     final parts = serialized.split('|');
-    if (parts.length != 3) return null;
-    
-    return {
-      'nombre': parts[0],
-      'latitud': parts[1].isNotEmpty ? double.tryParse(parts[1]) : null,
-      'longitud': parts[2].isNotEmpty ? double.tryParse(parts[2]) : null,
-    };
+    if (parts.length == 4) {
+      return {
+        'nombre': parts[0],
+        'direccion': parts[1].isNotEmpty ? parts[1] : parts[0],
+        'latitud': parts[2].isNotEmpty ? double.tryParse(parts[2]) : null,
+        'longitud': parts[3].isNotEmpty ? double.tryParse(parts[3]) : null,
+      };
+    }
+
+    // Backwards compatibility: accept old 3-part format (nombre|lat|long)
+    if (parts.length == 3) {
+      return {
+        'nombre': parts[0],
+        'direccion': parts[0],
+        'latitud': parts[1].isNotEmpty ? double.tryParse(parts[1]) : null,
+        'longitud': parts[2].isNotEmpty ? double.tryParse(parts[2]) : null,
+      };
+    }
+
+    return null;
   }
 
   // Parse ubicacion from Firestore (can be String or Map)
@@ -351,6 +365,10 @@ class Plan {
     if (ubicacion == null) return null;
     
     if (ubicacion is Map<String, dynamic>) {
+      // Ensure direccion exists (firestore may send only nombre previously)
+      if (!ubicacion.containsKey('direccion')) {
+        ubicacion['direccion'] = ubicacion['nombre'] ?? '';
+      }
       return ubicacion;
     }
     
@@ -358,6 +376,7 @@ class Plan {
       // Old format: just a string with the location name
       return {
         'nombre': ubicacion,
+        'direccion': ubicacion,
         'latitud': null,
         'longitud': null,
       };

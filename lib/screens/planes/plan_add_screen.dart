@@ -135,63 +135,60 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
           fecha = null;
         }
       }
-
-
-
       
-// HORA
-horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
+      // HORA
+      horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
 
-// Siempre intentamos leer horasEncuesta si existe
-final horasRaw = widget.plan!["horasEncuesta"];
-if (horasRaw is List && horasRaw.isNotEmpty) {
-  horasEncuesta = horasRaw.map<Map<String, dynamic>>((item) {
-    if (item is! Map) {
-      print("[🐧 planes] Advertencia: item de horasEncuesta no es Map: $item");
-      return {"hora": "", "votos": []};
-    }
+      // Siempre intentamos leer horasEncuesta si existe
+      final horasRaw = widget.plan!["horasEncuesta"];
+      if (horasRaw is List && horasRaw.isNotEmpty) {
+        horasEncuesta = horasRaw.map<Map<String, dynamic>>((item) {
+          if (item is! Map) {
+            print("[🐧 planes] Advertencia: item de horasEncuesta no es Map: $item");
+            return {"hora": "", "votos": []};
+          }
 
-    final horaRaw = item["hora"];
-    String horaString;
+          final horaRaw = item["hora"];
+          String horaString;
 
-    if (horaRaw is String) {
-      horaString = horaRaw;
-    } else if (horaRaw is Map && horaRaw["hora"] != null && horaRaw["minuto"] != null) {
-      final h = horaRaw["hora"];
-      final m = horaRaw["minuto"];
-      horaString = "${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}";
-    } else {
-      horaString = "00:00";
-    }
+          if (horaRaw is String) {
+            horaString = horaRaw;
+          } else if (horaRaw is Map && horaRaw["hora"] != null && horaRaw["minuto"] != null) {
+            final h = horaRaw["hora"];
+            final m = horaRaw["minuto"];
+            horaString = "${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}";
+          } else {
+            horaString = "00:00";
+          }
 
-    return {
-      "hora": horaString,
-      "votos": item["votos"] ?? [],
-    };
-  }).toList();
-} else {
-  horasEncuesta = [];
-}
+          return {
+            "hora": horaString,
+            "votos": item["votos"] ?? [],
+          };
+        }).toList();
+      } else {
+        horasEncuesta = [];
+      }
 
-// Si NO es encuesta, tratamos de leer hora fija
-if (!horaEsEncuesta) {
-  final horaRawSingle = widget.plan!["hora"];
-  if (horaRawSingle is String) {
-    hora = stringToTimeOfDay(horaRawSingle);
-  } else if (horaRawSingle is Map && 
-             horaRawSingle["hora"] is int && 
-             horaRawSingle["minuto"] is int) {
-    hora = TimeOfDay(
-      hour: horaRawSingle["hora"],
-      minute: horaRawSingle["minuto"],
-    );
-  } else {
-    hora = null;
-  }
-} else {
-  // si es encuesta, la hora fija no aplica
-  hora = null;
-}
+      // Si NO es encuesta, tratamos de leer hora fija
+      if (!horaEsEncuesta) {
+        final horaRawSingle = widget.plan!["hora"];
+        if (horaRawSingle is String) {
+          hora = stringToTimeOfDay(horaRawSingle);
+        } else if (horaRawSingle is Map && 
+                  horaRawSingle["hora"] is int && 
+                  horaRawSingle["minuto"] is int) {
+          hora = TimeOfDay(
+            hour: horaRawSingle["hora"],
+            minute: horaRawSingle["minuto"],
+          );
+        } else {
+          hora = null;
+        }
+      } else {
+        // si es encuesta, la hora fija no aplica
+        hora = null;
+      }
 
 
       //UBICACIÓN
@@ -421,23 +418,26 @@ if (!horaEsEncuesta) {
   void _ubicacionSelector(BuildContext context) {
     showUbicacionSelector(
       context,
-      (latLng, nombre) {
-      setState(() {
-        final nuevaUbicacion = {
-          "nombre": nombre.split(",")[0],
-          "latitud": latLng.latitude,
-          "longitud": latLng.longitude
-        };
-        if (!ubicacionEsEncuesta) {
-          ubicacion = nuevaUbicacion;
-        } else {
-          ubicacionesEncuesta.add({
-            "ubicacion": nuevaUbicacion,
-            "votos": []
-          });
-        }
-        print("[🐧 planes] Ubicación seleccionada: $nuevaUbicacion");
-      });
+      (latLng, shortName, fullAddress) {
+        setState(() {
+          final fullDireccion = fullAddress;
+          final shortNombre = shortName.split(",").first.trim();
+          final nuevaUbicacion = {
+            "nombre": shortNombre,
+            "direccion": fullDireccion,
+            "latitud": latLng.latitude,
+            "longitud": latLng.longitude
+          };
+          if (!ubicacionEsEncuesta) {
+            ubicacion = nuevaUbicacion;
+          } else {
+            ubicacionesEncuesta.add({
+              "ubicacion": nuevaUbicacion,
+              "votos": []
+            });
+          }
+          print("[🐧 planes] Ubicación seleccionada: $nuevaUbicacion");
+        });
       },
       initialPosition: widget.currentLocation,
     );
@@ -871,13 +871,30 @@ if (!horaEsEncuesta) {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text(
-                                    ubicacionEsEncuesta
-                                      ? "Elegir opción de encuesta"
-                                      : (ubicacion?.isNotEmpty == true
-                                        ? ubicacion!["nombre"] ?? "Ubicación desconocida"
-                                        : "Elegir ubicación"),
-                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        ubicacionEsEncuesta
+                                          ? "Elegir opción de encuesta"
+                                          : (ubicacion?.isNotEmpty == true
+                                            ? ubicacion!["nombre"] ?? "Ubicación desconocida"
+                                            : "Elegir ubicación"),
+                                        style: Theme.of(context).textTheme.bodyMedium,
+                                      ),
+                                      if (!ubicacionEsEncuesta && ubicacion?.isNotEmpty == true)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 4.0),
+                                          child: Text(
+                                            (ubicacion!["direccion"] ?? '') as String,
+                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -886,7 +903,7 @@ if (!horaEsEncuesta) {
                         ),
 
                         const SizedBox(width: 12),
-                        //SEGMENTED BUTTON (HORA/ENCUESTA)
+                        //SEGMENTED BUTTON (UBICACIÓN/ENCUESTA)
                         Expanded(
                           child: SegmentedButton<String>(
                             segments: const [
@@ -913,7 +930,7 @@ if (!horaEsEncuesta) {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    //HORA: OPCIONES DE ENCUESTA
+                    //UBICACIÓN: OPCIONES DE ENCUESTA
                     if (ubicacionEsEncuesta && ubicacionesEncuesta.isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -925,17 +942,31 @@ if (!horaEsEncuesta) {
                               ),
                               color: Theme.of(context).colorScheme.surfaceContainerHigh,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Flexible(
-                                      child: Text(
-                                        "Opción ${i + 1}: ${ubicacionesEncuesta[i]["ubicacion"]["nombre"]}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(fontWeight: FontWeight.w500),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Opción ${i + 1}: ${ubicacionesEncuesta[i]["ubicacion"]["nombre"]}",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(fontWeight: FontWeight.w500),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            (ubicacionesEncuesta[i]["ubicacion"]["direccion"] ?? '') as String,
+                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     IconButton(

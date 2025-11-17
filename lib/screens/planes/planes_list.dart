@@ -320,19 +320,25 @@ class PlanesList extends StatelessWidget {
                       ]),
                       //UBICACIÓN
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
                             Icons.location_on,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                             size: 15,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
-                              ubicacion["nombre"].split(",")[0],
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ubicacion["nombre"] ?? '',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
+                                  ),
+                                ),
+                              ],
                             ),
                           )
                         ],
