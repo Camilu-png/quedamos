@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -107,6 +107,7 @@ class DatabaseHelper {
         ubicacion $textTypeNullable,
         ubicacionEsEncuesta $intType,
         ubicacionesOpciones $textTypeNullable,
+        categoria $textTypeNullable,
         participantesAceptados $textType,
         participantesRechazados $textType,
         createdAt $intType,
@@ -199,6 +200,8 @@ class DatabaseHelper {
           horasEncuesta $textTypeNullable,
           ubicacion $textTypeNullable,
           ubicacionEsEncuesta $intType,
+          ubicacionesOpciones $textTypeNullable,
+          categoria $textTypeNullable,
           participantesAceptados $textType,
           participantesRechazados $textType,
           createdAt $intType,
@@ -249,6 +252,8 @@ class DatabaseHelper {
           horasEncuesta $textTypeNullable,
           ubicacion $textTypeNullable,
           ubicacionEsEncuesta $intType,
+          ubicacionesOpciones $textTypeNullable,
+          categoria $textTypeNullable,
           participantesAceptados $textType,
           participantesRechazados $textType,
           createdAt $intType,
@@ -301,6 +306,14 @@ class DatabaseHelper {
       } catch (e) {
         // Column might already exist, which is fine
         print('[🐧 database] ubicacionesOpciones column already exists or migration skipped: $e');
+      }
+    }
+    
+    if (oldVersion < 11) {
+      try {
+        await db.execute('ALTER TABLE plans ADD COLUMN categoria TEXT');
+      } catch (e) {
+        print('[🐧 database] categoria column already exists or migration skipped: $e');
       }
     }
   }

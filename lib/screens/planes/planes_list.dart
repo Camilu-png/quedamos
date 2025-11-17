@@ -146,10 +146,7 @@ class PlanesList extends StatelessWidget {
                         children: [
 
                           //BADGE: DISTANCIA
-                          if (currentLocation != null &&
-                              plan["ubicacionEsEncuesta"] != true &&
-                              plan["ubicacion"] != null &&
-                              plan["ubicacion"] is Map<String, dynamic>)
+                          if (currentLocation != null && plan["ubicacionEsEncuesta"] != true && plan["ubicacion"] != null && plan["ubicacion"] is Map<String, dynamic>)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                               decoration: BoxDecoration(
@@ -168,14 +165,19 @@ class PlanesList extends StatelessWidget {
                                   Text(
                                     () {
                                       final ubicacion = plan["ubicacion"] as Map<String, dynamic>;
-                                      final lat = ubicacion["latitud"];
-                                      final lng = ubicacion["longitud"];
-                                      final latDouble = (lat is int)
-                                        ? lat.toDouble()
-                                        : double.tryParse(lat.toString());
-                                      final lngDouble = (lng is int)
-                                        ? lng.toDouble()
-                                        : double.tryParse(lng.toString());
+                                      // Robust parsing: accept int, double or String (with ',' or '.')
+                                      final rawLat = ubicacion["latitud"];
+                                      final rawLng = ubicacion["longitud"];
+                                      double? latDouble;
+                                      double? lngDouble;
+                                      if (rawLat is double) latDouble = rawLat;
+                                      else if (rawLat is int) latDouble = rawLat.toDouble();
+                                      else if (rawLat is String) latDouble = double.tryParse(rawLat.replaceAll(',', '.'));
+
+                                      if (rawLng is double) lngDouble = rawLng;
+                                      else if (rawLng is int) lngDouble = rawLng.toDouble();
+                                      else if (rawLng is String) lngDouble = double.tryParse(rawLng.replaceAll(',', '.'));
+
                                       if (latDouble != null && lngDouble != null) {
                                         final distanceMeters = Geolocator.distanceBetween(
                                           currentLocation!.latitude,
@@ -199,7 +201,26 @@ class PlanesList extends StatelessWidget {
                                 ],
                               ),
                             ),
+                          
+                          //BADGE: CATEGORÍA
+                          if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                            const SizedBox(width: 4),
+                          if (plan["categoria"] != null && (plan["categoria"] as String).isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.tertiaryContainer,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(categoriasMap[plan["categoria"]]?["icon"] ?? Icons.label, size: 15, color: categoriasMap[plan["categoria"]]?["color"] ?? Theme.of(context).colorScheme.onTertiaryContainer),
+                                ],
+                              ),
+                            ),
 
+                          //BADGE: ENCUESTA
                           if (plan["fechaEsEncuesta"] || plan["horaEsEncuesta"] || plan["ubicacionEsEncuesta"])
                             const SizedBox(width: 4),
                           if (plan["fechaEsEncuesta"] || plan["horaEsEncuesta"] || plan["ubicacionEsEncuesta"])
@@ -221,6 +242,7 @@ class PlanesList extends StatelessWidget {
                               ),
                             ),
 
+                          //BADGE: ACEPTADO/RECHAZADO
                           if (participantesAceptadosUsuario || participantesRechazadosUsuario)
                             const SizedBox(width: 4),
                           if (participantesAceptadosUsuario || participantesRechazadosUsuario)
@@ -276,67 +298,77 @@ class PlanesList extends StatelessWidget {
                           fontWeight: FontWeight.w900
                         ),
                       ),
+
                       const SizedBox(height: 4),
 
                       Column(children: [
                         //FECHA
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                fechaBonita,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant
-                                ),
+                        if (!plan["fechaEsEncuesta"])
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 15,
                               ),
-                            )
-                          ],
-                        ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  fechaBonita,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
                         //HORA
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                horaBonita,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant
-                                ),
+                        if (!plan["horaEsEncuesta"])
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 15,
                               ),
-                            )
-                          ],
-                        ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  horaBonita,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
                       ]),
                       //UBICACIÓN
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            size: 15,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              ubicacion["nombre"].split(",")[0],
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant
-                              ),
+                      if (!plan["ubicacionEsEncuesta"])
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              size: 15,
                             ),
-                          )
-                        ],
-                      ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    ubicacion["nombre"] ?? '',
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
                     ],
                   ),
                 ),

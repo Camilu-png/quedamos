@@ -9,6 +9,90 @@ import "package:flutter_dotenv/flutter_dotenv.dart";
 import "package:google_maps_flutter/google_maps_flutter.dart" as gmaps;
 import "package:flutter_google_places_sdk/flutter_google_places_sdk.dart";
 
+//CATEGORÍAS MAP
+final Map<String, Map<String, dynamic>> categoriasMap = {
+  "Social": {
+    "icon": Icons.people,
+    "color": Colors.purple,
+  },
+  "Cultural": {
+    "icon": Icons.theater_comedy,
+    "color": Colors.orange,
+  },
+  "Deportivo": {
+    "icon": Icons.sports_soccer,
+    "color": Colors.green,
+  },
+  "Trabajo": {
+    "icon": Icons.work,
+    "color": Colors.blueGrey,
+  },
+  "Viaje": {
+    "icon": Icons.flight_takeoff,
+    "color": Colors.blue,
+  },
+  "Hobby": {
+    "icon": Icons.palette,
+    "color": Colors.teal,
+  },
+  "Bienestar": {
+    "icon": Icons.self_improvement,
+    "color": Colors.lightGreen,
+  },
+  "Comida": {
+    "icon": Icons.restaurant,
+    "color": Colors.redAccent,
+  },
+  "Voluntariado": {
+    "icon": Icons.volunteer_activism,
+    "color": Colors.deepOrange,
+  },
+  "Música": {
+    "icon": Icons.music_note,
+    "color": Colors.pinkAccent,
+  },
+  "Cine": {
+    "icon": Icons.movie,
+    "color": Colors.indigo,
+  },
+  "Lectura": {
+    "icon": Icons.book,
+    "color": Colors.brown,
+  },
+  "Naturaleza": {
+    "icon": Icons.park,
+    "color": Colors.greenAccent,
+  },
+  "Tecnología": {
+    "icon": Icons.computer,
+    "color": Colors.cyan,
+  },
+  "Educación": {
+    "icon": Icons.school,
+    "color": Colors.blueAccent,
+  },
+  "Fiesta": {
+    "icon": Icons.cake,
+    "color": Colors.purpleAccent,
+  },
+  "Arte": {
+    "icon": Icons.brush,
+    "color": Colors.amber,
+  },
+  "Juegos": {
+    "icon": Icons.videogame_asset,
+    "color": Colors.deepPurple,
+  },
+  "Salud": {
+    "icon": Icons.health_and_safety,
+    "color": Colors.red,
+  },
+  "Compras": {
+    "icon": Icons.shopping_cart,
+    "color": Colors.orangeAccent,
+  },
+};
+
 //ICONOS MAP
 final Map<String, IconData> iconosMap = {
   "event": Icons.event,
@@ -111,27 +195,46 @@ String getColorName(Color color) {
     .key;
 }
 
-//SHOW MAP
+// SHOW MAP
 Future<void> showMap(
   BuildContext context,
   bool mounted,
   Map<String, dynamic> ubicacion,
 ) async {
   print("[🐧 planes] Abriendo mapa...");
-  if (!ubicacion.containsKey("latitud") || !ubicacion.containsKey("longitud")) return;
+  if (!ubicacion.containsKey("latitud") || !ubicacion.containsKey("longitud")) {
+    print("[🐧 planes] Ubicación sin latitud/longitud.");
+    return;
+  }
   final lat = ubicacion["latitud"];
   final lng = ubicacion["longitud"];
-  final nombre = ubicacion["nombre"] ?? "$lat,$lng";
-  //Codificar nombre
-  final query = Uri.encodeComponent(nombre);
-  //Abrir Google Maps en las coordenadas + nombre
-  final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng($query)");
+  final direccion = (ubicacion["direccion"] as String?)?.trim();
+  // Si hay dirección, la incluimos en el query, si no, solo lat,lng
+  final String queryTexto = direccion != null && direccion.isNotEmpty
+      ? "$lat,$lng ($direccion)"
+      : "$lat,$lng";
+  // Construir URI de forma segura
+  final uri = Uri.https(
+    "www.google.com",
+    "/maps/search/",
+    {
+      "api": "1",
+      "query": queryTexto,
+    },
+  );
+  print("[🐧 planes] URL mapa: $uri");
   try {
-    await launchUrl(
-      url,
+    final ok = await launchUrl(
+      uri,
       mode: LaunchMode.externalApplication,
     );
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No se pudo abrir el mapa.")),
+      );
+    }
   } catch (e) {
+    print("[🐧 planes] Error al abrir mapa: $e");
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No se pudo abrir el mapa.")),
@@ -139,7 +242,6 @@ Future<void> showMap(
     }
   }
 }
-
 //GET PLACE NAME FROM LATITUD & LONGITUDE
 Future<String?> getPlaceNameFromLatLng(double lat, double lng) async {
   final apiKey = dotenv.env["API_KEY"] ?? ""; //API KEY
@@ -157,7 +259,8 @@ Future<String?> getPlaceNameFromLatLng(double lat, double lng) async {
 //SELECTOR DE UBICACIÓN
 Future<void> showUbicacionSelector(
   BuildContext context,
-  Function(gmaps.LatLng, String) onLocationSelected, {
+  // onLocationSelected: (latLng, shortName, fullAddress)
+  Function(gmaps.LatLng, String, String) onLocationSelected, {
   Position? initialPosition,
 }) {
   //MODAL
@@ -179,7 +282,8 @@ Future<void> showUbicacionSelector(
 
 //UBICACIÓN SELECTOR: MAPA
 class UbicacionSelectorMapa extends StatefulWidget {
-  final Function(gmaps.LatLng, String) onLocationSelected;
+  // onLocationSelected: (latLng, shortName, fullAddress)
+  final Function(gmaps.LatLng, String, String) onLocationSelected;
   final Position? initialPosition;
   const UbicacionSelectorMapa({super.key, required this.onLocationSelected, this.initialPosition});
   @override
@@ -190,10 +294,12 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
   gmaps.GoogleMapController? mapController;
   late FlutterGooglePlacesSdk places;
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   List<AutocompletePrediction> _predictions = [];
   Timer? _debounce;
   bool _hasSetInitialLocation = false; 
   bool _isLoadingLocation = true;
+  bool _nameEdited = false;
   @override
   void initState() {
     super.initState();
@@ -266,6 +372,10 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
       setState(() {
         selectedLocation = target;
         _searchController.text = details.place?.name ?? "";
+        //Set short name default and reset edited flag
+        final short = (_searchController.text.split(',').first).trim();
+        _nameController.text = short;
+        _nameEdited = false;
         _predictions = [];
       });
     }
@@ -319,26 +429,59 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
               Padding(
                 padding: const EdgeInsets.only(right: 16, left: 16, bottom: 16),
                 child: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: "Buscar lugar...",
-                        hintStyle: Theme.of(context).textTheme.bodyMedium,
-                        prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        //DIRECCIÓN
+                        TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: "Buscar lugar...",
+                            hintStyle: Theme.of(context).textTheme.bodyMedium,
+                            prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            filled: true,
+                            fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          onChanged: (v) {
+                            _buscarLugares(v);
+                            if (!_nameEdited) {
+                              final short = v.split(',').first.trim();
+                              _nameController.text = short;
+                            }
+                          },
                         ),
-                      ),
-                      onChanged: _buscarLugares,
+                        const SizedBox(height: 8),
+                        //NOMBRE
+                        TextField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            hintText: "Nombre del lugar",
+                            hintStyle: Theme.of(context).textTheme.bodyMedium,
+                            prefixIcon: Icon(Icons.edit, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            filled: true,
+                            fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          onChanged: (v) {
+                            _nameEdited = true;
+                          },
+                        ),
+                      ],
                     ),
-                  
+                  ),
                 ),
               ),
               //CUERPO
@@ -393,6 +536,10 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
                           if (placeName != null) {
                             setState(() {
                               _searchController.text = placeName;
+                              if (!_nameEdited) {
+                                final short = placeName.split(',').first.trim();
+                                _nameController.text = short;
+                              }
                             });
                           }
                         },
@@ -415,8 +562,9 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
                   child: SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: () {
-                        widget.onLocationSelected(selectedLocation, _searchController.text);
+                        onPressed: () {
+                        // return (latLng, shortName, fullAddress)
+                        widget.onLocationSelected(selectedLocation, _nameController.text, _searchController.text);
                         Navigator.pop(context);
                       },
                       style: FilledButton.styleFrom(
