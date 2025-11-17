@@ -165,14 +165,19 @@ class PlanesList extends StatelessWidget {
                                   Text(
                                     () {
                                       final ubicacion = plan["ubicacion"] as Map<String, dynamic>;
-                                      final lat = ubicacion["latitud"];
-                                      final lng = ubicacion["longitud"];
-                                      final latDouble = (lat is int)
-                                        ? lat.toDouble()
-                                        : double.tryParse(lat.toString());
-                                      final lngDouble = (lng is int)
-                                        ? lng.toDouble()
-                                        : double.tryParse(lng.toString());
+                                      // Robust parsing: accept int, double or String (with ',' or '.')
+                                      final rawLat = ubicacion["latitud"];
+                                      final rawLng = ubicacion["longitud"];
+                                      double? latDouble;
+                                      double? lngDouble;
+                                      if (rawLat is double) latDouble = rawLat;
+                                      else if (rawLat is int) latDouble = rawLat.toDouble();
+                                      else if (rawLat is String) latDouble = double.tryParse(rawLat.replaceAll(',', '.'));
+
+                                      if (rawLng is double) lngDouble = rawLng;
+                                      else if (rawLng is int) lngDouble = rawLng.toDouble();
+                                      else if (rawLng is String) lngDouble = double.tryParse(rawLng.replaceAll(',', '.'));
+
                                       if (latDouble != null && lngDouble != null) {
                                         final distanceMeters = Geolocator.distanceBetween(
                                           currentLocation!.latitude,
@@ -298,69 +303,72 @@ class PlanesList extends StatelessWidget {
 
                       Column(children: [
                         //FECHA
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                fechaBonita,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant
-                                ),
+                        if (!plan["fechaEsEncuesta"])
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 15,
                               ),
-                            )
-                          ],
-                        ),
-                        //HORA
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                horaBonita,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      ]),
-                      //UBICACIÓN
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            size: 15,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  ubicacion["nombre"] ?? '',
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  fechaBonita,
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Theme.of(context).colorScheme.onSurfaceVariant
                                   ),
                                 ),
-                              ],
+                              )
+                            ],
+                          ),
+                        //HORA
+                        if (!plan["horaEsEncuesta"])
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 15,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  horaBonita,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                      ]),
+                      //UBICACIÓN
+                      if (!plan["ubicacionEsEncuesta"])
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              size: 15,
                             ),
-                          )
-                        ],
-                      ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    ubicacion["nombre"] ?? '',
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
                     ],
                   ),
                 ),

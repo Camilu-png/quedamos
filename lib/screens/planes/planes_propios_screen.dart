@@ -231,8 +231,8 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
                 width: double.infinity,
                 child: SegmentedButton<String>(
                   segments: [
-                    ButtonSegment(value: "Activos", label: Text("Activos", style: Theme.of(context).textTheme.bodyMedium)),
-                    ButtonSegment(value: "Inactivos", label: Text("Inactivos", style: Theme.of(context).textTheme.bodyMedium)),
+                    ButtonSegment(value: "Activos", label: Text("Activos")),
+                    ButtonSegment(value: "Inactivos", label: Text("Inactivos")),
                   ],
                   selected: <String>{actividadSelected},
                   onSelectionChanged: (actividadSelection) {
@@ -268,6 +268,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
                     prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
                       borderSide: BorderSide.none,
