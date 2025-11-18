@@ -18,7 +18,6 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => MainScreenState();
 }
 
-//PENDIENTE: REVISAR PQ NO SIRVE UPDATE DE TOKEN
 void listenTokenChanges(String uid) {
   FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
     FirebaseFirestore.instance
@@ -26,6 +25,18 @@ void listenTokenChanges(String uid) {
       .doc(uid)
       .update({"fcmToken": newToken});
   });
+}
+
+Future<void> requestNotificationPermission() async {
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  print('Permisos de notificación: ${settings.authorizationStatus}');
 }
 
 class MainScreenState extends State<MainScreen> {
@@ -39,6 +50,7 @@ class MainScreenState extends State<MainScreen> {
     super.initState();
     _initLocation();
     listenTokenChanges(widget.userID);
+    requestNotificationPermission();
     _mainScreens = _buildMainScreens();
     _currentIndex = widget.initialIndex;
     _currentScreen = _mainScreens[_currentIndex];
