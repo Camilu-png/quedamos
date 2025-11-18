@@ -65,6 +65,8 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -88,7 +90,12 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  Text("Filtros", style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    "Filtros",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Text("Distancia", style: Theme.of(context).textTheme.titleMedium),
                   RadioListTile<double?>(
@@ -248,6 +255,21 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                   ),
                   const SizedBox(height: 12),
                   Row(children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          filtroDistancia = null;
+                          filtroFecha = null;
+                            filtroEstadosSeleccionadas.clear();
+                            filtroVisibilidades.clear();
+                            filtroActividadesSeleccionadas = {"activos"};
+                            categoriasSeleccionadas.clear();
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Text("Limpiar todo", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface))
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(child: FilledButton(
                       onPressed: () {
                         setState(() {
@@ -260,20 +282,9 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                           });
                         Navigator.pop(context);
                       },
-                      child: const Text("Aplicar"),
+                      style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.secondary),
+                      child: Text("Aplicar", style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSecondary)),
                     )),
-                    const SizedBox(width: 8),
-                    FilledButton.tonal(onPressed: () {
-                      setState(() {
-                        filtroDistancia = null;
-                        filtroFecha = null;
-                          filtroEstadosSeleccionadas.clear();
-                          filtroVisibilidades.clear();
-                          filtroActividadesSeleccionadas = {"activos"};
-                          categoriasSeleccionadas.clear();
-                      });
-                      Navigator.pop(context);
-                    }, child: const Text("Limpiar todo")),
                   ]),
                   const SizedBox(height: 8),
                 ],
