@@ -515,8 +515,9 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
       
       // CATEGORY
       if (categoriasSeleccionadas.isNotEmpty) {
-        final cat = plan["categoria"] as String?;
-        if (cat == null || !categoriasSeleccionadas.contains(cat)) return false;
+        final cat = (plan["categoria"] as String?)?.trim().toLowerCase();
+        final selectedCats = categoriasSeleccionadas.map((e) => e.trim().toLowerCase()).toSet();
+        if (cat == null || !selectedCats.contains(cat)) return false;
       }
 
       // If user selected "Planes aceptados", only include plans where the user is in participantesAceptados

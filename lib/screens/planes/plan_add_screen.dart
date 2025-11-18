@@ -6,8 +6,8 @@ import "package:cloud_firestore/cloud_firestore.dart";
 import "package:connectivity_plus/connectivity_plus.dart";
 import "package:quedamos/app_colors.dart";
 import "package:quedamos/screens/main_screen.dart";
-import "package:quedamos/screens/planes/planes_components.dart";
 import "package:quedamos/services/plans_service.dart";
+import "package:quedamos/screens/planes/planes_components.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -83,17 +83,14 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       //FECHA
       fechaEsEncuesta = widget.plan!["fechaEsEncuesta"] ?? false;
       final listaFechas = widget.plan!["fechasEncuesta"];
-      
       if (listaFechas is List && listaFechas.isNotEmpty) {
         fechasEncuesta = listaFechas.map<Map<String, dynamic>>((item) {
           if (item is! Map) {
             print("[🐧 planes] Advertencia: item de fechasEncuesta no es Map: $item");
             return {"fecha": DateTime.now(), "votos": []};
           }
-          
           final fechaRaw = item["fecha"];
           DateTime fechaParsed;
-
           if (fechaRaw is String) {
             fechaParsed = DateTime.parse(fechaRaw);
           } else if (fechaRaw is int) {
@@ -106,7 +103,6 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
             print("[🐧 planes] Advertencia: tipo de fecha desconocido: ${fechaRaw.runtimeType}");
             fechaParsed = DateTime.now();
           }
-
           return {
             "fecha": fechaParsed,
             "votos": item["votos"] ?? [],
@@ -115,8 +111,6 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       } else {
         fechasEncuesta = [];
       }
-
-      // If it's not a fecha-encuesta, try to load the single fecha value
       if (!fechaEsEncuesta) {
         final fechaRawSingle = widget.plan!["fecha"];
         if (fechaRawSingle != null) {
@@ -139,11 +133,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
           fecha = null;
         }
       }
-      
       // HORA
       horaEsEncuesta = widget.plan!["horaEsEncuesta"] ?? false;
-
-      // Siempre intentamos leer horasEncuesta si existe
       final horasRaw = widget.plan!["horasEncuesta"];
       if (horasRaw is List && horasRaw.isNotEmpty) {
         horasEncuesta = horasRaw.map<Map<String, dynamic>>((item) {
@@ -151,10 +142,8 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
             print("[🐧 planes] Advertencia: item de horasEncuesta no es Map: $item");
             return {"hora": "", "votos": []};
           }
-
           final horaRaw = item["hora"];
           String horaString;
-
           if (horaRaw is String) {
             horaString = horaRaw;
           } else if (horaRaw is Map && horaRaw["hora"] != null && horaRaw["minuto"] != null) {
@@ -164,7 +153,6 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
           } else {
             horaString = "00:00";
           }
-
           return {
             "hora": horaString,
             "votos": item["votos"] ?? [],
@@ -173,8 +161,6 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
       } else {
         horasEncuesta = [];
       }
-
-      // Si NO es encuesta, tratamos de leer hora fija
       if (!horaEsEncuesta) {
         final horaRawSingle = widget.plan!["hora"];
         if (horaRawSingle is String) {
@@ -190,43 +176,31 @@ class _AddPlanScreenState extends State<AddPlanScreen> {
           hora = null;
         }
       } else {
-        // si es encuesta, la hora fija no aplica
         hora = null;
       }
-
-
       //UBICACIÓN
-      //UBICACIÓN
-ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
-
-// Siempre intentamos cargar ubicacionesEncuesta si existe
-final ubicacionesRaw = widget.plan!["ubicacionesEncuesta"];
-if (ubicacionesRaw != null && ubicacionesRaw is List && ubicacionesRaw.isNotEmpty) {
-  ubicacionesEncuesta = ubicacionesRaw
-      .where((u) => u != null && u is Map)
-      .map<Map<String, dynamic>>((u) => Map<String, dynamic>.from(u))
-      .toList();
-} else {
-  ubicacionesEncuesta = [];
-}
-
-// Siempre leemos la ubicación fija si existe
-final ubicacionRaw = widget.plan!["ubicacion"];
-if (ubicacionRaw != null && ubicacionRaw is Map) {
-  ubicacion = Map<String, dynamic>.from(ubicacionRaw);
-} else {
-  // fallback por si no hay ninguna
-  ubicacion = {
-    "nombre": "Casa Central, UTFSM",
-    "latitud": -33.0458,
-    "longitud": -71.6197,
-  };
-}
-
-print("[🐧 planes] Ubicación cargada: $ubicacion");
-print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
-
-
+      ubicacionEsEncuesta = widget.plan!["ubicacionEsEncuesta"] ?? false;
+      final ubicacionesRaw = widget.plan!["ubicacionesEncuesta"];
+      if (ubicacionesRaw != null && ubicacionesRaw is List && ubicacionesRaw.isNotEmpty) {
+        ubicacionesEncuesta = ubicacionesRaw
+            .where((u) => u != null && u is Map)
+            .map<Map<String, dynamic>>((u) => Map<String, dynamic>.from(u))
+            .toList();
+      } else {
+        ubicacionesEncuesta = [];
+      }
+      final ubicacionRaw = widget.plan!["ubicacion"];
+      if (ubicacionRaw != null && ubicacionRaw is Map) {
+        ubicacion = Map<String, dynamic>.from(ubicacionRaw);
+      } else {
+        ubicacion = {
+          "nombre": "Casa Central, UTFSM",
+          "latitud": -33.0458,
+          "longitud": -71.6197,
+        };
+      }
+      print("[🐧 planes] Ubicación cargada: $ubicacion");
+      print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
       //PARTICIPANTES
       final participantesAceptadosRaw = widget.plan!["participantesAceptados"];
       if (participantesAceptadosRaw != null && participantesAceptadosRaw is List) {
@@ -289,7 +263,7 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                 Expanded(
                   child: TabBarView(
                     children: [
-                      //PESTAÑA: COLORES
+                      //PESTAÑA: ICONOS
                       StatefulBuilder(
                         builder: (context, setStateInner) {
                           return GridView.count(
@@ -306,7 +280,7 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                                   setState(() {
                                     iconoNombre = iconoNombreEntry;
                                   });
-                                  setStateInner(() {}); //Rebuild
+                                  setStateInner(() {});
                                 },
                                 child: Ink(
                                   decoration: BoxDecoration(
@@ -351,7 +325,7 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                                   setState(() {
                                     iconoColor = iconoColorEntry;
                                   });
-                                  setStateInner(() {}); //Rebuild
+                                  setStateInner(() {});
                                 },
                                 child: Ink(
                                   decoration: BoxDecoration(
@@ -509,7 +483,7 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                           _showIconoSelectorModal(context);
                         },
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8), //Área tactil
+                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -1145,8 +1119,8 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                             //GUARDAR PLAN
                             print("[🐧 planes] Guardando plan...");
                             DateTime fechaReal = fechaEsEncuesta
-                              ? DateTime.now() // valor "dummy" para SQLite
-                              : (fecha ?? DateTime.now()); // si hay fecha seleccionada, la usamos, si no también ponemos now
+                              ? DateTime.now()
+                              : (fecha ?? DateTime.now());
                             final planFinal = {
                               "planID": planID,
                               "fecha_creacion": Timestamp.fromDate(DateTime.now()),
@@ -1189,25 +1163,23 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                                   return;
                                 }
                               } else {
-                                // Check connectivity
+                                //Check connectivity
                                 final connectivityResult = await Connectivity().checkConnectivity();
-                                final isOnline = !connectivityResult.contains(ConnectivityResult.none);
-                                
+                                final isOnline = !connectivityResult.contains(ConnectivityResult.none);                                
                                 try {
                                   if (isOnline) {
-                                    // Try to create online
+                                    //Try to create online
                                     await db.collection("planes").doc(planID).set(planFinal);
                                     print("[🐧 planes] Plan creado correctamente online");
                                   } else {
-                                    // Offline mode - save locally
+                                    //Offline mode - save locally
                                     print("[🐧 planes] Modo offline - guardando plan localmente");
                                     final plansService = PlansService();
                                     await plansService.createPlan(
                                       planData: planFinal,
                                       isOnline: false,
                                     );
-                                    
-                                    // Show offline message
+                                    //Show offline message
                                     if (mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
@@ -1229,7 +1201,6 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                                       );
                                     }
                                   }
-                                  
                                   if (mounted) {
                                     if (Navigator.of(context).canPop()) {
                                       print('[🐧 planes] Pop con plan creado, volviendo...');
@@ -1244,13 +1215,12 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                                   }
                                 } catch (e) {
                                   print("[🐧 planes] Error al crear plan: $e");
-                                  // Try to save offline as fallback
+                                  //Try to save offline as fallback
                                   final plansService = PlansService();
                                   await plansService.createPlan(
                                     planData: planFinal,
                                     isOnline: false,
                                   );
-                                  
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -1260,7 +1230,7 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                                             SizedBox(width: 12),
                                             Expanded(
                                               child: Text(
-                                                'Error de conexión. Plan guardado localmente.',
+                                                "Error de conexión. Plan guardado localmente.",
                                                 style: TextStyle(color: Colors.white),
                                               ),
                                             ),
