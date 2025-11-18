@@ -22,6 +22,7 @@ class _PlanScreenState extends State<PlanScreen> {
   late Map<String, dynamic> plan;
   late List<dynamic> participantesAceptados;
   late List<dynamic> participantesRechazados;
+  bool _participationChanged = false;
 
   @override
   void initState() {
@@ -677,10 +678,23 @@ class _PlanScreenState extends State<PlanScreen> {
     final bool participantesAceptadosUsuario = participantesAceptados.contains(widget.userID);
     final bool participantesRechazadosUsuario = participantesRechazados.contains(widget.userID);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop) {
+          Navigator.pop(context, _participationChanged ? "participation_changed" : null);
+        }
+      },
+      child: Scaffold(
 
-      //APP BAR
-      appBar: AppBar(
+        //APP BAR
+        appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
+          onPressed: () {
+            Navigator.pop(context, _participationChanged ? "participation_changed" : null);
+          },
+        ),
         title: Text(
           "Detalle del plan",
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -1241,6 +1255,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                   "participantesAceptados": FieldValue.arrayRemove([widget.userID]),
                                   "participantesRechazados": FieldValue.arrayUnion([widget.userID]),
                                 });
+                                _participationChanged = true;
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text("Has abandonado el plan.")),
@@ -1291,6 +1306,7 @@ class _PlanScreenState extends State<PlanScreen> {
                                   "participantesAceptados": FieldValue.arrayUnion([widget.userID]),
                                   "participantesRechazados": FieldValue.arrayRemove([widget.userID]),
                                 });
+                                _participationChanged = true;
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text("Te has unido al plan.")),
@@ -1328,6 +1344,7 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
