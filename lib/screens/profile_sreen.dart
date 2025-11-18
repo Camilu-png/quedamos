@@ -142,10 +142,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancelar"),
-              ),
             ],
           ),
         );
