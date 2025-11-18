@@ -892,36 +892,38 @@ class _PlanScreenState extends State<PlanScreen> {
                         if (participantesAceptadosUsuario || participantesRechazadosUsuario)
                           const SizedBox(width: 8),
 
-                        //ACEPTADO/RECHAZADO
-                        if (participantesAceptadosUsuario || participantesRechazadosUsuario)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: participantesAceptadosUsuario ? Color(0xFFC8E6C9) : Theme.of(context).colorScheme.errorContainer,
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  participantesAceptadosUsuario ? Icons.check_circle : Icons.cancel,
-                                  size: 24,
+                      //ACEPTADO/RECHAZADO
+                      if (participantesAceptadosUsuario || participantesRechazadosUsuario)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: participantesAceptadosUsuario 
+                              ? Theme.of(context).colorScheme.tertiaryContainer
+                              : Theme.of(context).colorScheme.errorContainer,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                participantesAceptadosUsuario ? Icons.check_circle : Icons.cancel,
+                                size: 24,
+                                color: participantesAceptadosUsuario 
+                                  ? Theme.of(context).colorScheme.onTertiaryContainer
+                                  : Theme.of(context).colorScheme.onErrorContainer,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                participantesAceptadosUsuario ? "Aceptado" : "Rechazado",
+                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                   color: participantesAceptadosUsuario 
-                                    ? Color(0xFF0D2610)
+                                    ? Theme.of(context).colorScheme.onTertiaryContainer
                                     : Theme.of(context).colorScheme.onErrorContainer,
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  participantesAceptadosUsuario ? "Aceptado" : "Rechazado",
-                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                    color: participantesAceptadosUsuario 
-                                      ? Color(0xFF0D2610)
-                                      : Theme.of(context).colorScheme.onErrorContainer,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
+                        ),
 
                       ],
                     ),

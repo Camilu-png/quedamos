@@ -1,6 +1,5 @@
 import "package:flutter/material.dart";
 import "package:url_launcher/url_launcher.dart";
-import "package:quedamos/app_colors.dart";
 import "dart:async";
 import "dart:convert";
 import "package:http/http.dart" as http;
@@ -158,7 +157,7 @@ final Map<String, Color> coloresMap = {
   "brown": Colors.brown,
   "grey": Colors.grey,
   "blueGrey": Colors.blueGrey,
-  "secondary": secondary,
+  "secondary": Color(0xFFFF5722),
 };
 
 //STRING -> TIME OF DAY
@@ -191,7 +190,7 @@ String getIconName(IconData icon) {
 String getColorName(Color color) {
   return coloresMap.entries
     .firstWhere((entry) => entry.value == color,
-      orElse: () => const MapEntry("secondary", secondary))
+      orElse: () => const MapEntry("secondary", Color(0xFFFF5722)))
     .key;
 }
 
@@ -383,7 +382,7 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.0),
       body: SafeArea(
         child: Container(
           margin: const EdgeInsets.all(16),

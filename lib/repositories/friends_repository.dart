@@ -233,14 +233,14 @@ class FriendsRepository {
             }
           }
           
-          _requestsStreamController.add(remoteRequests);
+          if (!_requestsStreamController.isClosed) {
+            _requestsStreamController.add(remoteRequests);
+          }
         },
       );
-    }
-    
-    // Always listen to manual updates from StreamController (works both online and offline)
-    await for (final requests in _requestsStreamController.stream) {
-      yield requests;
+      
+      // Stream remote data
+      yield* _remoteDataSource.getFriendRequestsStream(userId);
     }
   }
 
@@ -298,7 +298,9 @@ class FriendsRepository {
     
     // Emit updated friend requests list
     final updatedRequests = await _localDataSource.getAllFriendRequests();
-    _requestsStreamController.add(updatedRequests);
+    if (!_requestsStreamController.isClosed) {
+      _requestsStreamController.add(updatedRequests);
+    }
   }
 
   Future<void> acceptFriendRequest(
@@ -379,11 +381,15 @@ class FriendsRepository {
     
     // Emit updated friend requests list
     final updatedRequests = await _localDataSource.getAllFriendRequests();
-    _requestsStreamController.add(updatedRequests);
+    if (!_requestsStreamController.isClosed) {
+      _requestsStreamController.add(updatedRequests);
+    }
     
     // Emit updated friends list
     final updatedFriends = await _localDataSource.getAllFriends();
-    _friendsStreamController.add(updatedFriends);
+    if (!_friendsStreamController.isClosed) {
+      _friendsStreamController.add(updatedFriends);
+    }
   }
 
   Future<void> rejectFriendRequest(String currentUserId, String fromUserId) async {
@@ -402,7 +408,9 @@ class FriendsRepository {
     
     // Emit updated friend requests list
     final updatedRequests = await _localDataSource.getAllFriendRequests();
-    _requestsStreamController.add(updatedRequests);
+    if (!_requestsStreamController.isClosed) {
+      _requestsStreamController.add(updatedRequests);
+    }
   }
 
   // Sync operations

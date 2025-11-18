@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:quedamos/app_colors.dart';
 
 class _TextButtonAction extends StatefulWidget {
   final String text;
@@ -78,7 +77,8 @@ class FriendRequestList extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          elevation: 3,
+          elevation: 1,
+          color: Theme.of(context).colorScheme.surface,
           child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -98,7 +98,7 @@ class FriendRequestList extends StatelessWidget {
                       topLeft: Radius.circular(12),
                       bottomLeft: Radius.circular(12),
                     ),
-                    child: _buildFriendImage(friend),
+                    child: _buildFriendImage(context, friend),
                   ),
                 ),
 
@@ -118,9 +118,10 @@ class FriendRequestList extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
+                              child: FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
@@ -134,30 +135,30 @@ class FriendRequestList extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(Icons.check_circle, size: 20, color: Colors.white),
-                                    SizedBox(width: 5),
-                                    Text(
-                                      "Aceptar",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                icon: Icon(
+                                  Icons.check_circle,
+                                  size: 20,
+                                ),
+                                label: Text(
+                                  "Aceptar",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 8),
                             Expanded(
-                              child: FilledButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.error,
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Theme.of(context).colorScheme.error,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  side: BorderSide(
+                                    color: Theme.of(context).colorScheme.error,
+                                    width: 1,
                                   ),
                                 ),
                                 onPressed: () {
@@ -168,21 +169,15 @@ class FriendRequestList extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.cancel,
-                                        size: 20,
-                                        color: Theme.of(context).colorScheme.onError),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      "Rechazar",
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onError,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                icon: Icon(
+                                  Icons.cancel,
+                                  size: 20,
+                                ),
+                                label: Text(
+                                  "Rechazar",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
@@ -200,7 +195,7 @@ class FriendRequestList extends StatelessWidget {
     );
   }
 
-  Widget _buildFriendImage(Map<String, dynamic> friend) {
+  Widget _buildFriendImage(BuildContext context, Map<String, dynamic> friend) {
     final localPhotoPath = friend["localPhotoPath"] as String?;
     final photoUrl = friend["photoUrl"] as String?;
     
@@ -210,7 +205,7 @@ class FriendRequestList extends StatelessWidget {
       return Image.file(
         file,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _defaultAvatar(friend),
+        errorBuilder: (ctx, error, stackTrace) => _defaultAvatar(ctx, friend),
       );
     }
     
@@ -219,20 +214,20 @@ class FriendRequestList extends StatelessWidget {
       return Image.network(
         photoUrl,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _defaultAvatar(friend),
+        errorBuilder: (ctx, error, stackTrace) => _defaultAvatar(ctx, friend),
       );
     }
     
     // Si no hay ninguna imagen, mostrar placeholder
-    return _defaultAvatar(friend);
+    return _defaultAvatar(context, friend);
   }
 
-  Widget _defaultAvatar(Map<String, dynamic> friend) {
+  Widget _defaultAvatar(BuildContext context, Map<String, dynamic> friend) {
     return Container(
-      color: (friend["color"] as Color?)?.withOpacity(0.7) ??
-          primaryDark.withOpacity(0.7),
-      child: const Center(
-        child: Icon(Icons.person, color: Colors.white, size: 36),
+      color: (friend["color"] as Color?)?.withValues(alpha: 0.7) ??
+          Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+      child: Center(
+        child: Icon(Icons.person, color: Theme.of(context).colorScheme.onPrimary, size: 36),
       ),
     );
   }

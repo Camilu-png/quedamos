@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../app_colors.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -13,65 +12,90 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBarTheme(
-      data: NavigationBarThemeData(
-        labelTextStyle: MaterialStateProperty.all(
-          const TextStyle(
-            color: Colors.white,
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return NavigationBar(
+      selectedIndex: currentIndex,
+      onDestinationSelected: onTap,
+      backgroundColor: colorScheme.primary,
+      indicatorColor: colorScheme.primaryContainer,
+      height: 70,
+      destinations: [
+        NavigationDestination(
+          icon: Icon(
+            Icons.location_on_outlined,
+            color: colorScheme.onPrimary,
           ),
+          selectedIcon: Icon(
+            Icons.location_on,
+            color: colorScheme.onPrimaryContainer,
+          ),
+          label: 'Planes',
         ),
-      ),
-      child: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: onTap,
-        backgroundColor: primaryColor,
-        indicatorColor: primaryDark.withOpacity(0.5),
-        height: 70,
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.location_on_outlined, color: Colors.white),
-            selectedIcon: const Icon(Icons.location_on, color: Colors.white),
-            label: 'Planes',
+        NavigationDestination(
+          icon: Icon(
+            Icons.calendar_today_outlined,
+            color: colorScheme.onPrimary,
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.calendar_today_outlined, color: Colors.white),
-            selectedIcon: const Icon(Icons.calendar_today, color: Colors.white),
-            label: 'Mis planes',
+          selectedIcon: Icon(
+            Icons.calendar_today,
+            color: colorScheme.onPrimaryContainer,
           ),
-          NavigationDestination(
-            icon: Container(
-              decoration: BoxDecoration(
-                color: primaryDark,
-                shape: BoxShape.circle,
-              ),
-              padding: const EdgeInsets.all(8),
-              child: const Icon(Icons.add, color: Colors.white, size: 32),
+          label: 'Mis planes',
+        ),
+        NavigationDestination(
+          icon: Container(
+            decoration: BoxDecoration(
+              color: colorScheme.secondary,
+              shape: BoxShape.circle,
             ),
-            selectedIcon: Container(
-              decoration: BoxDecoration(
-                color: primaryDark,
-                shape: BoxShape.circle,
-              ),
-              padding: const EdgeInsets.all(8),
-              child: const Icon(Icons.add, color: Colors.white, size: 32),
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              Icons.add,
+              color: colorScheme.onSecondary,
+              size: 32,
             ),
-            label: 'Crear plan',
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.group_outlined, color: Colors.white),
-            selectedIcon: const Icon(Icons.group, color: Colors.white),
-            label: 'Amigos',
+          selectedIcon: Container(
+            decoration: BoxDecoration(
+              color: colorScheme.secondary,
+              shape: BoxShape.circle,
+            ),
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              Icons.add,
+              color: colorScheme.onSecondary,
+              size: 32,
+            ),
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.person_outline, color: Colors.white),
-            selectedIcon: Icon(Icons.person, color: Colors.white),
-            label: 'Perfil',
+          label: 'Crear plan',
+        ),
+        NavigationDestination(
+          icon: Icon(
+            Icons.group_outlined,
+            color: colorScheme.onPrimary,
           ),
-        ],
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-        elevation: 3,
-        surfaceTintColor: Colors.transparent,
-      ),
+          selectedIcon: Icon(
+            Icons.group,
+            color: colorScheme.onPrimaryContainer,
+          ),
+          label: 'Amigos',
+        ),
+        NavigationDestination(
+          icon: Icon(
+            Icons.person_outline,
+            color: colorScheme.onPrimary,
+          ),
+          selectedIcon: Icon(
+            Icons.person,
+            color: colorScheme.onPrimaryContainer,
+          ),
+          label: 'Perfil',
+        ),
+      ],
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+      elevation: 0,
+      surfaceTintColor: colorScheme.surfaceTint,
     );
   }
 }
