@@ -93,20 +93,22 @@ class _FriendsScreenState extends State<FriendsScreen> {
           final items = snapshot.data ?? [];
 
           if (items.isEmpty) {
-            return SingleChildScrollView(
+            return Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
                   SizedBox(
                     width: double.infinity,
                     child: SegmentedButton<String>(
-                      segments: [
+                      segments: const [
                         ButtonSegment(
-                            value: "Amigos",
-                            label: Text("Amigos")),
+                          value: "Amigos",
+                          label: Text("Amigos"),
+                        ),
                         ButtonSegment(
-                            value: "Solicitudes",
-                            label: Text("Solicitudes")),
+                          value: "Solicitudes",
+                          label: Text("Solicitudes"),
+                        ),
                       ],
                       selected: <String>{selectedSegment},
                       onSelectionChanged: (newSelection) {
@@ -116,14 +118,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         });
                       },
                       style: SegmentedButton.styleFrom(
-                        backgroundColor: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHigh,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.surfaceContainerHigh,
                         selectedBackgroundColor:
                             Theme.of(context).colorScheme.primaryContainer,
-                        foregroundColor: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onSurfaceVariant,
                         selectedForegroundColor:
                             Theme.of(context).colorScheme.onPrimaryContainer,
                         shape: RoundedRectangleBorder(
@@ -134,17 +134,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      selectedSegment == 'Amigos'
-                        ? "Todavía no tienes amigos."
-                        : "No tienes solicitudes pendientes.",
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        selectedSegment == 'Amigos'
+                            ? "Todavía no tienes amigos."
+                            : "No tienes solicitudes pendientes.",
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ],
               ),
             );
           }
+
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
