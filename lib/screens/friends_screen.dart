@@ -103,12 +103,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       segments: [
                         ButtonSegment(
                             value: "Amigos",
-                            label: Text("Amigos",
-                                style: Theme.of(context).textTheme.bodyMedium)),
+                            label: Text("Amigos")),
                         ButtonSegment(
                             value: "Solicitudes",
-                            label: Text("Solicitudes",
-                                style: Theme.of(context).textTheme.bodyMedium)),
+                            label: Text("Solicitudes")),
                       ],
                       selected: <String>{selectedSegment},
                       onSelectionChanged: (newSelection) {
@@ -158,12 +156,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     segments: [
                       ButtonSegment(
                           value: "Amigos",
-                          label: Text("Amigos",
-                              style: Theme.of(context).textTheme.bodyMedium)),
+                          label: Text("Amigos")),
                       ButtonSegment(
                           value: "Solicitudes",
-                          label: Text("Solicitudes",
-                              style: Theme.of(context).textTheme.bodyMedium)),
+                          label: Text("Solicitudes")),
                     ],
                     selected: <String>{selectedSegment},
                     onSelectionChanged: (newSelection) {

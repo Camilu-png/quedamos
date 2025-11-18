@@ -61,6 +61,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             : null,
         filled: true,
         fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
           borderSide: BorderSide.none,
