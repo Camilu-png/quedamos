@@ -1,18 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:quedamos/screens/login_screen.dart';
-
-// Opciones de avatar (puedes editar/añadir las que quieras)
-const List<String> kAvatarOptions = [
-  "https://cataas.com/cat/calico?width=200&height=200",
-  "https://cataas.com/cat/black?width=200&height=200",
-  "https://cataas.com/cat/orange?width=200&height=200",
-  "https://cataas.com/cat/gray?width=200&height=200",
-  "https://cataas.com/cat/tabby?width=200&height=200",
-  "https://cataas.com/cat?width=200&height=200",
-];
 
 class ProfileScreen extends StatefulWidget {
   final String userID;
@@ -24,28 +17,13 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late Future<Map<String, dynamic>?> _userFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _userFuture = _getUserData();
-  }
-
   Future<Map<String, dynamic>?> _getUserData() async {
     try {
-      // Add timeout to prevent infinite loading
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.userID)
           .get()
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              // Return null on timeout, will use Firebase Auth data as fallback
-              throw TimeoutException('Timeout loading user data');
-            },
-          );
+          .timeout(const Duration(seconds: 10));
 
       return doc.data();
     } catch (e) {
@@ -71,85 +49,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     };
   }
 
-  Future<void> _updateUserPhoto(String url) async {
+  // Cambiar foto
+  Future<void> _changePhoto() async {
     try {
-      // Actualizar Firestore
+      final picker = ImagePicker();
+      final XFile? picked = await picker.pickImage(source: ImageSource.gallery);
+
+      if (picked == null) return;
+
+      final file = File(picked.path);
+
+      // Subir imagen a Storage
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('profilePictures')
+          .child('${widget.userID}.jpg');
+
+      await ref.putFile(file);
+
+      final url = await ref.getDownloadURL();
+
+      // Guardar en Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.userID)
           .update({'photoUrl': url});
 
-      // Opcional: actualizar también Firebase Auth
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        await currentUser.updatePhotoURL(url);
-      }
+      // Refrescar vista
+      setState(() {});
 
-      // Volver a cargar datos para refrescar la UI
-      setState(() {
-        _userFuture = _getUserData();
-      });
     } catch (e) {
-      print("Error actualizando foto: $e");
-      if (mounted) {
+      print("Error al cambiar foto: $e");
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No se pudo actualizar la foto de perfil")),
+          SnackBar(content: Text("Error al subir la imagen")),
         );
       }
-    }
-  }
-
-  Future<void> _showAvatarSelector() async {
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Elige tu avatar",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 16),
-              // Opciones en "filas" usando Wrap (se adaptan al ancho)
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: kAvatarOptions.map((url) {
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context, url); // devolvemos la url elegida
-                    },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.network(
-                        url,
-                        width: 72,
-                        height: 72,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-
-    if (selected != null) {
-      await _updateUserPhoto(selected);
     }
   }
 
@@ -172,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
       ),
       body: FutureBuilder<Map<String, dynamic>?>(
-        future: _userFuture,
+        future: _getUserData(),
         builder: (context, snapshot) {
           // Show loading only briefly
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -211,8 +146,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Icon(
                           Icons.cloud_off,
-                          size: 20,
-                          color:
+                            size: 20,
+                            color:
                               Theme.of(context).colorScheme.onErrorContainer,
                         ),
                         const SizedBox(width: 8),
@@ -223,10 +158,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 .textTheme
                                 .bodySmall
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onErrorContainer,
-                                ),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onErrorContainer,
+                            ),
                           ),
                         ),
                       ],
@@ -235,59 +170,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 40),
 
-                // Avatar
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withValues(alpha: 0.2),
-                  backgroundImage:
-                      photoUrl != null ? NetworkImage(photoUrl) : null,
-                  child: photoUrl == null
-                      ? Icon(
-                          Icons.person,
-                          size: 60,
-                          color: Theme.of(context).colorScheme.primary,
-                        )
-                      : null,
-                ),
-
-                const SizedBox(height: 12),
-
-                TextButton.icon(
-                  onPressed: _showAvatarSelector,
-                  icon: Icon(Icons.edit_outlined, size: 16, color: Theme.of(context).colorScheme.onSurface),
-                  label: Text("Cambiar foto de perfil", style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w400,
-                    decoration: TextDecoration.underline,
-                  )),
+                // FOTO DE PERFIL + BOTÓN PARA CAMBIAR
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage:
+                          photoUrl != null ? NetworkImage(photoUrl) : null,
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.2),
+                      child: photoUrl == null
+                          ? Icon(Icons.person,
+                              size: 60,
+                              color: Theme.of(context).colorScheme.primary)
+                          : null,
+                    ),
+                    GestureDetector(
+                      onTap: _changePhoto,
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.primary,
+                        child: const Icon(Icons.edit, color: Colors.white, size: 18),
+                      ),
+                    )
+                  ],
                 ),
 
                 const SizedBox(height: 24),
 
-                // Nombre y correo
-                Text(
-                  name,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
+                Text(name,
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
-                Text(
-                  email,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
-                      ),
-                ),
+                Text(email,
+                    style: TextStyle(
+                        color:
+                            Theme.of(context).colorScheme.onSurfaceVariant)),
 
                 const SizedBox(height: 32),
                 const Divider(thickness: 1.2),
 
                 const Spacer(),
+
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
