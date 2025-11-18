@@ -442,25 +442,50 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
     
     final planesFiltrados = _allPlans.where((plan) {
       final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
-      DateTime? planFecha;
-      if (!fechaEsEncuesta) {
-        planFecha = plan["fecha"] is Timestamp ? (plan["fecha"] as Timestamp).toDate() : DateTime.tryParse(plan["fecha"]?.toString() ?? "");
-      }
+  final horaEsEncuesta = plan["horaEsEncuesta"] ?? false;
 
-      final bool isActive = (fechaEsEncuesta == true) || (planFecha != null && planFecha.isAfter(now));
+  // Encuestas siempre activas
+  if (fechaEsEncuesta || horaEsEncuesta) {
+    return filtroActividadesSeleccionadas.isEmpty || filtroActividadesSeleccionadas.contains("activos");
+  }
 
-      if (filtroActividadesSeleccionadas.isNotEmpty) {
-        final containsAct = filtroActividadesSeleccionadas.contains("activos");
-        final containsInact = filtroActividadesSeleccionadas.contains("inactivos");
-        if (containsAct && !containsInact) {
-          if (!isActive) return false;
-        } else if (containsInact && !containsAct) {
-          if (isActive) return false;
-        }
-      }
-      
-      if (filtroFecha != null) {
-        if (planFecha == null) return false;
+  // Fecha completa del plan
+  DateTime? planFecha;
+  if (plan["fecha"] != null) {
+    planFecha = plan["fecha"] is Timestamp
+        ? (plan["fecha"] as Timestamp).toDate()
+        : DateTime.tryParse(plan["fecha"].toString());
+    
+    // Si hay campo de hora separado
+    if (planFecha != null && plan["hora"] != null) {
+      final horaPartes = plan["hora"].toString().split(':'); // ["16","30"]
+      final hour = int.tryParse(horaPartes[0]) ?? 0;
+      final minute = int.tryParse(horaPartes[1]) ?? 0;
+      planFecha = DateTime(
+        planFecha.year,
+        planFecha.month,
+        planFecha.day,
+        hour,
+        minute,
+      );
+    }
+  }
+
+  // Determinar si el plan está activo
+  final bool isActive = planFecha != null && planFecha.isAfter(now);
+
+  // Filtrado por selección de activos/inactivos
+  if (filtroActividadesSeleccionadas.isNotEmpty) {
+    final containsAct = filtroActividadesSeleccionadas.contains("activos");
+    final containsInact = filtroActividadesSeleccionadas.contains("inactivos");
+
+    if (containsAct && !containsInact && !isActive) return false;
+    if (containsInact && !containsAct && isActive) return false;
+  }
+
+  // Filtrado por fecha
+  if (filtroFecha != null) {
+    if (planFecha == null) return false;
 
         bool enRango = false;
         if (filtroFecha == "hoy") {

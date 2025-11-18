@@ -111,19 +111,43 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
     }
     final now = DateTime.now();
     final planesFiltrados = _allPlans.where((plan) {
-      //FECHA - filter by active/inactive
       final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
-      if (!fechaEsEncuesta) {
-        final fecha = plan["fecha"] is Timestamp
-          ? (plan["fecha"] as Timestamp).toDate()
-          : DateTime.tryParse(plan["fecha"]?.toString() ?? "") ?? now;
-        if (actividadSelected == "Activos") {
-          if (fecha.isBefore(now)) return false;
-        } else {
-          if (fecha.isAfter(now)) return false;
-        }
+      final horaEsEncuesta = plan["horaEsEncuesta"] ?? false;
+      // Encuestas siempre activas
+      if (fechaEsEncuesta || horaEsEncuesta) {
+        return actividadSelected == "Activos";
       }
-      
+      // Fecha completa del plan
+      var planFecha = plan["fecha"] is Timestamp
+    ? (plan["fecha"] as Timestamp).toDate()
+    : DateTime.tryParse(plan["fecha"]?.toString() ?? DateTime.now().toString()) ?? DateTime.now();
+
+      // Si tienes un campo de hora separado (por ejemplo "hora": "16:30")
+      if (plan["hora"] != null) {
+        final horaPartes = plan["hora"].toString().split(':'); // ["16", "30"]
+        final hour = int.tryParse(horaPartes[0]) ?? 0;
+        final minute = int.tryParse(horaPartes[1]) ?? 0;
+
+        planFecha = DateTime(
+          planFecha.year,
+          planFecha.month,
+          planFecha.day,
+          hour,
+          minute,
+        );
+      }
+
+      print("planFecha completo: $planFecha");
+            // Plan normal: activo/inactivo según fecha + hora
+            if (actividadSelected == "Activos") {
+              if (planFecha.isBefore(now)) return false; // ya pasó → inactivo
+            } else {
+              if (planFecha.isAfter(now)) return false; // aún no ocurre → no inactivo
+            }
+
+
+
+
       //BÚSQUEDA
       if (busqueda.isNotEmpty) {
         final titulo = (plan["titulo"] ?? "").toString().toLowerCase();
