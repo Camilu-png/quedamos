@@ -931,7 +931,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                                       ),
                                     ),
                                   );
-                                  if (result == "deleted") {
+                                  if (result == "deleted" || result == "participation_changed") {
                                     if (mounted) _refreshPlans();
                                   }
                                 },
