@@ -725,7 +725,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                 child: SegmentedButton<String>(
                   segments: const [
                     ButtonSegment(value: "descubrir", label: Text("Descubrir")),
-                    ButtonSegment(value: "aceptados", label: Text("Planes aceptados")),
+                    ButtonSegment(value: "aceptados", label: Text("Aceptado")),
                   ],
                   selected: <String>{viewMode},
                   onSelectionChanged: (selection) {
@@ -799,7 +799,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                         children: [
                           const SizedBox(width: 2),
                           FilterChip(
-                            label: const Text("Amigos"),
+                            label: const Text("Para amigos"),
                             selected: filtroVisibilidades.contains("Amigos"),
                             onSelected: (sel) {
                               setState(() {
