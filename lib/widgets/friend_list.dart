@@ -245,14 +245,14 @@ class _AddFriendButtonState extends State<_AddFriendButton> {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: _pressed 
-            ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.7)
-            : Theme.of(context).colorScheme.primaryContainer,
+            ? Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.7)
+            : Theme.of(context).colorScheme.secondaryContainer,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.person_add_alt_1_outlined,
           size: 20,
-          color: Colors.black,
+          color: Theme.of(context).colorScheme.onSecondaryContainer,
         ),
       ),
     );

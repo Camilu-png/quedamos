@@ -520,6 +520,7 @@ print("[🐧 planes] Opciones de encuesta: $ubicacionesEncuesta");
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   color: Theme.of(context).colorScheme.onSurface,
                                   fontWeight: FontWeight.w400,
+                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             ],
