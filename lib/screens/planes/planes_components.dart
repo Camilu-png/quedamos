@@ -194,7 +194,7 @@ String getColorName(Color color) {
     .key;
 }
 
-// SHOW MAP
+//SHOW: MAP
 Future<void> showMap(
   BuildContext context,
   bool mounted,
@@ -208,11 +208,11 @@ Future<void> showMap(
   final lat = ubicacion["latitud"];
   final lng = ubicacion["longitud"];
   final direccion = (ubicacion["direccion"] as String?)?.trim();
-  // Si hay dirección, la incluimos en el query, si no, solo lat,lng
+  //Si hay dirección, la incluimos en el query, si no, solo lat,lng
   final String queryTexto = direccion != null && direccion.isNotEmpty
       ? "$lat,$lng ($direccion)"
       : "$lat,$lng";
-  // Construir URI de forma segura
+  //Construir URI de forma segura
   final uri = Uri.https(
     "www.google.com",
     "/maps/search/",
@@ -241,7 +241,8 @@ Future<void> showMap(
     }
   }
 }
-//GET PLACE NAME FROM LATITUD & LONGITUDE
+
+//GET: PLACE NAME FROM LATITUD & LONGITUDE
 Future<String?> getPlaceNameFromLatLng(double lat, double lng) async {
   final apiKey = dotenv.env["API_KEY"] ?? ""; //API KEY
   final url = Uri.parse("https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey");
@@ -255,10 +256,9 @@ Future<String?> getPlaceNameFromLatLng(double lat, double lng) async {
   return null;
 }
 
-//SELECTOR DE UBICACIÓN
+//SHOW: UBICACIÓN SELECTOR
 Future<void> showUbicacionSelector(
   BuildContext context,
-  // onLocationSelected: (latLng, shortName, fullAddress)
   Function(gmaps.LatLng, String, String) onLocationSelected, {
   Position? initialPosition,
 }) {
@@ -279,9 +279,8 @@ Future<void> showUbicacionSelector(
   return Future.value();
 }
 
-//UBICACIÓN SELECTOR: MAPA
+//MAPA: UBICACIÓN SELECTOR
 class UbicacionSelectorMapa extends StatefulWidget {
-  // onLocationSelected: (latLng, shortName, fullAddress)
   final Function(gmaps.LatLng, String, String) onLocationSelected;
   final Position? initialPosition;
   const UbicacionSelectorMapa({super.key, required this.onLocationSelected, this.initialPosition});
@@ -304,7 +303,6 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
     super.initState();
     final apiKey = dotenv.env["API_KEY"] ?? "";
     places = FlutterGooglePlacesSdk(apiKey); //API KEY
-    //Si existe locación inicial... 
     print("[🐧 planes] $widget.initialPosition");
     if (widget.initialPosition != null) {
       print("[🐧 planes] SIIIIIIIIIIIIIIII");
@@ -346,6 +344,8 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
       });
     }
   }
+  //BUSCAR LUGARES
+  //Llama a Google Places para autocompletar direcciones según la query
   Future<void> _buscarLugares(String query) async {
     if (query.isEmpty) {
       setState(() => _predictions = []);
@@ -359,6 +359,8 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
       });
     });
   }
+  //MOVER EL MAPA AL LUGAR SELECCIONADO
+  //Recibe un ID de un lugar, obtiene sus detalles y mueve la cámara a ese lugar
   Future<void> _moverAlLugar(String placeId) async {
     final details = await places.fetchPlace(
       placeId,
@@ -371,7 +373,6 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
       setState(() {
         selectedLocation = target;
         _searchController.text = details.place?.name ?? "";
-        //Set short name default and reset edited flag
         final short = (_searchController.text.split(',').first).trim();
         _nameController.text = short;
         _nameEdited = false;
@@ -562,7 +563,6 @@ class _UbicacionSelectorMapaState extends State<UbicacionSelectorMapa> {
                     width: double.infinity,
                     child: FilledButton(
                         onPressed: () {
-                        // return (latLng, shortName, fullAddress)
                         widget.onLocationSelected(selectedLocation, _nameController.text, _searchController.text);
                         Navigator.pop(context);
                       },

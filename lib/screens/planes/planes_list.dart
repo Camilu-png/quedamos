@@ -22,18 +22,16 @@ class PlanesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ES PROPIO
+    //ES PROPIO
     final bool esPropio = (plan["anfitrionID"] ?? "") == userID;
-    // ANFITRIÓN
+    //ANFITRIÓN
     final String anfitrionNombre = plan["anfitrionNombre"] ?? "";
-    // ICONO
-    final IconData iconoNombre =
-        iconosMap[plan["iconoNombre"]] ?? Icons.event;
-    final Color iconoColor =
-        coloresMap[plan["iconoColor"]] ?? secondary;
-    // TÍTULO
+    //ICONO
+    final IconData iconoNombre = iconosMap[plan["iconoNombre"]] ?? Icons.event;
+    final Color iconoColor = coloresMap[plan["iconoColor"]] ?? secondary;
+    //TÍTULO
     final String titulo = plan["titulo"] ?? "";
-    // FECHA
+    //FECHA
     String fechaBonita;
     if (plan["fechaEsEncuesta"] == true) {
       fechaBonita = "Por determinar";
@@ -43,14 +41,13 @@ class PlanesList extends StatelessWidget {
     } else {
       fechaBonita = "Desconocida";
     }
-    // HORA
+    //HORA
     String horaBonita;
     if (plan["horaEsEncuesta"] == true) {
       horaBonita = "Por determinar";
     } else if (plan["hora"] is String) {
       final partes = (plan["hora"] as String).split(":");
-      final horaObj =
-          TimeOfDay(hour: int.parse(partes[0]), minute: int.parse(partes[1]));
+      final horaObj = TimeOfDay(hour: int.parse(partes[0]), minute: int.parse(partes[1]));
       horaBonita = horaObj.format(context);
     } else if (plan["hora"] is TimeOfDay) {
       horaBonita = (plan["hora"] as TimeOfDay).format(context);
@@ -71,7 +68,7 @@ class PlanesList extends StatelessWidget {
         "nombre": "Por determinar",
       };
     }
-    //PARTICIPANTES (usar estado local)
+    //PARTICIPANTES (estado local)
     late List<dynamic> participantesAceptados = List<dynamic>.from(plan["participantesAceptados"] ?? []);
     late List<dynamic> participantesRechazados = List<dynamic>.from(plan["participantesRechazados"] ?? []);
     final bool participantesAceptadosUsuario = participantesAceptados.contains(userID);
@@ -165,7 +162,6 @@ class PlanesList extends StatelessWidget {
                                   Text(
                                     () {
                                       final ubicacion = plan["ubicacion"] as Map<String, dynamic>;
-                                      // Robust parsing: accept int, double or String (with ',' or '.')
                                       final rawLat = ubicacion["latitud"];
                                       final rawLng = ubicacion["longitud"];
                                       double? latDouble;
@@ -173,11 +169,9 @@ class PlanesList extends StatelessWidget {
                                       if (rawLat is double) latDouble = rawLat;
                                       else if (rawLat is int) latDouble = rawLat.toDouble();
                                       else if (rawLat is String) latDouble = double.tryParse(rawLat.replaceAll(',', '.'));
-
                                       if (rawLng is double) lngDouble = rawLng;
                                       else if (rawLng is int) lngDouble = rawLng.toDouble();
                                       else if (rawLng is String) lngDouble = double.tryParse(rawLng.replaceAll(',', '.'));
-
                                       if (latDouble != null && lngDouble != null) {
                                         final distanceMeters = Geolocator.distanceBetween(
                                           currentLocation!.latitude,

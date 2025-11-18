@@ -2,10 +2,10 @@ import "package:flutter/material.dart";
 import "package:geolocator/geolocator.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/main.dart";
-import "package:quedamos/screens/planes/planes_list.dart";
-import "package:quedamos/screens/planes/planes_components.dart";
-import "package:quedamos/screens/planes/plan_screen.dart";
 import "package:quedamos/services/plans_service.dart";
+import "package:quedamos/screens/planes/planes_list.dart";
+import "package:quedamos/screens/planes/plan_screen.dart";
+import "package:quedamos/screens/planes/planes_components.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -41,7 +41,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
   void initState() {
     super.initState();
     currentPosition = widget.currentLocation;
-    _loadPlans(); // Use cache if available
+    _loadPlans(); //Use cache if available
   }
 
   int _activeFiltersCount() {
@@ -320,7 +320,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
     super.dispose();
   }
 
-  //LOAD PLANS (with caching)
+  //LOAD: PLANS (with caching)
   Position? currentPosition;
   Future<void> _loadPlans({bool forceRefresh = false}) async {
     print("[🐧 planes] Cargando planes (forceRefresh: $forceRefresh)...");
@@ -441,86 +441,81 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
     final Position? pos = widget.currentLocation ?? currentPosition;
     
     final planesFiltrados = _allPlans.where((plan) {
+
+      //FECHA
       final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
-  final horaEsEncuesta = plan["horaEsEncuesta"] ?? false;
-
-  // Encuestas siempre activas
-  if (fechaEsEncuesta || horaEsEncuesta) {
-    return filtroActividadesSeleccionadas.isEmpty || filtroActividadesSeleccionadas.contains("activos");
-  }
-
-  // Fecha completa del plan
-  DateTime? planFecha;
-  if (plan["fecha"] != null) {
-    planFecha = plan["fecha"] is Timestamp
-        ? (plan["fecha"] as Timestamp).toDate()
-        : DateTime.tryParse(plan["fecha"].toString());
-    
-    // Si hay campo de hora separado
-    if (planFecha != null && plan["hora"] != null) {
-      final horaPartes = plan["hora"].toString().split(':'); // ["16","30"]
-      final hour = int.tryParse(horaPartes[0]) ?? 0;
-      final minute = int.tryParse(horaPartes[1]) ?? 0;
-      planFecha = DateTime(
-        planFecha.year,
-        planFecha.month,
-        planFecha.day,
-        hour,
-        minute,
-      );
-    }
-  }
-
-  // Determinar si el plan está activo
-  final bool isActive = planFecha != null && planFecha.isAfter(now);
-
-  // Filtrado por selección de activos/inactivos
-  if (filtroActividadesSeleccionadas.isNotEmpty) {
-    final containsAct = filtroActividadesSeleccionadas.contains("activos");
-    final containsInact = filtroActividadesSeleccionadas.contains("inactivos");
-
-    if (containsAct && !containsInact && !isActive) return false;
-    if (containsInact && !containsAct && isActive) return false;
-  }
-
-  // Filtrado por fecha
-  if (filtroFecha != null) {
-    if (planFecha == null) return false;
-
-        bool enRango = false;
-        if (filtroFecha == "hoy") {
-          final startOfDay = DateTime(now.year, now.month, now.day);
-          final endOfDay = startOfDay.add(const Duration(days: 1));
-          enRango = planFecha.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) && planFecha.isBefore(endOfDay);
-        } else if (filtroFecha == "semana") {
-          final proximoLunes = now.add(Duration(days: (8 - now.weekday) % 7));
-          enRango = planFecha.isAfter(now) && planFecha.isBefore(proximoLunes.add(const Duration(days: 7)));
-        } else if (filtroFecha == "mes") {
-          final finMes = DateTime(now.year, now.month + 1, 0);
-          enRango = planFecha.isAfter(now) && planFecha.isBefore(finMes);
-        } else if (filtroFecha == "proximoMes") {
-          final initProx = DateTime(now.year, now.month + 1, 1);
-          final finProx = DateTime(now.year, now.month + 2, 0);
-          enRango = planFecha.isAfter(initProx) && planFecha.isBefore(finProx);
-        }
-        if (!enRango) return false;
+      final horaEsEncuesta = plan["horaEsEncuesta"] ?? false;
+      //Encuestas siempre activas
+      if (fechaEsEncuesta || horaEsEncuesta) {
+        return filtroActividadesSeleccionadas.isEmpty || filtroActividadesSeleccionadas.contains("activos");
       }
+      //Fecha completa del plan
+      DateTime? planFecha;
+      if (plan["fecha"] != null) {
+        planFecha = plan["fecha"] is Timestamp
+            ? (plan["fecha"] as Timestamp).toDate()
+            : DateTime.tryParse(plan["fecha"].toString());
+        //Si hay campo de hora separado
+        if (planFecha != null && plan["hora"] != null) {
+          final horaPartes = plan["hora"].toString().split(':'); // ["16","30"]
+          final hour = int.tryParse(horaPartes[0]) ?? 0;
+          final minute = int.tryParse(horaPartes[1]) ?? 0;
+          planFecha = DateTime(
+            planFecha.year,
+            planFecha.month,
+            planFecha.day,
+            hour,
+            minute,
+          );
+        }
+      }
+      //Determinar si el plan está activo
+      final bool isActive = planFecha != null && planFecha.isAfter(now);
+      //Filtrado por selección de activos/inactivos
+      if (filtroActividadesSeleccionadas.isNotEmpty) {
+        final containsAct = filtroActividadesSeleccionadas.contains("activos");
+        final containsInact = filtroActividadesSeleccionadas.contains("inactivos");
+
+        if (containsAct && !containsInact && !isActive) return false;
+        if (containsInact && !containsAct && isActive) return false;
+      }
+      //Filtrado por fecha
+      if (filtroFecha != null) {
+        if (planFecha == null) return false;
+            bool enRango = false;
+            if (filtroFecha == "hoy") {
+              final startOfDay = DateTime(now.year, now.month, now.day);
+              final endOfDay = startOfDay.add(const Duration(days: 1));
+              enRango = planFecha.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) && planFecha.isBefore(endOfDay);
+            } else if (filtroFecha == "semana") {
+              final proximoLunes = now.add(Duration(days: (8 - now.weekday) % 7));
+              enRango = planFecha.isAfter(now) && planFecha.isBefore(proximoLunes.add(const Duration(days: 7)));
+            } else if (filtroFecha == "mes") {
+              final finMes = DateTime(now.year, now.month + 1, 0);
+              enRango = planFecha.isAfter(now) && planFecha.isBefore(finMes);
+            } else if (filtroFecha == "proximoMes") {
+              final initProx = DateTime(now.year, now.month + 1, 1);
+              final finProx = DateTime(now.year, now.month + 2, 0);
+              enRango = planFecha.isAfter(initProx) && planFecha.isBefore(finProx);
+            }
+            if (!enRango) return false;
+          }
       
-      // SEARCH
+      //BÚSQUEDA
       if (busqueda.isNotEmpty) {
         final titulo = (plan["titulo"] ?? "").toString().toLowerCase();
         final anfitrion = (plan["anfitrionNombre"] ?? "").toString().toLowerCase();
         if (!titulo.contains(busqueda.toLowerCase()) && !anfitrion.contains(busqueda.toLowerCase())) return false;
       }
       
-      // CATEGORY
+      //CATEGORÍA
       if (categoriasSeleccionadas.isNotEmpty) {
         final cat = (plan["categoria"] as String?)?.trim().toLowerCase();
         final selectedCats = categoriasSeleccionadas.map((e) => e.trim().toLowerCase()).toSet();
         if (cat == null || !selectedCats.contains(cat)) return false;
       }
 
-      // If user selected "Planes aceptados", only include plans where the user is in participantesAceptados
+      //PLANES ACEPTADOS
       if (viewMode == "aceptados") {
         final aceptados = plan["participantesAceptados"];
         bool isAccepted = false;
@@ -535,7 +530,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
         if (!isAccepted) return false;
       }
 
-      // Estado filter (multi-select): if any estado selected, require plan to match at least one
+      //ESTADO (ACTIVO/INACTIVO)
       if (filtroEstadosSeleccionadas.isNotEmpty) {
         bool matchesEstado = false;
         if (filtroEstadosSeleccionadas.contains("rechazado")) {
@@ -567,18 +562,17 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
         if (!matchesEstado) return false;
       }
 
-      // VISIBILIDAD (Amigos / Público) - multi-select
+      //VISIBILIDAD (AMIGOS/PÚBLICO)
       if (filtroVisibilidades.isNotEmpty) {
         final vis = plan["visibilidad"] as String?;
         if (vis == null) return false;
         if (!filtroVisibilidades.contains(vis)) return false;
       }
       
-      // DISTANCE
+      //DISTANCIA
       if (filtroDistancia != null && pos != null) {
         final ubi = plan["ubicacion"];
         if (plan["ubicacionEsEncuesta"] != true && ubi is Map<String, dynamic>) {
-          // robust parsing for lat/lng
           double? lat;
           double? lng;
           final rawLat = ubi["latitud"];
@@ -593,11 +587,9 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
 
           if (lat != null && lng != null) {
             final dist = Geolocator.distanceBetween(pos.latitude, pos.longitude, lat, lng);
-            // debug log to help trace unexpected results (include parsed coords and ref location)
             print("[🐧 planes] filtroDistancia=${filtroDistancia}km plan=${plan["planID"] ?? plan["id"] ?? ""} dist=${(dist/1000).toStringAsFixed(2)}km (planLat=$lat planLng=$lng refLat=${pos.latitude} refLng=${pos.longitude})");
             if (dist > (filtroDistancia! * 1000)) return false;
           } else {
-            // If lat/lng cannot be parsed, exclude the plan to be safe
             return false;
           }
         } else {
@@ -898,7 +890,7 @@ class _PlanesScreenState extends State<PlanesScreen> with RouteAware {
                         builder: (context) {
                           final filteredPlans = _getFilteredPlans();
                           
-                          // No plans and has error (no cache, no connection)
+                          //No plans and has error (no cache, no connection)
                           if (filteredPlans.isEmpty && _hasConnectionError) {
                             return Center(
                               child: Column(

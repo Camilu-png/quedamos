@@ -2,9 +2,9 @@ import "package:flutter/material.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:quedamos/main.dart";
 import "package:geolocator/geolocator.dart";
+import "package:quedamos/services/plans_service.dart";
 import "package:quedamos/screens/planes/planes_list.dart";
 import "package:quedamos/screens/planes/plan_screen.dart";
-import "package:quedamos/services/plans_service.dart";
 
 final db = FirebaseFirestore.instance;
 
@@ -22,7 +22,6 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
   
   String actividadSelected = "Activos";
   String busqueda = "";
-
   final PlansService _plansService = PlansService();
   List<Map<String, dynamic>> _allPlans = [];
   bool _isLoading = true;
@@ -57,7 +56,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
     super.dispose();
   }
 
-  //LOAD PLANS
+  //LOAD: PLANS
   Future<void> _loadPlans({bool forceRefresh = false}) async {
     setState(() {
       _isLoading = true;
@@ -79,7 +78,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
     } catch (error) {
       print("[🐧 planes] Error: $error");
       
-      // Check if it's a network error
+      //Check if it's a network error
       final isNetworkError = error.toString().contains('network') ||
                             error.toString().contains('connection') ||
                             error.toString().contains('Failed host lookup');
@@ -92,14 +91,14 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
             : 'Error al cargar planes.';
       });
       
-      // If we have cached data, don't clear it
+      //If we have cached data, don't clear it
       if (_allPlans.isNotEmpty) {
         print("[🐧 planes] Usando caché a pesar del error");
       }
     }
   }
 
-  //GET FILTERED PLANS
+  //GET: FILTERED PLANS
   List<Map<String, dynamic>> _getFilteredPlans() {
     for (final plan in _allPlans) {
       print("Plan:");
@@ -113,21 +112,19 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
     final planesFiltrados = _allPlans.where((plan) {
       final fechaEsEncuesta = plan["fechaEsEncuesta"] ?? false;
       final horaEsEncuesta = plan["horaEsEncuesta"] ?? false;
-      // Encuestas siempre activas
+      //Encuestas siempre activas
       if (fechaEsEncuesta || horaEsEncuesta) {
         return actividadSelected == "Activos";
       }
-      // Fecha completa del plan
+      //Fecha completa del plan
       var planFecha = plan["fecha"] is Timestamp
-    ? (plan["fecha"] as Timestamp).toDate()
-    : DateTime.tryParse(plan["fecha"]?.toString() ?? DateTime.now().toString()) ?? DateTime.now();
-
-      // Si tienes un campo de hora separado (por ejemplo "hora": "16:30")
+        ? (plan["fecha"] as Timestamp).toDate()
+        : DateTime.tryParse(plan["fecha"]?.toString() ?? DateTime.now().toString()) ?? DateTime.now();
+      //Si hay un campo de hora separado...
       if (plan["hora"] != null) {
-        final horaPartes = plan["hora"].toString().split(':'); // ["16", "30"]
+        final horaPartes = plan["hora"].toString().split(':');
         final hour = int.tryParse(horaPartes[0]) ?? 0;
         final minute = int.tryParse(horaPartes[1]) ?? 0;
-
         planFecha = DateTime(
           planFecha.year,
           planFecha.month,
@@ -136,17 +133,13 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
           minute,
         );
       }
-
       print("planFecha completo: $planFecha");
-            // Plan normal: activo/inactivo según fecha + hora
-            if (actividadSelected == "Activos") {
-              if (planFecha.isBefore(now)) return false; // ya pasó → inactivo
-            } else {
-              if (planFecha.isAfter(now)) return false; // aún no ocurre → no inactivo
-            }
-
-
-
+      //Marcar activo/inactivo
+      if (actividadSelected == "Activos") { //Si estamos viendo activos...
+        if (planFecha.isBefore(now)) return false; //Inactivo -> false
+      } else { //si estamos viendo inactivos...
+        if (planFecha.isAfter(now)) return false; //Activo -> false
+      }
 
       //BÚSQUEDA
       if (busqueda.isNotEmpty) {
@@ -315,7 +308,7 @@ class _MisPlanesScreenState extends State<MisPlanesScreen> with RouteAware {
                         builder: (context) {
                           final filteredPlans = _getFilteredPlans();
                           
-                          // No plans and has error (no cache, no connection)
+                          //No plans and has error (no cache, no connection)
                           if (filteredPlans.isEmpty && _hasConnectionError) {
                             return Center(
                               child: Column(

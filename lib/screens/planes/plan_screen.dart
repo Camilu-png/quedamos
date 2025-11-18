@@ -32,12 +32,14 @@ class _PlanScreenState extends State<PlanScreen> {
     participantesRechazados = List<dynamic>.from(plan["participantesRechazados"] ?? []);
   }
 
+  //GET: PLAN ID
   String? _getPlanID() {
     final dynamic pid = plan["planID"] ?? plan["id"] ?? plan["planId"];
     if (pid == null) return null;
     return pid.toString();
   }
 
+  //GET: USERS NAMES
   Future<List<String>> _getUsersNames(List<dynamic> userIDs) async {
     print("[🐧 planes] Obteniendo nombres de los participantes...");
     if (userIDs.isEmpty) return [];
@@ -53,6 +55,7 @@ class _PlanScreenState extends State<PlanScreen> {
     return nombres;
   }
 
+  //SHOW: PARTICIPANTES MODAL
   void _showParticipantesModal(BuildContext context, List<dynamic> participantesAceptados, List<dynamic> participantesRechazados) {
     print("[🐧 planes] Abriendo modal de participantes...");
     showModalBottomSheet(
@@ -180,6 +183,7 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
+  //SHOW: ENCUESTA
   void _showEncuesta(String tipo) {
     String tituloModal = "";
     String fieldName = "";
@@ -545,7 +549,7 @@ class _PlanScreenState extends State<PlanScreen> {
                     },
                   ),
                 ),
-                // BOTÓN: FIJAR OPCIÓN MÁS VOTADA
+                //BOTÓN: FIJAR OPCIÓN MÁS VOTADA
                 if (esAnfitrion)
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -1048,7 +1052,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: IgnorePointer(
-                      ignoring: !horaEsEncuesta, // si no es encuesta, no se puede presionar
+                      ignoring: !horaEsEncuesta,
                       child: FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: horaEsEncuesta
@@ -1063,7 +1067,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             ? () {
                                 _showEncuesta("hora");
                               }
-                            : () {}, // vacío, no se ejecuta gracias a IgnorePointer
+                            : () {},
                         child: Padding(
                           padding: const EdgeInsets.only(left: 16, right: 12),
                           child: Row(
